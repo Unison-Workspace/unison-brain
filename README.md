@@ -3,22 +3,28 @@
 [![CI](https://github.com/Unison-Workspace/unison-brain/actions/workflows/ci.yml/badge.svg)](https://github.com/Unison-Workspace/unison-brain/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
 
-**Your cloud knowledge base, in any coding agent.**
+**Give your coding agent a memory that outlives the session.**
 
-The Unison brain is a hosted knowledge base — decisions, conventions,
-architecture, prior solutions, people. This repo is the **open-source client**
-for it: a CLI, an SDK, an MCP server, and an agent skill. No local database, no
-local index — the brain lives in the cloud and is reachable from any machine or
-agent with one command.
+Claude Code, Cursor, and Codex start every session with amnesia. They re-read the
+codebase, re-derive the architecture, and re-ask the questions you answered last
+week — LLMs are stateless, and the context window resets the moment you close the
+terminal. Meanwhile the decisions, the conventions, and the hard-won *why* live in
+your head, in Slack, in a Notion nobody opens — never where the agent can reach them.
+
+The **Unison brain** is a hosted knowledge base — decisions, conventions,
+architecture, prior fixes, people — that your agents *read from and write back to*,
+from any machine, with one command:
 
 ```bash
 unison search "why did we pick device-flow auth"
 ```
 
-This client is open source so you can read exactly what it sends before piping it
-into a coding agent with shell access. The brain backend that stores and searches
-your data is a separate, closed service; see [`SPEC.md`](./SPEC.md) for the API
-contract this client speaks.
+This repo is the **open-source client**: a CLI, an SDK, an MCP server, and an agent
+skill. No local database, no vector index to run, no framework to adopt — the brain
+lives in the cloud and every surface speaks one API. It's open source so you can read
+exactly what it sends before you pipe it into an agent with shell access; the backend
+that stores and searches your data is a separate, closed service ([`SPEC.md`](./SPEC.md)
+is the contract this client speaks).
 
 ## What's in the box
 
@@ -31,6 +37,19 @@ contract this client speaks.
 
 The SDK is the core; the CLI and MCP server are thin wrappers over it, and the
 skill wraps the CLI — one API contract, four surfaces.
+
+## Why not a `CLAUDE.md` or a memory SDK?
+
+- **`CLAUDE.md` / `.cursorrules` are local, per-repo, and rot.** They don't follow
+  you to another machine, another repo, or a teammate, and nobody updates them. The
+  brain is one source of truth every agent — and every teammate's agent — reads from
+  and writes back to.
+- **mem0 / Letta / Zep are libraries you build an agent *with*.** Unison plugs into
+  the agents you *already use* — Claude Code, Cursor, Codex — on day one. Nothing to
+  host, no framework to adopt, no migration.
+- **It's a knowledge graph, not a chat log.** Canonical entities (people, projects,
+  companies) and bitemporal facts mean the agent knows *who*, *what*, and *what
+  changed when* — not just a pile of past messages.
 
 ## Quickstart
 
