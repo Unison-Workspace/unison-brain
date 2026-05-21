@@ -84,13 +84,16 @@ async function loopbackLogin(apiUrl: string, appUrl: string): Promise<string> {
       });
     });
 
-    setTimeout(
+    // unref so a completed login lets the process exit immediately rather than
+    // waiting out this 5-minute deadline (the timer no longer holds the loop open).
+    const timer = setTimeout(
       () => {
         server.close();
         reject(new Error("Timed out waiting for browser login."));
       },
       5 * 60 * 1000,
     );
+    timer.unref();
   });
 }
 

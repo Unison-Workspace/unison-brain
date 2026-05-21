@@ -11,8 +11,10 @@ import { fail } from "./output";
 export async function confirmDestructive(action: string, yes: boolean): Promise<boolean> {
   if (yes) return true;
   if (!process.stdin.isTTY) {
+    // Exit nonzero so scripts/agents see a real failure, not a silent no-op
+    // that looks like success.
     fail(`Refusing to ${action} in a non-interactive shell. Pass --yes to proceed.`);
-    return false;
+    process.exit(1);
   }
   const rl = createInterface({ input: process.stdin, output: process.stderr });
   const answer = await new Promise<string>((resolve) => {
