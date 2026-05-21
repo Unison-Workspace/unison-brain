@@ -1,149 +1,210 @@
 # Unison Brain API — Specification
 
-This is the contract the **Unison backend** must implement for this open-source
-client (SDK / CLI / MCP) to work. It lives here, in the public client repo, so the
-contract is reviewable by integrators — but **nothing in this spec is implemented
-in this repo**. Implementation happens in the closed Unison monorepo (primarily
-`apps/api`), wrapping the existing `cortexRouter` primitives behind REST + an
-API-key auth path.
+The contract the **Unison backend** implements and this open-source client
+(SDK / CLI / MCP) targets. It lives in the public client repo so integrators can
+read it. **No backend code lives here** — implementation happens in the closed
+Unison monorepo (`apps/api`), as a thin REST facade over the existing
+`agents.cortex.*` tRPC router plus a machine-auth path.
+
+Every operation below is something a user can already do with the brain from the
+Unison dashboard (`/agents/brain`). The goal: parity with the dashboard, headless.
+
+---
+
+## 1. Design principles
+
+- **Two abstractions, one brain.** The cortex is a **filesystem** (paths under
+  `/wiki/`, `/skills/`, `/actions/` are writable; `/sources/`, `/raw/`, `/system/`
+  are read-only synth/ingest tiers) **and** a **knowledge graph**
+  (entities → bitemporal facts → links). The API exposes both.
+- **Three surfaces, deliberately different breadth:**
+  - **SDK** — *complete*. Every user-facing operation, typed. The contract.
+  - **CLI** — *complete, ergonomic*. Grouped commands; for humans and shell agents.
+  - **MCP** — *curated* (~8 tools). Only what an agent should call. Agents must not
+    merge entities, retry jobs, or delete docs. Small tool count avoids context bloat.
+- **Open client, closed backend.** Security lives at the boundary (scoped keys,
+  tenant isolation, rate limits), not in code secrecy.
+
+## 2. Scope
+
+**In scope (this spec):** the full brain — documents, entities, facts, links,
+dedup review, job visibility, health. Tiers 1–3 below.
+
+**Out of scope (deliberately):**
+- **Agent chat / sessions / streaming** (`agents.runs.*`, `agents.documents.*`) —
+  a separate, larger product surface, not the brain.
+- **Connectors** (Gmail / Drive / Notion / Slack ingest) — browser OAuth + workspace
+  config; not CLI-shaped.
+- **Internal worker machinery** — embedding, signal promotion, reconcile/merge
+  pipelines, compaction, ingest jobs. Encapsulated behind the job queue; auto-run.
+- **Visualization** — the 3D graph and inline-diff editor. The *data* behind them
+  (`links`, `neighbors`, `listEntities`) is exposed; the canvas is not.
+
+---
+
+## 3. Authentication
+
+`Authorization: Bearer <token>` on every request except the device-code endpoints.
+Token is an API key (`usk_...`) or a device-flow access token.
+
+### Backend gap — the one true blocker
+Today all requests need a Supabase **user** JWT; a headless client can't get one.
+Backend must add a machine-credential path:
+1. `api_keys` table: `(id, tenant_id, user_id, name, hashed_key, scopes[], last_used_at, created_at, revoked_at)`. Store only a hash; show plaintext once.
+2. Context builder branches: `Bearer usk_...` → resolve `(tenant, user, scopes)` and mint a synthetic authed context; `Bearer <jwt>` → existing path unchanged.
+
+### Scopes
+- `brain:read` → all GETs
+- `brain:write` → document write/delete/tag/share, entity upsert, fact record/correct/invalidate, link
+- `brain:admin` → dedup review (merge/unmerge), job retry
+
+### Endpoints
+- `POST /v1/auth/device/code` — body `{ clientId: "unison-cli" }` → `{ deviceCode, userCode, verificationUri, verificationUriComplete, interval, expiresIn }` (RFC 8628).
+- `POST /v1/auth/device/token` — body `{ deviceCode }`. Pending→`400 {error:"authorization_pending"}`; also `slow_down`, `access_denied`, `expired_token`. Approved→`200 { accessToken, tokenType, scope }`.
+- `GET /v1/auth/whoami` → `{ user:{id,email}, tenant:{id,name}, scopes[] }`.
+
+The verification page (`/device` in the dashboard) is where the logged-in user
+confirms the `userCode`, picks a tenant, and approves — minting the token.
+
+---
+
+## 4. Conventions
 
 - **Base URL:** configurable; production TBD (client default `https://api.unison.computer`).
-- **Versioning:** all paths are prefixed with `/v1`.
-- **Encoding:** JSON request/response bodies; field names are `camelCase`.
-- **Auth:** `Authorization: Bearer <token>` on every request except the device-code
-  endpoints. Token is either an API key (`usk_...`) or a device-flow access token.
+- **Versioning:** all paths prefixed `/v1`.
+- **JSON, `camelCase`.** Paths are passed as query params (they contain slashes).
+- **Errors:** `{ "error": { "code": "snake_case", "message": "..." } }` with codes
+  `unauthenticated` (401), `forbidden` (403, missing scope), `not_found` (404),
+  `conflict` (409, content-hash mismatch), `rate_limited` (429), `http_error` (5xx).
+- **Optimistic concurrency:** `write` accepts `expectedContentHash` (hex16); a stale
+  hash returns `409 conflict`.
+- **Rate limiting:** per key; `X-RateLimit-*` headers; `429` carries `Retry-After`.
+- **Bitemporal time-travel:** `asOf` (datetime) on `search`/`read`/`factsAbout` →
+  "what the brain knew as of then." A genuine differentiator; surface it.
 
 ---
 
-## Why a new auth path is the only real blocker
+## 5. Resources
 
-Today every Unison API request requires a live **Supabase user JWT**. A headless
-CLI / MCP server cannot get one. The backend therefore needs a **machine-credential
-path**:
+Field names mirror the existing `agents.cortex.*` zod schemas exactly.
 
-1. An `api_keys` table: `(id, tenant_id, user_id, name, hashed_key, scopes[],
-   last_used_at, created_at, revoked_at)`. Store only a hash (e.g. SHA-256) of the
-   key; show the plaintext once at creation.
-2. In the API request context builder, branch on the credential type:
-   - `Bearer usk_...` → look up the hashed key, resolve `(tenant_id, user_id,
-     scopes)`, mint a synthetic authed context bound to that tenant.
-   - `Bearer <supabase-jwt>` → existing path, unchanged.
-3. Scopes: `brain:read`, `brain:write`. Reads require `brain:read`; `PUT /brain/doc`
-   requires `brain:write`.
+### 5.1 Documents (filesystem tier)
 
-The device flow below mints the same kind of token after a browser approval, so
-interactive users never copy-paste a key.
+| REST | Maps to | Notes |
+|---|---|---|
+| `GET /v1/brain/search?q&k&kind*&tag*&memoryType&asOf` | `cortex.search` | `k` 1–50 (def 10); `kind` ∈ wiki_page\|raw\|note\|log\|index; `memoryType` ∈ episodic\|semantic\|procedural\|auto → `RankedHit[]` |
+| `GET /v1/brain/grep?pattern&caseSensitive&limit` | `cortex.grep` | regex over bodies; `limit` 1–200 (def 50) |
+| `GET /v1/brain/doc?path&asOf` | `cortex.read` | single doc; routes synth-reads (`/system/`,`/raw/`) |
+| `GET /v1/brain/list?prefix&kind*&tag*&limit` | `cortex.list` | enumerate by prefix/kind/tag |
+| `GET /v1/brain/fs?path` | `cortex.listFs` | directory listing (dir/file/mtime), bootstraps SCHEMA.md |
+| `GET /v1/brain/fs/read?path` | `cortex.readFs` | raw content of any tier incl. read-only ones |
+| `PUT /v1/brain/doc` | `cortex.write` | body: `path` (must be under /wiki//skills//actions/), `kind` (def note), `title?`, `tldr?`, `bodyMd` (≤200k), `tags[]`, `visibility` tenant\|private, `expectedContentHash?`, `source?{kind,ref}` |
+| `DELETE /v1/brain/doc?path` | **BrainFs.delete** ⚠ needs route | |
+| `POST /v1/brain/doc/tag` | **BrainFs.tag** ⚠ needs route | body `{ path, add[], remove[] }` |
+| `POST /v1/brain/share` | `cortex.share` | body `{ kind: doc\|fact\|entity, id }` → promote private→tenant |
+| `GET /v1/brain/neighbors?idOrPath&kind*&limit` | `cortex.neighbors` | `kind` ∈ mentions\|derived_from\|supersedes\|see_also; `limit` 1–100 (def 20) |
 
----
+### 5.2 Entities (graph)
 
-## Authentication endpoints
+| REST | Maps to | Notes |
+|---|---|---|
+| `GET /v1/brain/entities?kind*&status&limit` | `cortex.listEntities` | `status` ∈ active\|stub\|archived |
+| `GET /v1/brain/entities/resolve?name&kindHint` | `cortex.resolveEntity` | fuzzy + alias match → `BrainEntity\|null` |
+| `GET /v1/brain/entities/:id` | **BrainFs.getEntity** ⚠ needs route | get by id |
+| `POST /v1/brain/entities` | `cortex.upsertEntity` | body `{ kind, displayName, slug?, aliases[], props{}, status }` |
+| `POST /v1/brain/entities/:id/aliases` | **BrainFs.addAlias** ⚠ needs route | optional; or fold into upsert |
 
-### `POST /v1/auth/device/code`
-Start the OAuth 2.0 Device Authorization Grant (RFC 8628).
+### 5.3 Facts (bitemporal)
 
-Request: `{ "clientId": "unison-cli" }`
+| REST | Maps to | Notes |
+|---|---|---|
+| `GET /v1/brain/facts?limit&includeInvalidated` | `cortex.listFacts` | browse all |
+| `GET /v1/brain/entities/:id/facts?asOf&includeInvalidated` | `cortex.factsAbout` | facts about one entity |
+| `GET /v1/brain/entities/:id/timeline?from&to` | `cortex.timeline` | chronological |
+| `POST /v1/brain/facts` | `cortex.recordFact` | `{ subjectId, predicate, factText, objectJson?, objectEntityId?, validFrom?, validTo?, confidence(0–1 def .6), supersedesId? }` |
+| `PATCH /v1/brain/facts/:id` | `cortex.correctFact` | supersede with corrected fields |
+| `DELETE /v1/brain/facts/:id` | `cortex.invalidateFact` | soft (sets valid_to=now) |
 
-Response `200`:
-```json
-{
-  "deviceCode": "string (opaque, server-stored)",
-  "userCode": "WDJB-MJHT",
-  "verificationUri": "https://app.unison.computer/device",
-  "verificationUriComplete": "https://app.unison.computer/device?code=WDJB-MJHT",
-  "interval": 5,
-  "expiresIn": 900
-}
-```
+### 5.4 Links (graph edges)
 
-### `POST /v1/auth/device/token`
-Poll for the token. Called every `interval` seconds.
+| REST | Maps to | Notes |
+|---|---|---|
+| `GET /v1/brain/links?limit` | `cortex.links` | all directed edges `{fromId,toId,kind}` |
+| `POST /v1/brain/links` | `cortex.link` | body `{ fromId, toId, kind }` |
 
-Request: `{ "deviceCode": "..." }`
+### 5.5 Dedup review (`brain:admin`)
 
-- Pending → `400` `{ "error": "authorization_pending" }`
-- Polling too fast → `400` `{ "error": "slow_down" }`
-- User declined → `400` `{ "error": "access_denied" }`
-- Code expired → `400` `{ "error": "expired_token" }`
-- Approved → `200`:
-  ```json
-  { "accessToken": "usk_live_...", "tokenType": "Bearer", "scope": "brain:read brain:write" }
-  ```
+| REST | Maps to | Notes |
+|---|---|---|
+| `GET /v1/brain/review/conflicts` | `cortex.listMatchConflicts` | pending merge pairs + reasoning + exemplars |
+| `POST /v1/brain/review/conflicts/:id` | `cortex.resolveMatch` | body `{ verdict: merge\|distinct }` |
+| `GET /v1/brain/review/merges?limit` | `cortex.listRecentMerges` | undo panel feed |
+| `POST /v1/brain/review/merges/:id/undo` | `cortex.unmergeEntity` | enqueues unmerge |
 
-The verification page (`/device`) is an authenticated dashboard route: the
-logged-in user enters/confirms the `userCode`, picks the tenant, and approves —
-which is what mints the token returned above.
+### 5.6 Jobs (operator, `brain:admin`)
 
-### `GET /v1/auth/whoami`
-Response `200`:
-```json
-{
-  "user": { "id": "uuid", "email": "a@b.com" },
-  "tenant": { "id": "uuid", "name": "Acme" },
-  "scopes": ["brain:read", "brain:write"]
-}
-```
+| REST | Maps to | Notes |
+|---|---|---|
+| `GET /v1/brain/jobs?status&kind&limit` | `agents.jobs.list` | queue visibility |
+| `GET /v1/brain/jobs/stats` | `agents.jobs.stats` | counts by status |
+| `POST /v1/brain/jobs/:id/retry` | `agents.jobs.retry` | re-queue a failed job |
 
----
+### 5.7 Status
 
-## Brain endpoints
-
-All map onto existing `cortexRouter` procedures; this is a thin REST facade.
-
-### `GET /v1/brain/search`
-Query params: `q` (required), `k` (default 10), `kind`, `tag`.
-Maps to `cortex.search` (hybrid BM25 + vector + RRF).
-```json
-{
-  "results": [
-    { "path": "/wiki/auth", "title": "Auth", "snippet": "...", "score": 0.81, "kind": "wiki", "tags": ["security"] }
-  ]
-}
-```
-
-### `GET /v1/brain/doc`
-Query param: `path` (required). Maps to `cortex.read`.
-```json
-{ "path": "/wiki/auth", "title": "Auth", "content": "# Auth\n...", "kind": "wiki", "tags": ["security"], "updatedAt": "2026-05-21T10:00:00Z" }
-```
-Not found → `404` `{ "error": { "code": "not_found", "message": "..." } }`.
-
-### `PUT /v1/brain/doc`
-Requires `brain:write`. Maps to `cortex.write`.
-Request: `{ "path": "/notes/x", "content": "...", "kind": "note", "tags": ["a"] }`
-Response `200`: the stored document (same shape as `GET /brain/doc`).
-
-### `GET /v1/brain/list`
-Query params: `prefix`, `limit` (default 100). Maps to `cortex.list`.
-```json
-{ "items": [ { "path": "/wiki/auth", "title": "Auth", "kind": "wiki", "updatedAt": "..." } ] }
-```
-
-### `GET /v1/brain/status`
-Maps to counts over `cortex_documents` / `cortex_entities` / `cortex_facts` / jobs.
-```json
-{ "documents": 412, "entities": 88, "facts": 1203, "pendingJobs": 0 }
-```
+| REST | Maps to |
+|---|---|
+| `GET /v1/brain/status` | `cortex.health` → `{ docCount, docWithEmbedding, entityCount, factCount, lastIngestAt, pendingJobs, staleWikiPageCount }` |
 
 ---
 
-## Errors
+## 6. Surface mapping — REST → CLI → SDK → MCP
 
-Non-2xx responses (other than the device-flow OAuth error strings above) use:
-```json
-{ "error": { "code": "snake_case_code", "message": "human readable" } }
-```
-Standard codes: `unauthenticated` (401), `forbidden` (403, missing scope),
-`not_found` (404), `rate_limited` (429), `http_error` (5xx).
+MCP column: ✓ = exposed as an agent tool; — = SDK/CLI only.
 
-## Rate limiting
+| Operation | CLI | SDK method | MCP |
+|---|---|---|---|
+| search | `unison search <q> [-k --kind --tag --memory-type --as-of]` | `brain.search()` | ✓ `brain_search` |
+| grep | `unison grep <pattern> [--case-sensitive]` | `brain.grep()` | — |
+| read doc | `unison get <path> [--json --as-of]` | `brain.get()` | ✓ `brain_get` |
+| list docs | `unison ls [prefix] [--kind --tag]` | `brain.list()` | ✓ `brain_list` |
+| fs tree / raw | `unison ls --tree <path>` / `unison get --raw <path>` | `brain.listFs()` / `brain.readFs()` | — |
+| write doc | `unison write <path> [-m --title --tldr --tag --visibility --if-match]` | `brain.write()` | ✓ `brain_write` |
+| delete doc | `unison rm <path>` | `brain.delete()` | — |
+| tag doc | `unison tag <path> [--add --remove]` | `brain.tag()` | — |
+| share | `unison share <doc\|fact\|entity> <id>` | `brain.share()` | — |
+| neighbors | `unison neighbors <idOrPath>` | `brain.neighbors()` | — |
+| list entities | `unison entity ls [--kind --status]` | `brain.entities.list()` | — |
+| resolve entity | `unison entity resolve <name>` | `brain.entities.resolve()` | ✓ `brain_resolve_entity` |
+| get entity | `unison entity get <id>` | `brain.entities.get()` | — |
+| upsert entity | `unison entity set <kind> <name> [--alias --prop]` | `brain.entities.upsert()` | — |
+| list facts | `unison fact ls [--all]` | `brain.facts.list()` | — |
+| facts about | `unison fact ls --entity <id>` | `brain.facts.about()` | ✓ `brain_facts_about` |
+| timeline | `unison timeline <entityId> [--from --to]` | `brain.facts.timeline()` | — |
+| record fact | `unison fact add <entityId> <predicate> <text> [--confidence]` | `brain.facts.record()` | ✓ `brain_record_fact` |
+| correct fact | `unison fact correct <factId> [...]` | `brain.facts.correct()` | — |
+| invalidate fact | `unison fact rm <factId>` | `brain.facts.invalidate()` | — |
+| list links | `unison links` | `brain.links.list()` | — |
+| create link | `unison link <fromId> <toId> --kind <k>` | `brain.links.create()` | — |
+| review conflicts | `unison review ls` | `brain.review.conflicts()` | — |
+| resolve match | `unison review merge\|distinct <id>` | `brain.review.resolve()` | — |
+| recent merges | `unison review merges` | `brain.review.merges()` | — |
+| unmerge | `unison review undo <mergeId>` | `brain.review.undo()` | — |
+| jobs | `unison jobs ls [--status]` / `jobs stats` / `jobs retry <id>` | `brain.jobs.*()` | — |
+| status | `unison status` | `brain.status()` | ✓ `brain_status` |
+| auth | `unison auth login\|logout\|status` | `startDeviceAuth()` / `pollDeviceToken()` | — |
 
-Per-API-key. Include `X-RateLimit-Limit`, `X-RateLimit-Remaining`,
-`X-RateLimit-Reset` on responses; `429` carries `Retry-After`.
+MCP tool set (8): `brain_search`, `brain_get`, `brain_write`, `brain_list`,
+`brain_resolve_entity`, `brain_facts_about`, `brain_record_fact`, `brain_status`.
 
 ---
 
-## Future (not in v1)
+## 7. Backend work required
 
-`/v1/brain/entities`, `/v1/brain/facts`, `/v1/brain/grep`, and a `watch`/sync
-endpoint to back `brain-cli watch`-style local vault mirroring. The SDK is
-structured so these slot in as new `BrainClient` methods without breaking changes.
+1. **Machine auth** — `api_keys` table + key→context branch + scopes (§3). *The blocker.*
+2. **REST facade** — ~30 routes over the existing `cortex.*` procedures (mostly mechanical).
+3. **Three new tRPC/REST routes** for BrainFs methods that exist but aren't exposed:
+   `delete(path)`, `tag(path, add, remove)`, `getEntity(id)` (and optionally `addAlias`).
+4. **Device-flow endpoints** + the `/device` approval page in the dashboard.
+
+The client in this repo is built to this spec; the current scaffold implements
+only the Tier-1 document subset and will be expanded to match.
