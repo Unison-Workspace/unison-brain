@@ -19,8 +19,8 @@ const brain = new BrainClient({
 
 // Documents
 const hits = await brain.search("auth decision", { limit: 5 });
-const doc = await brain.get("/wiki/architecture");
-await brain.write({ path: "/wiki/x", bodyMd: "We chose X because Y." });
+const doc = await brain.get("/wiki/architecture.md");
+await brain.write({ path: "/wiki/x.md", bodyMd: "We chose X because Y." }); // paths end in .md
 
 // Knowledge graph
 const daniel = await brain.entities.resolve("Daniel");

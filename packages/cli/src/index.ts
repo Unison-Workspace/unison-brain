@@ -43,8 +43,8 @@ Exit codes:
 Examples:
   unison auth login
   unison search "auth decision" -k 5 --json
-  unison get /wiki/architecture
-  echo "We chose X because Y." | unison write /wiki/x
+  unison get /wiki/architecture.md
+  echo "We chose X because Y." | unison write /wiki/x.md
   unison entity resolve "Daniel" --json
   unison rm /wiki/old --yes        # destructive cmds need --yes when non-interactive
 `,

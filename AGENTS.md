@@ -43,15 +43,15 @@ CI runs `bun lint`, `bun test`, `bun run build`. All three must pass.
 
 ```bash
 unison search "<question>" --json     # results = JSON on stdout (compact when piped)
-unison cat /wiki/architecture          # read a document (alias of get)
+unison cat /wiki/architecture.md       # read a document (alias of get)
 unison ls /wiki                        # directory view; tree / find for navigation
 unison entity resolve "Daniel" --json  # graph lookup → fact ls --entity <id>
-echo "..." | unison write /wiki/x      # writable tiers: /wiki/ /skills/ /actions/
+echo "..." | unison write /wiki/x.md   # writable tiers: /wiki/ /skills/ /actions/ (paths end .md)
 ```
 
 - Pass `--json` for machine output. Errors are a JSON envelope on **stderr** with a
   nonzero exit code: `4` auth, `3` not found, `5` conflict, `1` other.
-- Destructive commands (`rm`, `fact rm`, `review merge`) need `--yes` non-interactively.
+- Destructive commands (`rm`, `fact rm`, `review merge`, `review undo`) need `--yes` non-interactively.
 - Auth: `unison auth login` (browser) or `UNISON_TOKEN=usk_...` for headless/CI.
 - Run `unison --help` and `unison <cmd> --help` — the help is written to be read by an agent.
 

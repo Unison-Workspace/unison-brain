@@ -26,8 +26,9 @@ Documents (your daily loop):
 unison search "<question or keywords>"   # hybrid keyword + semantic search
 unison grep "<regex>"                     # exact regex scan over bodies
 unison get <path>                         # read one document (prints raw content)
-unison ls [prefix]                        # list documents (--tree for the FS view)
-unison write <path> -m "<content>"        # write/update a doc (/wiki/ /skills/ /actions/)
+unison ls [path]                          # directory view (--docs for titles)
+unison tree [path]                        # recursive tree under a path
+unison write <path> -m "<content>"        # write/update a doc (path ends in .md)
 unison neighbors <idOrPath>               # linked documents
 unison status                             # brain health + counts
 ```
@@ -46,13 +47,14 @@ Add `--json` to any command for machine-readable output you can pipe to `jq`.
 
 ```bash
 unison search "auth approach" -k 5 --json
-cat decision.md | unison write /wiki/auth-2026-05
+cat decision.md | unison write /wiki/auth-2026-05.md
 ```
 
 **For agents:** prefer `--json` — results are JSON on **stdout**; errors are a JSON
 envelope on **stderr** with a nonzero **exit code** (4 = auth, 3 = not found,
-5 = conflict, 1 = other). Destructive commands (`rm`, `fact rm`, `review merge`)
-need `--yes` when running non-interactively, or they exit nonzero without acting.
+5 = conflict, 1 = other). Destructive commands (`rm`, `fact rm`, `review merge`,
+`review undo`) need `--yes` when running non-interactively, or they exit nonzero
+without acting.
 Run any command with `--help` to see its flags.
 
 ## Setup
@@ -63,5 +65,6 @@ If a command fails with **"Not authenticated"**, tell the user to run:
 unison auth login
 ```
 
-This opens a browser device-authorization flow. For CI or headless agents, set
-the `UNISON_TOKEN` environment variable to an API key instead (no login needed).
+This opens a browser PKCE login (loopback). On SSH/headless boxes with no browser,
+use `unison auth login --device`. For CI or headless agents, set the `UNISON_TOKEN`
+environment variable to an API key instead (no login needed).

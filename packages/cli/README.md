@@ -12,9 +12,9 @@ unison auth login             # browser sign-in (or UNISON_TOKEN=usk_... for CI)
 
 ```bash
 unison search "auth decision" -k 5      # hybrid keyword + semantic search
-unison cat /wiki/architecture            # read a document (alias of get)
+unison cat /wiki/architecture.md         # read a document (alias of get)
 unison ls /wiki                          # directory view; also: tree, find
-echo "We chose X because Y." | unison write /wiki/x
+echo "We chose X because Y." | unison write /wiki/x.md   # paths end in .md
 unison entity resolve "Daniel"           # knowledge-graph lookup
 unison fact ls --entity <id>             # facts about an entity
 unison skill install                     # drop the Agent Skill into ~/.claude/skills
