@@ -2,7 +2,7 @@ import type { JobStatus } from "@unisonlabs/sdk";
 import type { Command } from "commander";
 import pc from "picocolors";
 import { requireClient } from "../client-factory";
-import { info, printJson, success } from "../output";
+import { out, printJson, success } from "../output";
 
 export function registerJobs(program: Command): void {
   const jobs = program.command("jobs").description("Brain job queue (admin)");
@@ -27,7 +27,7 @@ export function registerJobs(program: Command): void {
       }
       for (const j of rows) {
         const err = j.error ? pc.red(` ${j.error}`) : "";
-        info(`${pc.cyan(j.id)}  ${j.kind}  ${pc.bold(j.status)}${err}`);
+        out(`${pc.cyan(j.id)}  ${j.kind}  ${pc.bold(j.status)}${err}`);
       }
     });
 
@@ -42,7 +42,7 @@ export function registerJobs(program: Command): void {
         printJson(s);
         return;
       }
-      info(
+      out(
         `pending ${s.pending}  running ${s.running}  done ${s.done}  failed ${s.failed}  skipped ${s.skipped}`,
       );
     });

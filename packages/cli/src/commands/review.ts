@@ -2,7 +2,7 @@ import type { Command } from "commander";
 import pc from "picocolors";
 import { requireClient } from "../client-factory";
 import { confirmDestructive } from "../confirm";
-import { info, printJson, success } from "../output";
+import { info, out, printJson, success } from "../output";
 
 export function registerReview(program: Command): void {
   const review = program.command("review").description("Entity dedup review (admin)");
@@ -23,8 +23,8 @@ export function registerReview(program: Command): void {
         return;
       }
       for (const c of conflicts) {
-        info(`${pc.cyan(c.id)}  ${c.aDescription}  ${pc.dim("vs")}  ${c.bDescription}`);
-        info(`  ${pc.dim(c.engineReasoning)}`);
+        out(`${pc.cyan(c.id)}  ${c.aDescription}  ${pc.dim("vs")}  ${c.bDescription}`);
+        out(`  ${pc.dim(c.engineReasoning)}`);
       }
     });
 
@@ -61,7 +61,7 @@ export function registerReview(program: Command): void {
         return;
       }
       for (const m of merges) {
-        info(`${pc.cyan(m.id)}  ${m.survivorName} ⟵ ${m.loserName}  ${pc.dim(m.createdAt)}`);
+        out(`${pc.cyan(m.id)}  ${m.survivorName} ⟵ ${m.loserName}  ${pc.dim(m.createdAt)}`);
       }
     });
 

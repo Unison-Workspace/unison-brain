@@ -49,6 +49,12 @@ unison search "auth approach" -k 5 --json
 cat decision.md | unison write /wiki/auth-2026-05
 ```
 
+**For agents:** prefer `--json` — results are JSON on **stdout**; errors are a JSON
+envelope on **stderr** with a nonzero **exit code** (4 = auth, 3 = not found,
+5 = conflict, 1 = other). Destructive commands (`rm`, `fact rm`, `review merge`)
+need `--yes` when running non-interactively, or they exit nonzero without acting.
+Run any command with `--help` to see its flags.
+
 ## Setup
 
 If a command fails with **"Not authenticated"**, tell the user to run:

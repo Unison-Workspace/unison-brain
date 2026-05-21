@@ -2,7 +2,7 @@ import type { DocKind, MemoryType } from "@unisonlabs/sdk";
 import type { Command } from "commander";
 import pc from "picocolors";
 import { requireClient } from "../client-factory";
-import { info, printJson } from "../output";
+import { info, out, printJson } from "../output";
 
 export function registerSearch(program: Command): void {
   program
@@ -44,17 +44,17 @@ export function registerSearch(program: Command): void {
           return;
         }
         for (const r of results) {
-          info(`${pc.cyan(r.doc.path)}  ${pc.dim(`(${r.score.toFixed(2)})`)}`);
-          if (r.doc.title) info(`  ${pc.bold(r.doc.title)}`);
+          out(`${pc.cyan(r.doc.path)}  ${pc.dim(`(${r.score.toFixed(2)})`)}`);
+          if (r.doc.title) out(`  ${pc.bold(r.doc.title)}`);
           const preview = r.highlight ?? r.doc.tldr ?? r.doc.bodyMd ?? "";
           if (preview)
-            info(
+            out(
               `  ${preview
                 .replace(/\s*\n\s*/g, " ")
                 .trim()
                 .slice(0, 200)}`,
             );
-          info("");
+          out("");
         }
       },
     );

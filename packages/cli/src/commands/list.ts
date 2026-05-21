@@ -1,7 +1,7 @@
 import type { DocKind } from "@unisonlabs/sdk";
 import type { Command } from "commander";
 import { requireClient } from "../client-factory";
-import { info, printJson } from "../output";
+import { info, out, printJson } from "../output";
 
 export function registerList(program: Command): void {
   program
@@ -26,7 +26,7 @@ export function registerList(program: Command): void {
             printJson(entries);
             return;
           }
-          for (const e of entries) info(`${e.type === "dir" ? "📁" : "📄"} ${e.path}`);
+          for (const e of entries) out(`${e.type === "dir" ? "📁" : "📄"} ${e.path}`);
           return;
         }
 
@@ -44,7 +44,7 @@ export function registerList(program: Command): void {
           info("No documents.");
           return;
         }
-        for (const d of docs) info(`${d.path}${d.title ? `  — ${d.title}` : ""}`);
+        for (const d of docs) out(`${d.path}${d.title ? `  — ${d.title}` : ""}`);
       },
     );
 }

@@ -1,6 +1,6 @@
 import type { Command } from "commander";
 import { requireClient } from "../client-factory";
-import { info, printJson } from "../output";
+import { out, printJson } from "../output";
 
 export function registerStatus(program: Command): void {
   program
@@ -14,11 +14,11 @@ export function registerStatus(program: Command): void {
         printJson(s);
         return;
       }
-      info(`documents:     ${s.docCount} (${s.docWithEmbedding} embedded)`);
-      info(`entities:      ${s.entityCount}`);
-      info(`facts:         ${s.factCount}`);
-      info(`pending jobs:  ${s.pendingJobs}`);
-      info(`stale wikis:   ${s.staleWikiPageCount}`);
-      if (s.lastIngestAt) info(`last ingest:   ${s.lastIngestAt}`);
+      out(`documents:     ${s.docCount} (${s.docWithEmbedding} embedded)`);
+      out(`entities:      ${s.entityCount}`);
+      out(`facts:         ${s.factCount}`);
+      out(`pending jobs:  ${s.pendingJobs}`);
+      out(`stale wikis:   ${s.staleWikiPageCount}`);
+      if (s.lastIngestAt) out(`last ingest:   ${s.lastIngestAt}`);
     });
 }

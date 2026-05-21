@@ -22,4 +22,13 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   non-interactive shells without `--yes`).
 - Actionable error hints (e.g. 401 → run `unison auth login`).
 
+### Agent ergonomics
+
+- Result data on **stdout**, status/progress on **stderr** (clean piping).
+- Errors are a JSON envelope on stderr under `--json` (or `OUTPUT_FORMAT=json`),
+  with `code` / `message` / `status` / `suggestedFix`.
+- Distinct **exit codes**: 0 ok, 1 error, 3 not found, 4 auth, 5 conflict.
+- JSON auto-compacts when piped (pretty on a TTY) to save agent tokens.
+- `--help` documents `--json`, env vars, exit codes, and usage examples.
+
 [Unreleased]: https://github.com/Unison-Workspace/unison-brain/commits/main
