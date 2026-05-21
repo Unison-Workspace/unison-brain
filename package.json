@@ -4,13 +4,23 @@
   "version": "0.1.0",
   "type": "module",
   "description": "Open-source client for the Unison brain — your cloud knowledge base, in any coding agent.",
+  "homepage": "https://github.com/Unison-Workspace/unison-brain#readme",
+  "bugs": "https://github.com/Unison-Workspace/unison-brain/issues",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Unison-Workspace/unison-brain.git"
+  },
+  "author": "Auraqu, Inc.",
+  "license": "MIT",
   "workspaces": ["packages/*"],
   "scripts": {
     "lint": "biome check .",
     "lint:fix": "biome check --write .",
     "format": "biome format --write .",
     "test": "bun test",
-    "typecheck": "tsc --noEmit"
+    "build": "bun run --filter '@unison/sdk' build && bun run --filter '@unison/cli' build && bun run --filter '@unison/mcp' build",
+    "typecheck": "tsc --noEmit",
+    "release": "bun run build && npm_config_workspaces=true npm publish -w @unison/sdk && npm_config_workspaces=true npm publish -w @unison/cli && npm_config_workspaces=true npm publish -w @unison/mcp"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.0",

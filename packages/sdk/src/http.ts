@@ -6,6 +6,22 @@ export function stripTrailingSlash(url: string): string {
   return url.replace(/\/+$/, "");
 }
 
+type QueryValue = string | number | boolean | string[] | undefined;
+
+/** Build a query string; arrays repeat the key, undefined is skipped. */
+export function qs(params: Record<string, QueryValue>): string {
+  const sp = new URLSearchParams();
+  for (const [key, value] of Object.entries(params)) {
+    if (value === undefined) continue;
+    if (Array.isArray(value)) {
+      for (const item of value) sp.append(key, item);
+    } else {
+      sp.set(key, String(value));
+    }
+  }
+  return sp.toString();
+}
+
 export async function parseResponse<T>(res: Response): Promise<T> {
   if (res.ok) {
     return (await res.json()) as T;

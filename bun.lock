@@ -14,25 +14,29 @@
       "name": "@unison/cli",
       "version": "0.1.0",
       "bin": {
-        "unison": "./src/index.ts",
+        "unison": "./dist/index.js",
       },
       "dependencies": {
-        "@unison/sdk": "workspace:*",
         "commander": "^12.0.0",
         "open": "^10.0.0",
         "picocolors": "^1.0.0",
+      },
+      "devDependencies": {
+        "@unison/sdk": "workspace:*",
       },
     },
     "packages/mcp": {
       "name": "@unison/mcp",
       "version": "0.1.0",
       "bin": {
-        "unison-brain-mcp": "./src/index.ts",
+        "unison-brain-mcp": "./dist/index.js",
       },
       "dependencies": {
         "@modelcontextprotocol/sdk": "^1.0.0",
-        "@unison/sdk": "workspace:*",
         "zod": "^3.23.0",
+      },
+      "devDependencies": {
+        "@unison/sdk": "workspace:*",
       },
     },
     "packages/sdk": {

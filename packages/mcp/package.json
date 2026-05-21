@@ -2,18 +2,37 @@
   "name": "@unison/mcp",
   "version": "0.1.0",
   "description": "Model Context Protocol server for the Unison brain.",
-  "type": "module",
-  "license": "MIT",
-  "bin": {
-    "unison-brain-mcp": "./src/index.ts"
+  "keywords": ["unison", "brain", "knowledge-base", "mcp", "model-context-protocol", "ai", "agent"],
+  "homepage": "https://github.com/Unison-Workspace/unison-brain#readme",
+  "bugs": "https://github.com/Unison-Workspace/unison-brain/issues",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Unison-Workspace/unison-brain.git",
+    "directory": "packages/mcp"
   },
-  "files": ["src", "dist"],
+  "author": "Auraqu, Inc.",
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "unison-brain-mcp": "./dist/index.js"
+  },
+  "files": ["dist"],
+  "engines": {
+    "node": ">=18"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
-    "build": "tsc -p tsconfig.json"
+    "dev": "bun run src/index.ts",
+    "build": "bun build src/index.ts --target node --outfile dist/index.js --external @modelcontextprotocol/sdk --external zod",
+    "prepublishOnly": "bun run build"
   },
   "dependencies": {
-    "@unison/sdk": "workspace:*",
     "@modelcontextprotocol/sdk": "^1.0.0",
     "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "@unison/sdk": "workspace:*"
   }
 }

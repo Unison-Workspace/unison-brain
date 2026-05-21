@@ -7,9 +7,11 @@ export interface StoredCredentials {
   token: string;
 }
 
-// TODO: point at the production API once the brain endpoints ship. Override
-// anytime with the UNISON_API_URL env var or `unison auth login --api-url`.
-const DEFAULT_API_URL = "https://api.unison.computer";
+// TODO: point at production once the brain endpoints ship. Override anytime with
+// the UNISON_API_URL / UNISON_APP_URL env vars or `unison auth login --api-url`.
+const DEFAULT_API_URL = "https://api.unisonlabs.ai";
+// The dashboard origin the browser is sent to during login (the /cli-auth page).
+const DEFAULT_APP_URL = "https://app.unisonlabs.ai";
 
 export function configPath(): string {
   const base = process.env.XDG_CONFIG_HOME ?? join(homedir(), ".config");
@@ -18,6 +20,10 @@ export function configPath(): string {
 
 export function defaultApiUrl(): string {
   return process.env.UNISON_API_URL ?? DEFAULT_API_URL;
+}
+
+export function defaultAppUrl(): string {
+  return process.env.UNISON_APP_URL ?? DEFAULT_APP_URL;
 }
 
 export async function loadCredentials(): Promise<StoredCredentials | null> {

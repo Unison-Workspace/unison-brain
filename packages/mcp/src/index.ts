@@ -1,10 +1,10 @@
-#!/usr/bin/env bun
+#!/usr/bin/env node
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { BrainClient } from "@unison/sdk";
 import { z } from "zod";
 
-const apiUrl = process.env.UNISON_API_URL ?? "https://api.unison.computer";
+const apiUrl = process.env.UNISON_API_URL ?? "https://api.unisonlabs.ai";
 const token = process.env.UNISON_TOKEN;
 
 const client = new BrainClient({ baseUrl: apiUrl, token });
@@ -29,12 +29,14 @@ server.tool(
   {
     query: z.string().describe("Natural-language or keyword query"),
     limit: z.number().int().positive().optional().describe("Max results (default 10)"),
-    kind: z.string().optional().describe("Filter by document kind"),
-    tag: z.string().optional().describe("Filter by tag"),
+    memoryType: z
+      .enum(["episodic", "semantic", "procedural", "auto"])
+      .optional()
+      .describe("Memory tier filter"),
   },
-  async ({ query, limit, kind, tag }) => {
+  async ({ query, limit, memoryType }) => {
     ensureAuth();
-    return asText(await client.search(query, { limit, kind, tag }));
+    return asText(await client.search(query, { limit, memoryType }));
   },
 );
 
@@ -49,21 +51,6 @@ server.tool(
 );
 
 server.tool(
-  "brain_write",
-  "Write or update a document in the Unison brain so the knowledge persists across sessions and machines.",
-  {
-    path: z.string().describe("Document path, e.g. /notes/auth-decision"),
-    content: z.string().describe("Markdown content"),
-    kind: z.string().optional().describe("Document kind (default: note)"),
-    tags: z.array(z.string()).optional().describe("Tags"),
-  },
-  async ({ path, content, kind, tags }) => {
-    ensureAuth();
-    return asText(await client.write({ path, content, kind, tags }));
-  },
-);
-
-server.tool(
   "brain_list",
   "List documents in the Unison brain under a path prefix.",
   {
@@ -72,7 +59,75 @@ server.tool(
   },
   async ({ prefix, limit }) => {
     ensureAuth();
-    return asText(await client.list(prefix ?? "", limit ?? 100));
+    return asText(await client.list({ prefix, limit }));
+  },
+);
+
+server.tool(
+  "brain_write",
+  "Write or update a document in the Unison brain so the knowledge persists across sessions and machines. Only /wiki/, /skills/, /actions/ paths are writable.",
+  {
+    path: z.string().describe("Document path, e.g. /wiki/auth-decision"),
+    bodyMd: z.string().describe("Markdown content"),
+    title: z.string().optional(),
+    tags: z.array(z.string()).optional(),
+  },
+  async ({ path, bodyMd, title, tags }) => {
+    ensureAuth();
+    return asText(await client.write({ path, bodyMd, title, tags }));
+  },
+);
+
+server.tool(
+  "brain_resolve_entity",
+  "Find a knowledge-graph entity (person, company, project, etc.) by name. Use when a name is mentioned and you need its id or context.",
+  {
+    name: z.string().describe("Entity display name"),
+    kindHint: z
+      .enum([
+        "person",
+        "company",
+        "project",
+        "decision",
+        "topic",
+        "mail_thread",
+        "event",
+        "task",
+        "doc",
+      ])
+      .optional(),
+  },
+  async ({ name, kindHint }) => {
+    ensureAuth();
+    return asText(await client.entities.resolve(name, kindHint));
+  },
+);
+
+server.tool(
+  "brain_facts_about",
+  "List the known facts about an entity (by entity id).",
+  {
+    entityId: z.string().describe("Entity id (from brain_resolve_entity)"),
+    includeInvalidated: z.boolean().optional(),
+  },
+  async ({ entityId, includeInvalidated }) => {
+    ensureAuth();
+    return asText(await client.facts.about(entityId, { includeInvalidated }));
+  },
+);
+
+server.tool(
+  "brain_record_fact",
+  "Record a new fact about an entity so it persists in the brain.",
+  {
+    subjectId: z.string().describe("Entity id the fact is about"),
+    predicate: z.string().describe("Relation, e.g. 'works_at'"),
+    factText: z.string().describe("The fact in natural language"),
+    confidence: z.number().min(0).max(1).optional(),
+  },
+  async ({ subjectId, predicate, factText, confidence }) => {
+    ensureAuth();
+    return asText(await client.facts.record({ subjectId, predicate, factText, confidence }));
   },
 );
 

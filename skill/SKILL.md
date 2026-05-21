@@ -21,21 +21,32 @@ talks to the cloud — so the same brain is available from any machine or agent.
 
 ## Commands
 
+Documents (your daily loop):
 ```bash
 unison search "<question or keywords>"   # hybrid keyword + semantic search
+unison grep "<regex>"                     # exact regex scan over bodies
 unison get <path>                         # read one document (prints raw content)
-unison write <path> -m "<content>"        # write/update a document
-unison list [prefix]                      # list documents under a path prefix
+unison ls [prefix]                        # list documents (--tree for the FS view)
+unison write <path> -m "<content>"        # write/update a doc (/wiki/ /skills/ /actions/)
+unison neighbors <idOrPath>               # linked documents
 unison status                             # brain health + counts
 ```
 
+Knowledge graph (when names/relationships matter):
+```bash
+unison entity resolve "<name>"            # find a person/company/project by name
+unison fact ls --entity <id>              # what the brain knows about an entity
+unison fact add <entityId> <predicate> "<text>"   # record a fact
+unison timeline <entityId>                # facts over time
+```
+
 Add `--json` to any command for machine-readable output you can pipe to `jq`.
-`search` accepts `-k <n>`, `--kind`, and `--tag` filters. `write` accepts
-`--kind` and repeatable `--tag`, and reads content from stdin if `-m` is omitted:
+`search` accepts `-k <n>`, `--kind`, `--tag`, `--memory-type`, and `--as-of`
+(time-travel). `write` reads content from stdin if `-m` is omitted:
 
 ```bash
 unison search "auth approach" -k 5 --json
-cat decision.md | unison write /decisions/auth-2026-05
+cat decision.md | unison write /wiki/auth-2026-05
 ```
 
 ## Setup

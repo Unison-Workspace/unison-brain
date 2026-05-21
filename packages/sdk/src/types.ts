@@ -1,64 +1,286 @@
 export interface BrainClientOptions {
-  /** Base URL of the Unison API, e.g. https://api.unison.computer */
+  /** Base URL of the Unison API, e.g. https://api.unisonlabs.ai */
   baseUrl: string;
-  /** Bearer token: an API key (`usk_...`) or a device-flow access token. */
+  /** Bearer token: an API key (`usk_...`) or a browser-login access token. */
   token?: string;
   /** Override the fetch implementation (used in tests). */
   fetch?: typeof fetch;
 }
 
-export interface SearchOptions {
-  /** Max number of results. */
-  limit?: number;
-  /** Restrict to a document kind (e.g. "note", "wiki", "decision"). */
-  kind?: string;
-  /** Restrict to documents carrying this tag. */
-  tag?: string;
-}
+// ── Documents (filesystem tier) ────────────────────────────────────────────
 
-export interface SearchResult {
-  path: string;
-  title: string | null;
-  snippet: string;
-  score: number;
-  kind: string;
-  tags: string[];
-}
+export type DocKind = "wiki_page" | "raw" | "note" | "log" | "index" | "skill" | "skill_proposed";
+export type Visibility = "tenant" | "private";
+export type MemoryType = "episodic" | "semantic" | "procedural" | "auto";
 
 export interface BrainDocument {
+  id: string;
   path: string;
-  title: string | null;
-  content: string;
   kind: string;
+  title: string | null;
+  tldr: string | null;
+  bodyMd: string;
   tags: string[];
-  updatedAt: string;
+  visibility: Visibility;
+  updatedAt: string | null;
+  contentHash?: string | null;
 }
 
-export interface ListItem {
+/** A ranked search hit — the document is nested under `doc` (matches cortex.search). */
+export interface SearchResult {
+  doc: BrainDocument;
+  score: number;
+  highlight?: string;
+  sources: ("bm25" | "vector")[];
+}
+
+export interface FsEntry {
+  type: "dir" | "file";
   path: string;
-  title: string | null;
-  kind: string;
-  updatedAt: string;
+  name: string;
+  mtime: string | null;
+}
+
+export interface SearchOptions {
+  limit?: number;
+  kinds?: DocKind[];
+  tags?: string[];
+  memoryType?: MemoryType;
+  asOf?: string;
+}
+
+export interface GrepOptions {
+  caseSensitive?: boolean;
+  limit?: number;
+}
+
+export interface ListOptions {
+  prefix?: string;
+  kinds?: DocKind[];
+  tags?: string[];
+  limit?: number;
 }
 
 export interface WriteInput {
   path: string;
-  content: string;
-  kind?: string;
+  bodyMd: string;
+  kind?: DocKind;
+  title?: string;
+  tldr?: string;
   tags?: string[];
+  visibility?: Visibility;
+  expectedContentHash?: string;
+  source?: { kind: string; ref: string };
 }
 
+export interface TagInput {
+  add?: string[];
+  remove?: string[];
+}
+
+export type ShareKind = "doc" | "fact" | "entity";
+
+// ── Entities (knowledge graph) ─────────────────────────────────────────────
+
+export type EntityKind =
+  | "person"
+  | "company"
+  | "project"
+  | "decision"
+  | "topic"
+  | "mail_thread"
+  | "event"
+  | "task"
+  | "doc";
+export type EntityStatus = "active" | "stub" | "archived";
+
+export interface BrainEntity {
+  id: string;
+  kind: string;
+  displayName: string;
+  slug: string;
+  aliases: string[];
+  props: Record<string, unknown>;
+  status: EntityStatus;
+}
+
+export interface ListEntitiesOptions {
+  kinds?: string[];
+  status?: EntityStatus;
+  limit?: number;
+}
+
+export interface UpsertEntityInput {
+  kind: EntityKind;
+  displayName: string;
+  slug?: string;
+  aliases?: string[];
+  props?: Record<string, unknown>;
+  status?: EntityStatus;
+}
+
+// ── Facts (bitemporal) ─────────────────────────────────────────────────────
+
+export interface BrainFact {
+  id: string;
+  subjectId: string;
+  predicate: string;
+  factText: string;
+  objectJson: unknown | null;
+  objectEntityId: string | null;
+  validFrom: string | null;
+  validTo: string | null;
+  recordedAt: string;
+  confidence: number;
+}
+
+export interface RecordFactInput {
+  subjectId: string;
+  predicate: string;
+  factText: string;
+  objectJson?: unknown;
+  objectEntityId?: string;
+  validFrom?: string;
+  validTo?: string;
+  confidence?: number;
+  supersedesId?: string;
+}
+
+export interface CorrectFactInput {
+  predicate?: string;
+  factText?: string;
+  objectJson?: unknown;
+  objectEntityId?: string;
+  confidence?: number;
+}
+
+export interface FactsAboutOptions {
+  asOf?: string;
+  includeInvalidated?: boolean;
+}
+
+export interface TimelineOptions {
+  from?: string;
+  to?: string;
+}
+
+// ── Links (graph edges) ────────────────────────────────────────────────────
+
+export type LinkKind = "mentions" | "derived_from" | "supersedes" | "see_also";
+
+export interface BrainLink {
+  fromId: string;
+  toId: string;
+  kind: string;
+}
+
+export interface NeighborsOptions {
+  kinds?: LinkKind[];
+  limit?: number;
+}
+
+// ── Dedup review ───────────────────────────────────────────────────────────
+
+export interface MatchConflict {
+  id: string;
+  pairType: string;
+  aId: string;
+  bId: string;
+  engineReasoning: string;
+  engineVerdict: string;
+  calibratedConfidence: number;
+  aDescription: string;
+  bDescription: string;
+  exemplars: unknown[];
+}
+
+export interface MergeEvent {
+  id: string;
+  type: string;
+  survivorId: string;
+  loserId: string;
+  decidedBy: string;
+  judgeReasoning: string;
+  createdAt: string;
+  survivorName: string;
+  loserName: string;
+}
+
+export type MatchVerdict = "merge" | "distinct";
+
+// ── Jobs (operator) ────────────────────────────────────────────────────────
+
+export type JobStatus = "pending" | "running" | "done" | "failed" | "skipped";
+
+export interface BrainJob {
+  id: string;
+  kind: string;
+  lane: string;
+  priority: number;
+  status: JobStatus;
+  attempt: number;
+  error: string | null;
+  createdAt: string;
+}
+
+export interface JobStats {
+  pending: number;
+  running: number;
+  done: number;
+  failed: number;
+  skipped: number;
+}
+
+export interface ListJobsOptions {
+  status?: JobStatus;
+  kind?: string;
+  limit?: number;
+}
+
+// ── Status / identity ──────────────────────────────────────────────────────
+
 export interface BrainStatus {
-  documents: number;
-  entities: number;
-  facts: number;
+  docCount: number;
+  docWithEmbedding: number;
+  entityCount: number;
+  factCount: number;
+  lastIngestAt: string | null;
   pendingJobs: number;
+  staleWikiPageCount: number;
 }
 
 export interface WhoAmI {
   user: { id: string; email: string | null };
   tenant: { id: string; name: string | null };
   scopes: string[];
+}
+
+// ── Auth ───────────────────────────────────────────────────────────────────
+
+export interface TokenResponse {
+  accessToken: string;
+  tokenType: string;
+  scope: string;
+}
+
+export interface PkcePair {
+  verifier: string;
+  challenge: string;
+}
+
+export interface AuthorizeUrlParams {
+  clientId?: string;
+  redirectUri: string;
+  codeChallenge: string;
+  state: string;
+  scopes?: string[];
+}
+
+export interface ExchangeCodeParams {
+  code: string;
+  verifier: string;
+  redirectUri: string;
+  clientId?: string;
 }
 
 export interface DeviceCodeResponse {
@@ -68,10 +290,4 @@ export interface DeviceCodeResponse {
   verificationUriComplete: string;
   interval: number;
   expiresIn: number;
-}
-
-export interface DeviceTokenResponse {
-  accessToken: string;
-  tokenType: string;
-  scope: string;
 }

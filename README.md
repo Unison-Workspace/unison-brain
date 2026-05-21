@@ -1,5 +1,8 @@
 # Unison Brain
 
+[![CI](https://github.com/Unison-Workspace/unison-brain/actions/workflows/ci.yml/badge.svg)](https://github.com/Unison-Workspace/unison-brain/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
+
 **Your cloud knowledge base, in any coding agent.**
 
 The Unison brain is a hosted knowledge base — decisions, conventions,
@@ -32,36 +35,57 @@ skill wraps the CLI — one API contract, four surfaces.
 ## Quickstart
 
 ```bash
-unison auth login                 # browser device-flow login (or --with-token for CI)
+unison auth login                 # opens your browser to sign in
 unison status                     # confirm you're connected
 unison search "auth decision"     # search the brain
 unison get /wiki/architecture     # read a document
-echo "We chose X because Y." | unison write /decisions/x
+echo "We chose X because Y." | unison write /wiki/x
+unison entity resolve "Daniel"    # knowledge-graph lookup
+unison fact ls --entity <id>      # facts about an entity
 ```
 
-Add `--json` to any command for machine-readable output.
+Documents: `search`, `grep`, `get`, `ls` (`--tree`), `write`, `rm`, `tag`,
+`share`, `neighbors`, `links`, `link`. Graph: `entity …`, `fact …`, `timeline`.
+Admin: `review …`, `jobs …`. Add `--json` to any command. Full surface and the
+backend contract are in [`SPEC.md`](./SPEC.md).
 
 ## Authentication
 
-`unison auth login` uses the OAuth 2.0 **Device Authorization Grant** (RFC 8628),
-the same flow as `gh auth login` and `stripe login`: it prints a one-time code,
-opens your browser to approve it, and stores the resulting token at
-`~/.config/unison/config.json` (mode `0600`).
+`unison auth login` opens your browser to our sign-in page (PKCE loopback,
+RFC 8252 + 7636) — the same one-command, no-credentials-in-the-terminal flow as
+`gh auth login` / `vercel login`. Account creation happens in the browser; the CLI
+just receives and stores the token at `~/.config/unison/config.json` (mode `0600`).
+On a headless/SSH box, use `unison auth login --device` for the code-based flow.
 
 For **CI and headless agents**, skip the browser — set an API key:
 
 ```bash
 export UNISON_TOKEN="usk_live_..."   # overrides the stored credential
-export UNISON_API_URL="https://api.unison.computer"   # optional, until prod is the default
+export UNISON_API_URL="https://api.unisonlabs.ai"   # optional, until prod is the default
 ```
 
 `UNISON_TOKEN` always takes precedence over the stored file.
 
+## Install
+
+```bash
+npm i -g @unison/cli      # or: pnpm add -g / bun add -g / npx @unison/cli
+unison auth login         # sign in (opens your browser)
+```
+
+Distributed via npm as three packages: **`@unison/cli`** (the `unison` binary),
+**`@unison/sdk`** (the typed client library), and **`@unison/mcp`** (the MCP
+server). The published binaries are plain compiled JS with a
+`#!/usr/bin/env node` shebang — they run on Node or Bun, no runtime to install.
+
 ## Use it from a coding agent
 
-**Claude Code / Cursor / Codex (with a shell):** install the CLI and drop
-[`skill/SKILL.md`](./skill/SKILL.md) into your skills directory. The agent calls
-`unison` directly.
+**Claude Code / Cursor / Codex (with a shell):** install the CLI, then install the
+skill so the agent knows when and how to use the brain:
+
+```bash
+unison skill install      # writes the skill to ~/.claude/skills/unison-brain/
+```
 
 **Agents without a shell:** register the MCP server.
 
@@ -69,12 +93,31 @@ export UNISON_API_URL="https://api.unison.computer"   # optional, until prod is 
 {
   "mcpServers": {
     "unison-brain": {
-      "command": "unison-brain-mcp",
-      "env": { "UNISON_TOKEN": "usk_live_...", "UNISON_API_URL": "https://api.unison.computer" }
+      "command": "npx",
+      "args": ["-y", "@unison/mcp"],
+      "env": { "UNISON_TOKEN": "usk_live_...", "UNISON_API_URL": "https://api.unisonlabs.ai" }
     }
   }
 }
 ```
+
+## Shell completion
+
+```bash
+source <(unison completion bash)   # bash — add to ~/.bashrc
+source <(unison completion zsh)    # zsh  — add to ~/.zshrc
+unison completion fish > ~/.config/fish/completions/unison.fish
+```
+
+## SDK
+
+```ts
+import { BrainClient } from "@unison/sdk";
+const brain = new BrainClient({ baseUrl: "https://api.unisonlabs.ai", token: process.env.UNISON_TOKEN });
+const hits = await brain.search("auth decision", { limit: 5 });
+```
+
+See [`examples/`](./examples) for more.
 
 ## Development
 
@@ -82,18 +125,26 @@ Requires [Bun](https://bun.sh).
 
 ```bash
 bun install
-bun test          # unit tests (SDK + CLI)
-bun lint          # Biome
-bun run packages/cli/src/index.ts --help   # run the CLI from source
+bun test                                    # unit tests (SDK + CLI)
+bun lint                                     # Biome
+bun run packages/cli/src/index.ts --help     # run the CLI from source
+bun run build                                # bundle each package to dist/
+node packages/cli/dist/index.js --help       # run the built (node) binary
 ```
 
-This is a Bun workspace monorepo: `packages/*` resolve each other by name
-(`@unison/sdk` etc.) without a build step during development.
+This is a Bun workspace monorepo: `packages/*` resolve each other by name during
+development. `bun run build` bundles the CLI and MCP server into self-contained
+`dist/index.js` files (the SDK is bundled in; only npm deps stay external).
 
-> **Note:** the default API URL is a placeholder until the production brain
-> endpoints ship. Until then, point the client at a running backend with
-> `UNISON_API_URL` or `unison auth login --api-url <url>`. The endpoints this
-> client expects are specified in [`SPEC.md`](./SPEC.md).
+> **Note:** the brain endpoints (`SPEC.md`) are not live yet. Until then, point
+> the client at a running backend with `UNISON_API_URL` / `UNISON_APP_URL` or
+> `unison auth login --api-url <url>`.
+
+## Contributing & security
+
+Contributions welcome — see [`CONTRIBUTING.md`](./CONTRIBUTING.md) and the
+[`CHANGELOG.md`](./CHANGELOG.md). Found a vulnerability? See
+[`SECURITY.md`](./SECURITY.md) — please report privately, not via a public issue.
 
 ## License
 
