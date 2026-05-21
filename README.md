@@ -1,5 +1,8 @@
 # Unison Brain
 
+[![CI](https://github.com/Unison-Workspace/unison-brain/actions/workflows/ci.yml/badge.svg)](https://github.com/Unison-Workspace/unison-brain/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
+
 **Your cloud knowledge base, in any coding agent.**
 
 The Unison brain is a hosted knowledge base — decisions, conventions,
@@ -63,11 +66,26 @@ export UNISON_API_URL="https://api.unisonlabs.ai"   # optional, until prod is th
 
 `UNISON_TOKEN` always takes precedence over the stored file.
 
+## Install
+
+```bash
+npm i -g @unison/cli      # or: pnpm add -g / bun add -g / npx @unison/cli
+unison auth login         # sign in (opens your browser)
+```
+
+Distributed via npm as three packages: **`@unison/cli`** (the `unison` binary),
+**`@unison/sdk`** (the typed client library), and **`@unison/mcp`** (the MCP
+server). The published binaries are plain compiled JS with a
+`#!/usr/bin/env node` shebang — they run on Node or Bun, no runtime to install.
+
 ## Use it from a coding agent
 
-**Claude Code / Cursor / Codex (with a shell):** install the CLI and drop
-[`skill/SKILL.md`](./skill/SKILL.md) into your skills directory. The agent calls
-`unison` directly.
+**Claude Code / Cursor / Codex (with a shell):** install the CLI, then install the
+skill so the agent knows when and how to use the brain:
+
+```bash
+unison skill install      # writes the skill to ~/.claude/skills/unison-brain/
+```
 
 **Agents without a shell:** register the MCP server.
 
@@ -75,21 +93,31 @@ export UNISON_API_URL="https://api.unisonlabs.ai"   # optional, until prod is th
 {
   "mcpServers": {
     "unison-brain": {
-      "command": "unison-brain-mcp",
+      "command": "npx",
+      "args": ["-y", "@unison/mcp"],
       "env": { "UNISON_TOKEN": "usk_live_...", "UNISON_API_URL": "https://api.unisonlabs.ai" }
     }
   }
 }
 ```
 
-## Install
+## Shell completion
 
 ```bash
-npm i -g @unison/cli      # or: pnpm add -g / bun add -g / npx @unison/cli
+source <(unison completion bash)   # bash — add to ~/.bashrc
+source <(unison completion zsh)    # zsh  — add to ~/.zshrc
+unison completion fish > ~/.config/fish/completions/unison.fish
 ```
 
-Distributed via npm. The published binary is plain compiled JS with a
-`#!/usr/bin/env node` shebang, so it runs on Node or Bun — no runtime to install.
+## SDK
+
+```ts
+import { BrainClient } from "@unison/sdk";
+const brain = new BrainClient({ baseUrl: "https://api.unisonlabs.ai", token: process.env.UNISON_TOKEN });
+const hits = await brain.search("auth decision", { limit: 5 });
+```
+
+See [`examples/`](./examples) for more.
 
 ## Development
 
@@ -111,6 +139,12 @@ development. `bun run build` bundles the CLI and MCP server into self-contained
 > **Note:** the brain endpoints (`SPEC.md`) are not live yet. Until then, point
 > the client at a running backend with `UNISON_API_URL` / `UNISON_APP_URL` or
 > `unison auth login --api-url <url>`.
+
+## Contributing & security
+
+Contributions welcome — see [`CONTRIBUTING.md`](./CONTRIBUTING.md) and the
+[`CHANGELOG.md`](./CHANGELOG.md). Found a vulnerability? See
+[`SECURITY.md`](./SECURITY.md) — please report privately, not via a public issue.
 
 ## License
 

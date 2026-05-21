@@ -1,0 +1,25 @@
+# Changelog
+
+All notable changes to this project are documented here. The format follows
+[Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres
+to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [Unreleased]
+
+### Added
+
+- `@unison/sdk` — typed client covering the full brain surface (documents,
+  entities, facts, links, dedup review, jobs, status) plus PKCE and device-flow
+  auth helpers.
+- `@unison/cli` — the `unison` command: `auth login` (browser PKCE loopback,
+  `--device` fallback, `--with-token` for CI), `search`, `grep`, `get`, `ls`,
+  `write`, `rm`, `tag`, `share`, `neighbors`, `links`, `link`, `entity *`,
+  `fact *`, `timeline`, `review *`, `jobs *`, `status`.
+- `@unison/mcp` — MCP server exposing 8 curated brain tools.
+- `unison skill install` — installs the Agent Skill into `~/.claude/skills/`.
+- `unison completion <bash|zsh|fish>` — shell completion scripts.
+- Confirmation prompts on destructive commands (`--yes` to skip; refuses in
+  non-interactive shells without `--yes`).
+- Actionable error hints (e.g. 401 → run `unison auth login`).
+
+[Unreleased]: https://github.com/Unison-Workspace/unison-brain/commits/main

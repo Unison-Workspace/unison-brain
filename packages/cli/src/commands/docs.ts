@@ -2,6 +2,7 @@ import type { LinkKind, ShareKind } from "@unison/sdk";
 import type { Command } from "commander";
 import pc from "picocolors";
 import { requireClient } from "../client-factory";
+import { confirmDestructive } from "../confirm";
 import { info, printJson, success } from "../output";
 
 export function registerDocs(program: Command): void {
@@ -29,8 +30,10 @@ export function registerDocs(program: Command): void {
   program
     .command("rm <path>")
     .description("Delete a document (server rejects read-only tiers)")
+    .option("-y, --yes", "Skip the confirmation prompt")
     .option("--json", "Output JSON")
-    .action(async (path: string, opts: { json?: boolean }) => {
+    .action(async (path: string, opts: { json?: boolean; yes?: boolean }) => {
+      if (!(await confirmDestructive(`Delete ${path}`, Boolean(opts.yes)))) return;
       const client = await requireClient();
       const res = await client.delete(path);
       if (opts.json) printJson(res);

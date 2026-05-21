@@ -1,6 +1,7 @@
 import type { Command } from "commander";
 import pc from "picocolors";
 import { requireClient } from "../client-factory";
+import { confirmDestructive } from "../confirm";
 import { info, printJson, success } from "../output";
 
 export function registerReview(program: Command): void {
@@ -30,7 +31,9 @@ export function registerReview(program: Command): void {
   review
     .command("merge <conflictId>")
     .description("Approve a merge")
-    .action(async (conflictId: string) => {
+    .option("-y, --yes", "Skip the confirmation prompt")
+    .action(async (conflictId: string, opts: { yes?: boolean }) => {
+      if (!(await confirmDestructive(`Merge conflict ${conflictId}`, Boolean(opts.yes)))) return;
       const client = await requireClient();
       await client.review.resolve(conflictId, "merge");
       success(`Merged ${conflictId}`);
@@ -65,7 +68,9 @@ export function registerReview(program: Command): void {
   review
     .command("undo <mergeEventId>")
     .description("Undo a merge")
-    .action(async (mergeEventId: string) => {
+    .option("-y, --yes", "Skip the confirmation prompt")
+    .action(async (mergeEventId: string, opts: { yes?: boolean }) => {
+      if (!(await confirmDestructive(`Undo merge ${mergeEventId}`, Boolean(opts.yes)))) return;
       const client = await requireClient();
       await client.review.undo(mergeEventId);
       success(`Undid merge ${mergeEventId}`);

@@ -1,6 +1,7 @@
 import type { Command } from "commander";
 import pc from "picocolors";
 import { requireClient } from "../client-factory";
+import { confirmDestructive } from "../confirm";
 import { info, printJson, success } from "../output";
 
 function printFacts(
@@ -105,7 +106,9 @@ export function registerFact(program: Command): void {
   fact
     .command("rm <factId>")
     .description("Invalidate (soft-delete) a fact")
-    .action(async (factId: string) => {
+    .option("-y, --yes", "Skip the confirmation prompt")
+    .action(async (factId: string, opts: { yes?: boolean }) => {
+      if (!(await confirmDestructive(`Invalidate fact ${factId}`, Boolean(opts.yes)))) return;
       const client = await requireClient();
       await client.facts.invalidate(factId);
       success(`Invalidated ${factId}`);
