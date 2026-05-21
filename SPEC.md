@@ -22,8 +22,19 @@ Unison dashboard (`/agents/brain`). The goal: parity with the dashboard, headles
   - **CLI** — *complete, ergonomic*. Grouped commands; for humans and shell agents.
   - **MCP** — *curated* (~8 tools). Only what an agent should call. Agents must not
     merge entities, retry jobs, or delete docs. Small tool count avoids context bloat.
-- **Open client, closed backend.** Security lives at the boundary (scoped keys,
-  tenant isolation, rate limits), not in code secrecy.
+- **The client enforces nothing; the server is the only security boundary.** The
+  SDK/CLI/MCP attach the bearer token, send the request, and surface whatever the
+  server returns (e.g. `403`). They never check scopes, validate paths, hide
+  operations, or pre-authorize — an open-source client cannot be a security
+  boundary, so it isn't one. All authentication, scope/permission enforcement,
+  read-only-tier enforcement, tenant isolation, rate limiting, and content
+  safety live **server-side**. (MCP's smaller tool set is an agent-ergonomics
+  choice to avoid context bloat — not an enforcement mechanism.)
+- **Server enforcement is a separate spec.** The concrete server controls (RLS,
+  key hashing, BOLA, token-volume rate limits, prompt-injection scanning,
+  device-flow hardening) are deferred to a server spec written when the backend
+  is built. This document is the *client/contract* spec: what operations exist
+  and what errors the server may return.
 
 ## 2. Scope
 
@@ -39,6 +50,10 @@ dedup review, job visibility, health. Tiers 1–3 below.
   pipelines, compaction, ingest jobs. Encapsulated behind the job queue; auto-run.
 - **Visualization** — the 3D graph and inline-diff editor. The *data* behind them
   (`links`, `neighbors`, `listEntities`) is exposed; the canvas is not.
+- **Local FS mirror (`unison sync`)** — deferred. The CLI verbs + server-side
+  search already give an agent the filesystem feel with no daemon, staleness, or
+  local copy. Revisit only if users ask to edit brain docs in their own editor or
+  work offline.
 
 ---
 
@@ -53,10 +68,19 @@ Backend must add a machine-credential path:
 1. `api_keys` table: `(id, tenant_id, user_id, name, hashed_key, scopes[], last_used_at, created_at, revoked_at)`. Store only a hash; show plaintext once.
 2. Context builder branches: `Bearer usk_...` → resolve `(tenant, user, scopes)` and mint a synthetic authed context; `Bearer <jwt>` → existing path unchanged.
 
-### Scopes
+### Scopes (server-enforced; client just passes the token)
 - `brain:read` → all GETs
 - `brain:write` → document write/delete/tag/share, entity upsert, fact record/correct/invalidate, link
 - `brain:admin` → dedup review (merge/unmerge), job retry
+
+A token lacking the required scope gets `403 forbidden`. The client does not
+pre-check scopes — it sends the call and surfaces the result.
+
+### Write constraints (server-enforced)
+Writes/deletes to the read-only tiers `/sources/`, `/raw/`, `/system/` return
+`403`. Only `/wiki/`, `/skills/`, `/actions/` are writable. The client offers the
+write/delete/tag commands for any path and lets the server reject — it never
+hides or blocks paths itself.
 
 ### Endpoints
 - `POST /v1/auth/device/code` — body `{ clientId: "unison-cli" }` → `{ deviceCode, userCode, verificationUri, verificationUriComplete, interval, expiresIn }` (RFC 8628).
