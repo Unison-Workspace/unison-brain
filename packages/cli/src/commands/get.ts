@@ -5,7 +5,8 @@ import { printJson } from "../output";
 export function registerGet(program: Command): void {
   program
     .command("get <path>")
-    .description("Read a document from the brain by path")
+    .alias("cat")
+    .description("Read a document from the brain by path (alias: cat)")
     .option("--as-of <datetime>", "Read the version as of this time")
     .option("--raw", "Read raw FS content (any tier, incl. /sources/ /raw/ /system/)")
     .option("--json", "Output JSON (default prints raw content)")

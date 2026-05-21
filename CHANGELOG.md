@@ -16,6 +16,8 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   `write`, `rm`, `tag`, `share`, `neighbors`, `links`, `link`, `entity *`,
   `fact *`, `timeline`, `review *`, `jobs *`, `status`.
 - `@unisonlabs/mcp` — MCP server exposing 8 curated brain tools.
+- Filesystem navigation: `ls` (directory view by default, `--docs` for titles),
+  `tree`, `find` (path glob), `cat` (alias of `get`).
 - `unison skill install` — installs the Agent Skill into `~/.claude/skills/`.
 - `unison completion <bash|zsh|fish>` — shell completion scripts.
 - Confirmation prompts on destructive commands (`--yes` to skip; refuses in
