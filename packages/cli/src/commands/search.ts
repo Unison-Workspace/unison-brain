@@ -44,9 +44,9 @@ export function registerSearch(program: Command): void {
           return;
         }
         for (const r of results) {
-          info(`${pc.cyan(r.path)}  ${pc.dim(`(${r.score.toFixed(2)})`)}`);
-          if (r.title) info(`  ${pc.bold(r.title)}`);
-          const preview = r.tldr ?? r.bodyMd ?? "";
+          info(`${pc.cyan(r.doc.path)}  ${pc.dim(`(${r.score.toFixed(2)})`)}`);
+          if (r.doc.title) info(`  ${pc.bold(r.doc.title)}`);
+          const preview = r.highlight ?? r.doc.tldr ?? r.doc.bodyMd ?? "";
           if (preview)
             info(
               `  ${preview

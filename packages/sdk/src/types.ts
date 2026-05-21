@@ -26,8 +26,12 @@ export interface BrainDocument {
   contentHash?: string | null;
 }
 
-export interface SearchResult extends BrainDocument {
+/** A ranked search hit — the document is nested under `doc` (matches cortex.search). */
+export interface SearchResult {
+  doc: BrainDocument;
   score: number;
+  highlight?: string;
+  sources: ("bm25" | "vector")[];
 }
 
 export interface FsEntry {
@@ -94,7 +98,7 @@ export interface BrainEntity {
   id: string;
   kind: string;
   displayName: string;
-  slug: string | null;
+  slug: string;
   aliases: string[];
   props: Record<string, unknown>;
   status: EntityStatus;
@@ -126,6 +130,7 @@ export interface BrainFact {
   objectEntityId: string | null;
   validFrom: string | null;
   validTo: string | null;
+  recordedAt: string;
   confidence: number;
 }
 
@@ -216,7 +221,6 @@ export interface BrainJob {
   attempt: number;
   error: string | null;
   createdAt: string;
-  updatedAt: string;
 }
 
 export interface JobStats {

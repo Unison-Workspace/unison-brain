@@ -151,7 +151,7 @@ Field names mirror the existing `agents.cortex.*` zod schemas exactly.
 
 | REST | Maps to | Notes |
 |---|---|---|
-| `GET /v1/brain/search?q&k&kind*&tag*&memoryType&asOf` | `cortex.search` | `k` 1–50 (def 10); `kind` ∈ wiki_page\|raw\|note\|log\|index; `memoryType` ∈ episodic\|semantic\|procedural\|auto → `RankedHit[]` |
+| `GET /v1/brain/search?q&k&kind*&tag*&memoryType&asOf` | `cortex.search` | `k` 1–50 (def 10); `kind` ∈ wiki_page\|raw\|note\|log\|index; `memoryType` ∈ episodic\|semantic\|procedural\|auto. Returns `RankedHit[]` = `{ doc, score, highlight?, sources[] }` (doc is **nested**, not flattened) |
 | `GET /v1/brain/grep?pattern&caseSensitive&limit` | `cortex.grep` | regex over bodies; `limit` 1–200 (def 50) |
 | `GET /v1/brain/doc?path&asOf` | `cortex.read` | single doc; routes synth-reads (`/system/`,`/raw/`) |
 | `GET /v1/brain/list?prefix&kind*&tag*&limit` | `cortex.list` | enumerate by prefix/kind/tag |
