@@ -38,8 +38,8 @@ skill wraps the CLI — one API contract, four surfaces.
 unison auth login                 # opens your browser to sign in
 unison status                     # confirm you're connected
 unison search "auth decision"     # search the brain
-unison get /wiki/architecture     # read a document
-echo "We chose X because Y." | unison write /wiki/x
+unison get /wiki/architecture.md  # read a document
+echo "We chose X because Y." | unison write /wiki/x.md   # paths end in .md
 unison entity resolve "Daniel"    # knowledge-graph lookup
 unison fact ls --entity <id>      # facts about an entity
 ```
@@ -60,7 +60,7 @@ unison ls /wiki                 # entries under /wiki
 unison ls /wiki --docs          # documents with titles instead of the dir view
 unison tree /wiki               # recursive tree under /wiki
 unison find '/wiki/**auth*'     # paths matching a glob
-unison cat /wiki/architecture   # read a document (alias of `get`)
+unison cat /wiki/architecture.md  # read a document (alias of `get`)
 unison cat --raw '/system/...'  # read any tier, including synthetic ones
 unison grep "TODO" --json       # regex scan over document bodies
 ```
@@ -75,7 +75,7 @@ id=$(unison entity resolve "Daniel" --json | jq -r .entity.id)
 unison fact ls --entity "$id"          # what the brain knows about Daniel
 unison timeline "$id"                   # facts over time
 unison fact add "$id" works_at "Joined Unison in 2026" --confidence 0.9
-unison neighbors /wiki/architecture     # linked documents
+unison neighbors /wiki/architecture.md  # linked documents
 ```
 
 ## For coding agents
@@ -89,7 +89,7 @@ skill in with `unison skill install`, or run `unison --help` / `unison <cmd>
 
 ```bash
 unison search "rate limiting" -k 5 --json | jq '.[].doc.path'
-unison get /wiki/architecture --json
+unison get /wiki/architecture.md --json
 ```
 
 ## Authentication
