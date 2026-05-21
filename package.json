@@ -12,7 +12,7 @@
   },
   "author": "Auraqu, Inc.",
   "license": "MIT",
-  "workspaces": ["packages/*"],
+  "workspaces": ["packages/*", "examples"],
   "scripts": {
     "lint": "biome check .",
     "lint:fix": "biome check --write .",
