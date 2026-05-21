@@ -1,0 +1,26 @@
+# Unison Brain client
+
+> Open-source CLI, SDK, and MCP server for the Unison brain — a hosted,
+> path-addressable knowledge base (documents + a graph of entities and bitemporal
+> facts) that any coding agent can read and write over one HTTP API.
+
+The client enforces nothing; the Unison backend is the security boundary. Auth is
+a machine API key (`usk_...`) via `UNISON_TOKEN`, or a browser PKCE login. Pass
+`--json` for machine output (stdout); errors are JSON on stderr with distinct exit
+codes (4 auth, 3 not found, 5 conflict).
+
+## Docs
+- [README](README.md): install, quickstart, filesystem + knowledge-graph usage, agent notes
+- [AGENTS.md](AGENTS.md): how an agent should work in this repo and use the CLI
+- [SKILL.md](skill/SKILL.md): the drop-in Agent Skill (when/how to use the brain)
+- [SPEC.md](SPEC.md): the backend REST API contract this client targets
+- [CHANGELOG](CHANGELOG.md): release notes
+
+## Packages
+- [@unisonlabs/cli](packages/cli/README.md): the `unison` command
+- [@unisonlabs/sdk](packages/sdk/README.md): the typed TypeScript client
+- [@unisonlabs/mcp](packages/mcp/README.md): the MCP server
+
+## Examples
+- [examples/basic.ts](examples/basic.ts): search, read, write, status
+- [examples/entities.ts](examples/entities.ts): resolve an entity, read and record facts
