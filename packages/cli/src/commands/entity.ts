@@ -1,8 +1,8 @@
-import type { EntityKind, EntityStatus } from "@unison/sdk";
+import type { EntityKind, EntityStatus } from "@unisonlabs/sdk";
 import type { Command } from "commander";
 import pc from "picocolors";
 import { requireClient } from "../client-factory";
-import { fail, info, printJson, success } from "../output";
+import { fail, out, printJson, success } from "../output";
 
 function parseProps(pairs: string[] | undefined): Record<string, string> {
   const props: Record<string, string> = {};
@@ -37,7 +37,7 @@ export function registerEntity(program: Command): void {
           return;
         }
         for (const e of entities)
-          info(`${pc.cyan(e.id)}  ${pc.bold(e.displayName)} ${pc.dim(e.kind)}`);
+          out(`${pc.cyan(e.id)}  ${pc.bold(e.displayName)} ${pc.dim(e.kind)}`);
       },
     );
 
@@ -57,7 +57,7 @@ export function registerEntity(program: Command): void {
         fail(`No entity matched "${name}".`);
         process.exit(1);
       }
-      info(`${pc.cyan(found.id)}  ${pc.bold(found.displayName)} ${pc.dim(found.kind)}`);
+      out(`${pc.cyan(found.id)}  ${pc.bold(found.displayName)} ${pc.dim(found.kind)}`);
     });
 
   entity

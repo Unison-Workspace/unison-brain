@@ -18,9 +18,9 @@
     "lint:fix": "biome check --write .",
     "format": "biome format --write .",
     "test": "bun test",
-    "build": "bun run --filter '@unison/sdk' build && bun run --filter '@unison/cli' build && bun run --filter '@unison/mcp' build",
+    "build": "bun run --filter '@unisonlabs/sdk' build && bun run --filter '@unisonlabs/cli' build && bun run --filter '@unisonlabs/mcp' build",
     "typecheck": "tsc --noEmit",
-    "release": "bun run build && npm_config_workspaces=true npm publish -w @unison/sdk && npm_config_workspaces=true npm publish -w @unison/cli && npm_config_workspaces=true npm publish -w @unison/mcp"
+    "release": "bun run build && npm_config_workspaces=true npm publish -w @unisonlabs/sdk && npm_config_workspaces=true npm publish -w @unisonlabs/cli && npm_config_workspaces=true npm publish -w @unisonlabs/mcp"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.0",

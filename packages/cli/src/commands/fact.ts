@@ -2,14 +2,14 @@ import type { Command } from "commander";
 import pc from "picocolors";
 import { requireClient } from "../client-factory";
 import { confirmDestructive } from "../confirm";
-import { info, printJson, success } from "../output";
+import { out, printJson, success } from "../output";
 
 function printFacts(
   facts: { id: string; predicate: string; factText: string; validTo: string | null }[],
 ): void {
   for (const f of facts) {
     const invalid = f.validTo ? pc.dim(" (superseded)") : "";
-    info(`${pc.cyan(f.id)}  ${pc.bold(f.predicate)}: ${f.factText}${invalid}`);
+    out(`${pc.cyan(f.id)}  ${pc.bold(f.predicate)}: ${f.factText}${invalid}`);
   }
 }
 

@@ -1,9 +1,9 @@
-import type { LinkKind, ShareKind } from "@unison/sdk";
+import type { LinkKind, ShareKind } from "@unisonlabs/sdk";
 import type { Command } from "commander";
 import pc from "picocolors";
 import { requireClient } from "../client-factory";
 import { confirmDestructive } from "../confirm";
-import { info, printJson, success } from "../output";
+import { info, out, printJson, success } from "../output";
 
 export function registerDocs(program: Command): void {
   program
@@ -23,7 +23,7 @@ export function registerDocs(program: Command): void {
           printJson(docs);
           return;
         }
-        for (const d of docs) info(`${pc.cyan(d.path)}${d.title ? `  — ${d.title}` : ""}`);
+        for (const d of docs) out(`${pc.cyan(d.path)}${d.title ? `  — ${d.title}` : ""}`);
       },
     );
 
@@ -80,7 +80,7 @@ export function registerDocs(program: Command): void {
         printJson(docs);
         return;
       }
-      for (const d of docs) info(`${d.path}${d.title ? `  — ${d.title}` : ""}`);
+      for (const d of docs) out(`${d.path}${d.title ? `  — ${d.title}` : ""}`);
     });
 
   program
@@ -95,7 +95,7 @@ export function registerDocs(program: Command): void {
         printJson(links);
         return;
       }
-      for (const l of links) info(`${l.fromId} --${l.kind}--> ${l.toId}`);
+      for (const l of links) out(`${l.fromId} --${l.kind}--> ${l.toId}`);
     });
 
   program

@@ -1,5 +1,5 @@
 {
-  "name": "@unison/mcp",
+  "name": "@unisonlabs/mcp",
   "version": "0.1.0",
   "description": "Model Context Protocol server for the Unison brain.",
   "keywords": ["unison", "brain", "knowledge-base", "mcp", "model-context-protocol", "ai", "agent"],
@@ -33,6 +33,6 @@
     "zod": "^3.23.0"
   },
   "devDependencies": {
-    "@unison/sdk": "workspace:*"
+    "@unisonlabs/sdk": "workspace:*"
   }
 }

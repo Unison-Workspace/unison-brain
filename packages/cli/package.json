@@ -1,5 +1,5 @@
 {
-  "name": "@unison/cli",
+  "name": "@unisonlabs/cli",
   "version": "0.1.0",
   "description": "The `unison` CLI — search and write your Unison brain from the terminal or any coding agent.",
   "keywords": ["unison", "brain", "knowledge-base", "cli", "ai", "agent", "memory"],
@@ -34,6 +34,6 @@
     "picocolors": "^1.0.0"
   },
   "devDependencies": {
-    "@unison/sdk": "workspace:*"
+    "@unisonlabs/sdk": "workspace:*"
   }
 }

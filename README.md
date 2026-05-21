@@ -24,9 +24,9 @@ contract this client speaks.
 
 | Package | Install as | What it is |
 | --- | --- | --- |
-| [`@unison/cli`](./packages/cli) | `unison` | The CLI: `search`, `get`, `write`, `list`, `status`, `auth`. |
-| [`@unison/sdk`](./packages/sdk) | `@unison/sdk` | Typed HTTP client the CLI and MCP server are built on. |
-| [`@unison/mcp`](./packages/mcp) | `unison-brain-mcp` | A Model Context Protocol server for agents without shell access. |
+| [`@unisonlabs/cli`](./packages/cli) | `unison` | The CLI: `search`, `get`, `write`, `list`, `status`, `auth`. |
+| [`@unisonlabs/sdk`](./packages/sdk) | `@unisonlabs/sdk` | Typed HTTP client the CLI and MCP server are built on. |
+| [`@unisonlabs/mcp`](./packages/mcp) | `unison-brain-mcp` | A Model Context Protocol server for agents without shell access. |
 | [`skill/SKILL.md`](./skill/SKILL.md) | — | Drop-in [Agent Skill](https://www.anthropic.com/engineering/equipping-agents-for-the-real-world-with-agent-skills) that teaches an agent to use the CLI. |
 
 The SDK is the core; the CLI and MCP server are thin wrappers over it, and the
@@ -69,12 +69,12 @@ export UNISON_API_URL="https://api.unisonlabs.ai"   # optional, until prod is th
 ## Install
 
 ```bash
-npm i -g @unison/cli      # or: pnpm add -g / bun add -g / npx @unison/cli
+npm i -g @unisonlabs/cli      # or: pnpm add -g / bun add -g / npx @unisonlabs/cli
 unison auth login         # sign in (opens your browser)
 ```
 
-Distributed via npm as three packages: **`@unison/cli`** (the `unison` binary),
-**`@unison/sdk`** (the typed client library), and **`@unison/mcp`** (the MCP
+Distributed via npm as three packages: **`@unisonlabs/cli`** (the `unison` binary),
+**`@unisonlabs/sdk`** (the typed client library), and **`@unisonlabs/mcp`** (the MCP
 server). The published binaries are plain compiled JS with a
 `#!/usr/bin/env node` shebang — they run on Node or Bun, no runtime to install.
 
@@ -94,7 +94,7 @@ unison skill install      # writes the skill to ~/.claude/skills/unison-brain/
   "mcpServers": {
     "unison-brain": {
       "command": "npx",
-      "args": ["-y", "@unison/mcp"],
+      "args": ["-y", "@unisonlabs/mcp"],
       "env": { "UNISON_TOKEN": "usk_live_...", "UNISON_API_URL": "https://api.unisonlabs.ai" }
     }
   }
@@ -112,7 +112,7 @@ unison completion fish > ~/.config/fish/completions/unison.fish
 ## SDK
 
 ```ts
-import { BrainClient } from "@unison/sdk";
+import { BrainClient } from "@unisonlabs/sdk";
 const brain = new BrainClient({ baseUrl: "https://api.unisonlabs.ai", token: process.env.UNISON_TOKEN });
 const hits = await brain.search("auth decision", { limit: 5 });
 ```

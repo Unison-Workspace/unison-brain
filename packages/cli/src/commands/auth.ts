@@ -8,7 +8,7 @@ import {
   pollDeviceToken,
   randomState,
   startDeviceAuth,
-} from "@unison/sdk";
+} from "@unisonlabs/sdk";
 import type { Command } from "commander";
 import open from "open";
 import {

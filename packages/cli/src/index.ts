@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { BrainError } from "@unison/sdk";
+import { BrainError } from "@unisonlabs/sdk";
 import { Command } from "commander";
 import { registerAuth } from "./commands/auth";
 import { registerCompletion } from "./commands/completion";
@@ -23,7 +23,32 @@ program
   .name("unison")
   .description("Unison brain — your cloud knowledge base, in any coding agent")
   .version(VERSION)
-  .showSuggestionAfterError();
+  .showSuggestionAfterError()
+  .addHelpText(
+    "after",
+    `
+Output:
+  Add --json to any command for machine-readable output on stdout (compact when
+  piped). Human text and progress go to stderr; result data goes to stdout.
+
+Auth & env:
+  UNISON_TOKEN     API key (usk_...) — overrides the stored login (use in CI/agents)
+  UNISON_API_URL   API base URL (default https://api.unisonlabs.ai)
+  UNISON_APP_URL   Dashboard URL for 'auth login'
+  NO_COLOR         Disable color. Color is auto-off when output is piped.
+
+Exit codes:
+  0 success   1 error   3 not found   4 auth (sign in / scope)   5 conflict
+
+Examples:
+  unison auth login
+  unison search "auth decision" -k 5 --json
+  unison get /wiki/architecture
+  echo "We chose X because Y." | unison write /wiki/x
+  unison entity resolve "Daniel" --json
+  unison rm /wiki/old --yes        # destructive cmds need --yes when non-interactive
+`,
+  );
 
 // Auth
 registerAuth(program);
@@ -45,22 +70,60 @@ registerStatus(program);
 registerSkill(program);
 registerCompletion(program);
 
-/** Turn an API error into a clear message plus a next-step hint. */
-function reportError(err: unknown): void {
+// Distinct exit codes so an agent can branch without parsing text.
+function exitCodeFor(status: number): number {
+  if (status === 401 || status === 403) return 4; // auth: sign in / missing scope
+  if (status === 404) return 3; // not found
+  if (status === 409) return 5; // conflict (e.g. stale content hash)
+  return 1; // general / retryable
+}
+
+function suggestedFix(status: number): string | undefined {
+  if (status === 401) return "Run `unison auth login` to sign in.";
+  if (status === 403) return "Your key lacks the required scope (read / write / admin).";
+  if (status === 404) return "Nothing found at that path or id.";
+  if (status === 429) return "Rate limited — wait a moment and retry.";
+  if (status >= 500) return "The brain API had an error. Try again shortly.";
+  return undefined;
+}
+
+// Agents pass --json; emit a parseable error envelope (to stderr) instead of prose.
+function wantsJson(): boolean {
+  return (
+    process.argv.includes("--json") ||
+    process.env.OUTPUT_FORMAT === "json" ||
+    process.env.UNISON_JSON === "1"
+  );
+}
+
+// Errors go to stderr (stdout stays clean — success data only). When --json,
+// the envelope is parseable JSON; otherwise human text + a next-step hint.
+function jsonError(envelope: Record<string, unknown>): void {
+  process.stderr.write(`${JSON.stringify({ error: envelope })}\n`);
+}
+
+function reportError(err: unknown): number {
   if (err instanceof BrainError) {
-    fail(err.message);
-    if (err.status === 401) info("→ Run `unison auth login` to sign in.");
-    else if (err.status === 403)
-      info("→ Your key lacks the required scope (read / write / admin).");
-    else if (err.status === 404) info("→ Nothing found at that path or id.");
-    else if (err.status === 429) info("→ Rate limited. Wait a moment and retry.");
-    else if (err.status >= 500) info("→ The brain API had an error. Try again shortly.");
-    return;
+    const fix = suggestedFix(err.status);
+    if (wantsJson()) {
+      jsonError({
+        code: err.code,
+        message: err.message,
+        status: err.status,
+        ...(fix ? { suggestedFix: fix } : {}),
+      });
+    } else {
+      fail(err.message);
+      if (fix) info(`→ ${fix}`);
+    }
+    return exitCodeFor(err.status);
   }
-  fail(err instanceof Error ? err.message : String(err));
+  const message = err instanceof Error ? err.message : String(err);
+  if (wantsJson()) jsonError({ code: "error", message });
+  else fail(message);
+  return 1;
 }
 
 program.parseAsync(process.argv).catch((err: unknown) => {
-  reportError(err);
-  process.exit(1);
+  process.exit(reportError(err));
 });
