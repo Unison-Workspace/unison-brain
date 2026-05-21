@@ -20,7 +20,7 @@
     "test": "bun test",
     "build": "bun run --filter '@unison/sdk' build && bun run --filter '@unison/cli' build && bun run --filter '@unison/mcp' build",
     "typecheck": "tsc --noEmit",
-    "release": "bun run build && npm publish --workspace @unison/sdk && npm publish --workspace @unison/cli && npm publish --workspace @unison/mcp"
+    "release": "bun run build && npm_config_workspaces=true npm publish -w @unison/sdk && npm_config_workspaces=true npm publish -w @unison/cli && npm_config_workspaces=true npm publish -w @unison/mcp"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.0",
