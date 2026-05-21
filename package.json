@@ -1,0 +1,20 @@
+{
+  "name": "unison-brain",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Open-source client for the Unison brain — your cloud knowledge base, in any coding agent.",
+  "workspaces": ["packages/*"],
+  "scripts": {
+    "lint": "biome check .",
+    "lint:fix": "biome check --write .",
+    "format": "biome format --write .",
+    "test": "bun test",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^1.9.0",
+    "@types/bun": "latest",
+    "typescript": "^5.5.0"
+  }
+}
