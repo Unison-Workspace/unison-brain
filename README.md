@@ -44,10 +44,53 @@ unison entity resolve "Daniel"    # knowledge-graph lookup
 unison fact ls --entity <id>      # facts about an entity
 ```
 
-Documents: `search`, `grep`, `get`, `ls` (`--tree`), `write`, `rm`, `tag`,
-`share`, `neighbors`, `links`, `link`. Graph: `entity …`, `fact …`, `timeline`.
-Admin: `review …`, `jobs …`. Add `--json` to any command. Full surface and the
-backend contract are in [`SPEC.md`](./SPEC.md).
+Documents: `search`, `grep`, `cat`/`get`, `ls`, `tree`, `find`, `write`, `rm`,
+`tag`, `share`, `neighbors`, `links`, `link`. Graph: `entity …`, `fact …`,
+`timeline`. Admin: `review …`, `jobs …`. Add `--json` to any command. Full
+surface and the backend contract are in [`SPEC.md`](./SPEC.md).
+
+## Browse the brain like a filesystem
+
+The brain is path-addressable (`/wiki/`, `/sources/`, `/raw/`, `/system/`), so it
+navigates with the commands you already know:
+
+```bash
+unison ls                       # entries at the root (dirs + files)
+unison ls /wiki                 # entries under /wiki
+unison ls /wiki --docs          # documents with titles instead of the dir view
+unison tree /wiki               # recursive tree under /wiki
+unison find '/wiki/**auth*'     # paths matching a glob
+unison cat /wiki/architecture   # read a document (alias of `get`)
+unison cat --raw '/system/...'  # read any tier, including synthetic ones
+unison grep "TODO" --json       # regex scan over document bodies
+```
+
+## Query the knowledge graph
+
+Beyond documents, the brain has entities (canonical people/projects/companies)
+and bitemporal facts about them:
+
+```bash
+id=$(unison entity resolve "Daniel" --json | jq -r .entity.id)
+unison fact ls --entity "$id"          # what the brain knows about Daniel
+unison timeline "$id"                   # facts over time
+unison fact add "$id" works_at "Joined Unison in 2026" --confidence 0.9
+unison neighbors /wiki/architecture     # linked documents
+```
+
+## For coding agents
+
+Pass `--json` for machine output: results are JSON on **stdout** (compact when
+piped); errors are a JSON envelope on **stderr** with a nonzero exit code
+(`4` auth, `3` not found, `5` conflict, `1` other). Destructive commands (`rm`,
+`fact rm`, `review merge`) require `--yes` in non-interactive shells. Drop the
+skill in with `unison skill install`, or run `unison --help` / `unison <cmd>
+--help` — the help is written to be read by an agent.
+
+```bash
+unison search "rate limiting" -k 5 --json | jq '.[].doc.path'
+unison get /wiki/architecture --json
+```
 
 ## Authentication
 
