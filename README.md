@@ -58,7 +58,7 @@ For **CI and headless agents**, skip the browser — set an API key:
 
 ```bash
 export UNISON_TOKEN="usk_live_..."   # overrides the stored credential
-export UNISON_API_URL="https://api.unison.computer"   # optional, until prod is the default
+export UNISON_API_URL="https://api.unisonlabs.ai"   # optional, until prod is the default
 ```
 
 `UNISON_TOKEN` always takes precedence over the stored file.
@@ -76,11 +76,20 @@ export UNISON_API_URL="https://api.unison.computer"   # optional, until prod is 
   "mcpServers": {
     "unison-brain": {
       "command": "unison-brain-mcp",
-      "env": { "UNISON_TOKEN": "usk_live_...", "UNISON_API_URL": "https://api.unison.computer" }
+      "env": { "UNISON_TOKEN": "usk_live_...", "UNISON_API_URL": "https://api.unisonlabs.ai" }
     }
   }
 }
 ```
+
+## Install
+
+```bash
+npm i -g @unison/cli      # or: pnpm add -g / bun add -g / npx @unison/cli
+```
+
+Distributed via npm. The published binary is plain compiled JS with a
+`#!/usr/bin/env node` shebang, so it runs on Node or Bun — no runtime to install.
 
 ## Development
 
@@ -88,18 +97,20 @@ Requires [Bun](https://bun.sh).
 
 ```bash
 bun install
-bun test          # unit tests (SDK + CLI)
-bun lint          # Biome
-bun run packages/cli/src/index.ts --help   # run the CLI from source
+bun test                                    # unit tests (SDK + CLI)
+bun lint                                     # Biome
+bun run packages/cli/src/index.ts --help     # run the CLI from source
+bun run build                                # bundle each package to dist/
+node packages/cli/dist/index.js --help       # run the built (node) binary
 ```
 
-This is a Bun workspace monorepo: `packages/*` resolve each other by name
-(`@unison/sdk` etc.) without a build step during development.
+This is a Bun workspace monorepo: `packages/*` resolve each other by name during
+development. `bun run build` bundles the CLI and MCP server into self-contained
+`dist/index.js` files (the SDK is bundled in; only npm deps stay external).
 
-> **Note:** the default API URL is a placeholder until the production brain
-> endpoints ship. Until then, point the client at a running backend with
-> `UNISON_API_URL` or `unison auth login --api-url <url>`. The endpoints this
-> client expects are specified in [`SPEC.md`](./SPEC.md).
+> **Note:** the brain endpoints (`SPEC.md`) are not live yet. Until then, point
+> the client at a running backend with `UNISON_API_URL` / `UNISON_APP_URL` or
+> `unison auth login --api-url <url>`.
 
 ## License
 

@@ -5,16 +5,19 @@
   "type": "module",
   "license": "MIT",
   "bin": {
-    "unison": "./src/index.ts"
+    "unison": "./dist/index.js"
   },
-  "files": ["src", "dist"],
+  "files": ["dist"],
   "scripts": {
-    "build": "tsc -p tsconfig.json"
+    "dev": "bun run src/index.ts",
+    "build": "bun build src/index.ts --target node --outfile dist/index.js --external commander --external open --external picocolors"
   },
   "dependencies": {
-    "@unison/sdk": "workspace:*",
     "commander": "^12.0.0",
     "open": "^10.0.0",
     "picocolors": "^1.0.0"
+  },
+  "devDependencies": {
+    "@unison/sdk": "workspace:*"
   }
 }

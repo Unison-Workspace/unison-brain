@@ -50,13 +50,13 @@ describe("PKCE loopback helpers", () => {
   });
 
   test("buildAuthorizeUrl points at /cli-auth with PKCE + state params", () => {
-    const url = buildAuthorizeUrl("https://app.unison.computer/", {
+    const url = buildAuthorizeUrl("https://app.unisonlabs.ai/", {
       redirectUri: "http://127.0.0.1:5000/callback",
       codeChallenge: "chal",
       state: randomState(),
       scopes: ["brain:read", "brain:write"],
     });
-    expect(url).toContain("https://app.unison.computer/cli-auth?");
+    expect(url).toContain("https://app.unisonlabs.ai/cli-auth?");
     expect(url).toContain("code_challenge=chal");
     expect(url).toContain("code_challenge_method=S256");
     expect(url).toContain("redirect_uri=http");

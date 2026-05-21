@@ -1,10 +1,10 @@
-#!/usr/bin/env bun
+#!/usr/bin/env node
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { BrainClient } from "@unison/sdk";
 import { z } from "zod";
 
-const apiUrl = process.env.UNISON_API_URL ?? "https://api.unison.computer";
+const apiUrl = process.env.UNISON_API_URL ?? "https://api.unisonlabs.ai";
 const token = process.env.UNISON_TOKEN;
 
 const client = new BrainClient({ baseUrl: apiUrl, token });

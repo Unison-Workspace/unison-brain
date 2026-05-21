@@ -1,5 +1,5 @@
 export interface BrainClientOptions {
-  /** Base URL of the Unison API, e.g. https://api.unison.computer */
+  /** Base URL of the Unison API, e.g. https://api.unisonlabs.ai */
   baseUrl: string;
   /** Bearer token: an API key (`usk_...`) or a browser-login access token. */
   token?: string;

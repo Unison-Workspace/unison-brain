@@ -10,6 +10,7 @@
     "lint:fix": "biome check --write .",
     "format": "biome format --write .",
     "test": "bun test",
+    "build": "bun run --filter '@unison/sdk' build && bun run --filter '@unison/cli' build && bun run --filter '@unison/mcp' build",
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {

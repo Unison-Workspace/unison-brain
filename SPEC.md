@@ -75,7 +75,7 @@ else local:
 ```
 $ unison auth login
 → CLI starts a throwaway listener on 127.0.0.1:<random> (invisible to the user)
-→ opens browser to  https://app.unison.computer/cli-auth?...&redirect_uri=http://127.0.0.1:<port>/callback
+→ opens browser to  https://app.unisonlabs.ai/cli-auth?...&redirect_uri=http://127.0.0.1:<port>/callback
 → user logs in / signs up / approves on our site
 → our site redirects to the loopback with ?code=...&state=...
 → CLI exchanges code+verifier for a token, stores it, shuts the listener down
@@ -112,7 +112,7 @@ hides or blocks paths itself.
 
 ### Endpoints
 **Browser loopback (primary):**
-- `GET https://app.unison.computer/cli-auth` — dashboard page (not `/v1`). Params: `response_type=code`, `client_id=unison-cli`, `redirect_uri` (must match `http://127.0.0.1:*/callback` — server allowlists loopback only), `code_challenge`, `code_challenge_method=S256`, `state`, `scope`. User logs in/signs up/approves; redirects to `redirect_uri?code=...&state=...`.
+- `GET https://app.unisonlabs.ai/cli-auth` — dashboard page (not `/v1`). Params: `response_type=code`, `client_id=unison-cli`, `redirect_uri` (must match `http://127.0.0.1:*/callback` — server allowlists loopback only), `code_challenge`, `code_challenge_method=S256`, `state`, `scope`. User logs in/signs up/approves; redirects to `redirect_uri?code=...&state=...`.
 - `POST /v1/auth/token` — body `{ grantType: "authorization_code", code, codeVerifier, redirectUri, clientId }` → `200 { accessToken, tokenType, scope }`. Verifies PKCE; single-use code; short TTL.
 
 **Device flow (fallback):**
@@ -129,7 +129,7 @@ confirms the `userCode`, picks a tenant, and approves — minting the token.
 
 ## 4. Conventions
 
-- **Base URL:** configurable; production TBD (client default `https://api.unison.computer`).
+- **Base URL:** configurable; production TBD (client default `https://api.unisonlabs.ai`).
 - **Versioning:** all paths prefixed `/v1`.
 - **JSON, `camelCase`.** Paths are passed as query params (they contain slashes).
 - **Errors:** `{ "error": { "code": "snake_case", "message": "..." } }` with codes

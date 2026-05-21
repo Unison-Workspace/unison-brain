@@ -9,9 +9,9 @@ export interface StoredCredentials {
 
 // TODO: point at production once the brain endpoints ship. Override anytime with
 // the UNISON_API_URL / UNISON_APP_URL env vars or `unison auth login --api-url`.
-const DEFAULT_API_URL = "https://api.unison.computer";
+const DEFAULT_API_URL = "https://api.unisonlabs.ai";
 // The dashboard origin the browser is sent to during login (the /cli-auth page).
-const DEFAULT_APP_URL = "https://app.unison.computer";
+const DEFAULT_APP_URL = "https://app.unisonlabs.ai";
 
 export function configPath(): string {
   const base = process.env.XDG_CONFIG_HOME ?? join(homedir(), ".config");

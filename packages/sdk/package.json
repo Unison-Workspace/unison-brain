@@ -10,8 +10,19 @@
   "exports": {
     ".": "./src/index.ts"
   },
-  "files": ["src", "dist"],
+  "files": ["dist", "src"],
   "scripts": {
-    "build": "tsc -p tsconfig.json"
+    "build": "bun build src/index.ts --target node --outfile dist/index.js && tsc -p tsconfig.json --emitDeclarationOnly --outDir dist"
+  },
+  "publishConfig": {
+    "main": "./dist/index.js",
+    "module": "./dist/index.js",
+    "types": "./dist/index.d.ts",
+    "exports": {
+      ".": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      }
+    }
   }
 }
