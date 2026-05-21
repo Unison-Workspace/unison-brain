@@ -1,9 +1,26 @@
-# Unison Brain
+<div align="center">
+
+# 🧠 Unison Brain
+
+### Your coding agent has the memory of a goldfish.
+
+**A cloud brain your AI agents read from _and write back to_ — so Claude Code, Cursor,
+and Codex stop forgetting your decisions, your conventions, and the hard-won _why_.**
 
 [![CI](https://github.com/Unison-Workspace/unison-brain/actions/workflows/ci.yml/badge.svg)](https://github.com/Unison-Workspace/unison-brain/actions/workflows/ci.yml)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
+[![npm](https://img.shields.io/npm/v/@unisonlabs/cli?logo=npm&color=cb3837&label=cli)](https://www.npmjs.com/package/@unisonlabs/cli)
+[![GitHub stars](https://img.shields.io/github/stars/Unison-Workspace/unison-brain?style=social)](https://github.com/Unison-Workspace/unison-brain/stargazers)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
 
-**Give your coding agent a memory that outlives the session.**
+[**Why**](#with-the-brain-vs-without) • [**Quickstart**](#quickstart) • [**Install**](#install) • [**For agents**](#for-coding-agents) • [**SPEC**](./SPEC.md)
+
+</div>
+
+<!-- TODO(launch): drop a demo GIF here once prod is live —
+     <p align="center"><img src="docs/demo.gif" width="720" alt="unison search demo"></p>
+     A 10-second terminal demo is worth ~10x this text for stars. -->
+
+---
 
 Claude Code, Cursor, and Codex start every session with amnesia. They re-read the
 codebase, re-derive the architecture, and re-ask the questions you answered last
@@ -38,18 +55,15 @@ is the contract this client speaks).
 The SDK is the core; the CLI and MCP server are thin wrappers over it, and the
 skill wraps the CLI — one API contract, four surfaces.
 
-## Why not a `CLAUDE.md` or a memory SDK?
+## With the brain vs. without
 
-- **`CLAUDE.md` / `.cursorrules` are local, per-repo, and rot.** They don't follow
-  you to another machine, another repo, or a teammate, and nobody updates them. The
-  brain is one source of truth every agent — and every teammate's agent — reads from
-  and writes back to.
-- **mem0 / Letta / Zep are libraries you build an agent *with*.** Unison plugs into
-  the agents you *already use* — Claude Code, Cursor, Codex — on day one. Nothing to
-  host, no framework to adopt, no migration.
-- **It's a knowledge graph, not a chat log.** Canonical entities (people, projects,
-  companies) and bitemporal facts mean the agent knows *who*, *what*, and *what
-  changed when* — not just a pile of past messages.
+| 🐟 Without a brain | 🧠 With Unison |
+| --- | --- |
+| _"Why did we switch to device-flow auth?"_ → the agent greps, guesses, or asks you for the third time | `unison search "why device-flow auth"` → the actual decision **and its reasoning**, in one second |
+| New laptop, new repo, new teammate → re-explain the whole architecture from scratch | One brain. Every agent, every machine, every teammate reads the **same source of truth** |
+| `CLAUDE.md` / `.cursorrules` go stale the day after you write them | Agents **write back** what they learn, so the brain stays current on its own |
+| mem0 / Letta / Zep are frameworks you _build an agent with_ | Plugs into the agents you **already use** — nothing to host, no migration |
+| A flat log of past chat messages | A **knowledge graph**: entities (people, projects) + bitemporal facts — _who_, _what_, and _what changed when_ |
 
 ## Quickstart
 
@@ -201,6 +215,14 @@ development. `bun run build` bundles the CLI and MCP server into self-contained
 > **Note:** the brain endpoints (`SPEC.md`) are not live yet. Until then, point
 > the client at a running backend with `UNISON_API_URL` / `UNISON_APP_URL` or
 > `unison auth login --api-url <url>`.
+
+## Star history
+
+<a href="https://star-history.com/#Unison-Workspace/unison-brain&Date">
+  <img src="https://api.star-history.com/svg?repos=Unison-Workspace/unison-brain&type=Date" width="600" alt="Star history chart">
+</a>
+
+If the brain saves your agent one "wait, why did we do it this way?" — star it. ⭐
 
 ## Contributing & security
 
