@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { BrainError } from "@unison/sdk";
+import { BrainError } from "@unisonlabs/sdk";
 import { Command } from "commander";
 import { registerAuth } from "./commands/auth";
 import { registerCompletion } from "./commands/completion";

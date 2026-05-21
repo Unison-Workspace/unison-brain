@@ -11,7 +11,7 @@
       },
     },
     "packages/cli": {
-      "name": "@unison/cli",
+      "name": "@unisonlabs/cli",
       "version": "0.1.0",
       "bin": {
         "unison": "./dist/index.js",
@@ -22,11 +22,11 @@
         "picocolors": "^1.0.0",
       },
       "devDependencies": {
-        "@unison/sdk": "workspace:*",
+        "@unisonlabs/sdk": "workspace:*",
       },
     },
     "packages/mcp": {
-      "name": "@unison/mcp",
+      "name": "@unisonlabs/mcp",
       "version": "0.1.0",
       "bin": {
         "unison-brain-mcp": "./dist/index.js",
@@ -36,11 +36,11 @@
         "zod": "^3.23.0",
       },
       "devDependencies": {
-        "@unison/sdk": "workspace:*",
+        "@unisonlabs/sdk": "workspace:*",
       },
     },
     "packages/sdk": {
-      "name": "@unison/sdk",
+      "name": "@unisonlabs/sdk",
       "version": "0.1.0",
     },
   },
@@ -71,11 +71,11 @@
 
     "@types/node": ["@types/node@25.9.1", "", { "dependencies": { "undici-types": ">=7.24.0 <7.24.7" } }, "sha512-xfrlY7UD5rMJk3ZVJP8BNzS28J36YJg+xp+LPXV1TdWxr8uMH5A860QNxYDGQe/ylDSgjxE52Q9VnO7p75tJxg=="],
 
-    "@unison/cli": ["@unison/cli@workspace:packages/cli"],
+    "@unisonlabs/cli": ["@unisonlabs/cli@workspace:packages/cli"],
 
-    "@unison/mcp": ["@unison/mcp@workspace:packages/mcp"],
+    "@unisonlabs/mcp": ["@unisonlabs/mcp@workspace:packages/mcp"],
 
-    "@unison/sdk": ["@unison/sdk@workspace:packages/sdk"],
+    "@unisonlabs/sdk": ["@unisonlabs/sdk@workspace:packages/sdk"],
 
     "accepts": ["accepts@2.0.0", "", { "dependencies": { "mime-types": "^3.0.0", "negotiator": "^1.0.0" } }, "sha512-5cvg6CtKwfgdmVqY1WIiXKc3Q1bkRqGLi+2W/6ao+6Y7gu/RCwRuAhGEzh5B4KlszSuTLgZYuqFqo5bImjNKng=="],
 

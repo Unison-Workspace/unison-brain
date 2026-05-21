@@ -1,4 +1,4 @@
-import type { DocKind, Visibility } from "@unison/sdk";
+import type { DocKind, Visibility } from "@unisonlabs/sdk";
 import type { Command } from "commander";
 import { requireClient } from "../client-factory";
 import { fail, printJson, success } from "../output";

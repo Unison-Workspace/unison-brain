@@ -1,4 +1,4 @@
-import { BrainClient } from "@unison/sdk";
+import { BrainClient } from "@unisonlabs/sdk";
 import { loadCredentials } from "./config";
 import { fail } from "./output";
 

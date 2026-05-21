@@ -1,4 +1,4 @@
-import type { JobStatus } from "@unison/sdk";
+import type { JobStatus } from "@unisonlabs/sdk";
 import type { Command } from "commander";
 import pc from "picocolors";
 import { requireClient } from "../client-factory";

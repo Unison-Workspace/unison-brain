@@ -18,7 +18,7 @@ labels: bug
 
 **Environment**
 
-- Package + version (e.g. `@unison/cli` 0.1.0):
+- Package + version (e.g. `@unisonlabs/cli` 0.1.0):
 - OS:
 - Node / Bun version:
 

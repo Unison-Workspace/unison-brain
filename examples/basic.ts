@@ -1,8 +1,8 @@
 /**
- * Minimal @unison/sdk usage. Run with:
+ * Minimal @unisonlabs/sdk usage. Run with:
  *   UNISON_TOKEN=usk_live_... bun examples/basic.ts "auth decision"
  */
-import { BrainClient } from "@unison/sdk";
+import { BrainClient } from "@unisonlabs/sdk";
 
 const token = process.env.UNISON_TOKEN;
 if (!token) {

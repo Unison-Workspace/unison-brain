@@ -1,4 +1,4 @@
-import type { DocKind, MemoryType } from "@unison/sdk";
+import type { DocKind, MemoryType } from "@unisonlabs/sdk";
 import type { Command } from "commander";
 import pc from "picocolors";
 import { requireClient } from "../client-factory";

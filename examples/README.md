@@ -1,6 +1,6 @@
 # Examples
 
-Runnable examples for `@unison/sdk`. Set a token first:
+Runnable examples for `@unisonlabs/sdk`. Set a token first:
 
 ```bash
 export UNISON_TOKEN="usk_live_..."          # from the dashboard → Settings → API keys

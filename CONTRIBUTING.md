@@ -6,9 +6,9 @@ Thanks for helping improve the open-source client for the Unison brain.
 
 This is a [Bun](https://bun.sh) workspace monorepo:
 
-- `packages/sdk` — `@unison/sdk`, the typed HTTP client (the core).
-- `packages/cli` — `@unison/cli`, the `unison` command (bundles the SDK).
-- `packages/mcp` — `@unison/mcp`, the Model Context Protocol server.
+- `packages/sdk` — `@unisonlabs/sdk`, the typed HTTP client (the core).
+- `packages/cli` — `@unisonlabs/cli`, the `unison` command (bundles the SDK).
+- `packages/mcp` — `@unisonlabs/mcp`, the Model Context Protocol server.
 - `skill/SKILL.md` — the drop-in Agent Skill.
 - `SPEC.md` — the backend API contract this client targets (implemented elsewhere).
 

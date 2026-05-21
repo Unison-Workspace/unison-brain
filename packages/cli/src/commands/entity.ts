@@ -1,4 +1,4 @@
-import type { EntityKind, EntityStatus } from "@unison/sdk";
+import type { EntityKind, EntityStatus } from "@unisonlabs/sdk";
 import type { Command } from "commander";
 import pc from "picocolors";
 import { requireClient } from "../client-factory";
