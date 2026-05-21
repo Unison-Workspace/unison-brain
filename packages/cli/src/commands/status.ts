@@ -14,9 +14,11 @@ export function registerStatus(program: Command): void {
         printJson(s);
         return;
       }
-      info(`documents:    ${s.documents}`);
-      info(`entities:     ${s.entities}`);
-      info(`facts:        ${s.facts}`);
-      info(`pending jobs: ${s.pendingJobs}`);
+      info(`documents:     ${s.docCount} (${s.docWithEmbedding} embedded)`);
+      info(`entities:      ${s.entityCount}`);
+      info(`facts:         ${s.factCount}`);
+      info(`pending jobs:  ${s.pendingJobs}`);
+      info(`stale wikis:   ${s.staleWikiPageCount}`);
+      if (s.lastIngestAt) info(`last ingest:   ${s.lastIngestAt}`);
     });
 }

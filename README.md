@@ -32,21 +32,27 @@ skill wraps the CLI — one API contract, four surfaces.
 ## Quickstart
 
 ```bash
-unison auth login                 # browser device-flow login (or --with-token for CI)
+unison auth login                 # opens your browser to sign in
 unison status                     # confirm you're connected
 unison search "auth decision"     # search the brain
 unison get /wiki/architecture     # read a document
-echo "We chose X because Y." | unison write /decisions/x
+echo "We chose X because Y." | unison write /wiki/x
+unison entity resolve "Daniel"    # knowledge-graph lookup
+unison fact ls --entity <id>      # facts about an entity
 ```
 
-Add `--json` to any command for machine-readable output.
+Documents: `search`, `grep`, `get`, `ls` (`--tree`), `write`, `rm`, `tag`,
+`share`, `neighbors`, `links`, `link`. Graph: `entity …`, `fact …`, `timeline`.
+Admin: `review …`, `jobs …`. Add `--json` to any command. Full surface and the
+backend contract are in [`SPEC.md`](./SPEC.md).
 
 ## Authentication
 
-`unison auth login` uses the OAuth 2.0 **Device Authorization Grant** (RFC 8628),
-the same flow as `gh auth login` and `stripe login`: it prints a one-time code,
-opens your browser to approve it, and stores the resulting token at
-`~/.config/unison/config.json` (mode `0600`).
+`unison auth login` opens your browser to our sign-in page (PKCE loopback,
+RFC 8252 + 7636) — the same one-command, no-credentials-in-the-terminal flow as
+`gh auth login` / `vercel login`. Account creation happens in the browser; the CLI
+just receives and stores the token at `~/.config/unison/config.json` (mode `0600`).
+On a headless/SSH box, use `unison auth login --device` for the code-based flow.
 
 For **CI and headless agents**, skip the browser — set an API key:
 

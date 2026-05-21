@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { pollDeviceToken } from "./auth";
+import { buildAuthorizeUrl, generatePkce, pollDeviceToken, randomState } from "./auth";
 
 function stub(status: number, body: unknown): typeof fetch {
   return (() =>
@@ -38,5 +38,28 @@ describe("pollDeviceToken", () => {
     );
     expect(r.status).toBe("complete");
     expect(r.token?.accessToken).toBe("abc");
+  });
+});
+
+describe("PKCE loopback helpers", () => {
+  test("generatePkce returns a URL-safe verifier and S256 challenge", async () => {
+    const { verifier, challenge } = await generatePkce();
+    expect(verifier).toMatch(/^[A-Za-z0-9_-]+$/);
+    expect(challenge).toMatch(/^[A-Za-z0-9_-]+$/);
+    expect(challenge).not.toBe(verifier);
+  });
+
+  test("buildAuthorizeUrl points at /cli-auth with PKCE + state params", () => {
+    const url = buildAuthorizeUrl("https://app.unison.computer/", {
+      redirectUri: "http://127.0.0.1:5000/callback",
+      codeChallenge: "chal",
+      state: randomState(),
+      scopes: ["brain:read", "brain:write"],
+    });
+    expect(url).toContain("https://app.unison.computer/cli-auth?");
+    expect(url).toContain("code_challenge=chal");
+    expect(url).toContain("code_challenge_method=S256");
+    expect(url).toContain("redirect_uri=http");
+    expect(url).toContain("scope=brain");
   });
 });

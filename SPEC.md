@@ -59,8 +59,36 @@ dedup review, job visibility, health. Tiers 1–3 below.
 
 ## 3. Authentication
 
-`Authorization: Bearer <token>` on every request except the device-code endpoints.
-Token is an API key (`usk_...`) or a device-flow access token.
+`Authorization: Bearer <token>` on every request except the login endpoints.
+Token is an API key (`usk_...`) or an access token minted by a browser login.
+
+### How `unison auth login` works
+
+**Account creation always happens in the browser, never in the CLI** — no signup,
+password, SSO, or billing in a terminal. The CLI authenticates an *existing or
+newly-created* account; the browser tab handles the account part. A brand-new user
+runs `unison auth login` first, signs up in the tab that opens, approves, and is
+logged in — they never visit the dashboard as a separate prerequisite step.
+
+**Primary — browser loopback (PKCE, RFC 8252 + RFC 7636).** One command, nothing
+else local:
+```
+$ unison auth login
+→ CLI starts a throwaway listener on 127.0.0.1:<random> (invisible to the user)
+→ opens browser to  https://app.unison.computer/cli-auth?...&redirect_uri=http://127.0.0.1:<port>/callback
+→ user logs in / signs up / approves on our site
+→ our site redirects to the loopback with ?code=...&state=...
+→ CLI exchanges code+verifier for a token, stores it, shuts the listener down
+```
+The user starts no server and sees no code — just: browser opens our site → approve
+→ "authenticated". State + PKCE `code_verifier` prevent CSRF / code interception.
+
+**Fallback — device flow (RFC 8628)** for SSH / headless / no-browser boxes: the
+CLI prints a short code; the user enters it on our site from another device.
+`unison auth login --device`.
+
+**CI / automation — API key.** `export UNISON_TOKEN=usk_...`; no browser. Keys are
+minted in the dashboard.
 
 ### Backend gap — the one true blocker
 Today all requests need a Supabase **user** JWT; a headless client can't get one.
@@ -83,8 +111,15 @@ write/delete/tag commands for any path and lets the server reject — it never
 hides or blocks paths itself.
 
 ### Endpoints
+**Browser loopback (primary):**
+- `GET https://app.unison.computer/cli-auth` — dashboard page (not `/v1`). Params: `response_type=code`, `client_id=unison-cli`, `redirect_uri` (must match `http://127.0.0.1:*/callback` — server allowlists loopback only), `code_challenge`, `code_challenge_method=S256`, `state`, `scope`. User logs in/signs up/approves; redirects to `redirect_uri?code=...&state=...`.
+- `POST /v1/auth/token` — body `{ grantType: "authorization_code", code, codeVerifier, redirectUri, clientId }` → `200 { accessToken, tokenType, scope }`. Verifies PKCE; single-use code; short TTL.
+
+**Device flow (fallback):**
 - `POST /v1/auth/device/code` — body `{ clientId: "unison-cli" }` → `{ deviceCode, userCode, verificationUri, verificationUriComplete, interval, expiresIn }` (RFC 8628).
 - `POST /v1/auth/device/token` — body `{ deviceCode }`. Pending→`400 {error:"authorization_pending"}`; also `slow_down`, `access_denied`, `expired_token`. Approved→`200 { accessToken, tokenType, scope }`.
+
+**Both:**
 - `GET /v1/auth/whoami` → `{ user:{id,email}, tenant:{id,name}, scopes[] }`.
 
 The verification page (`/device` in the dashboard) is where the logged-in user
