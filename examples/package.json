@@ -1,0 +1,9 @@
+{
+  "name": "@unisonlabs/examples",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Runnable @unisonlabs/sdk examples",
+  "dependencies": {
+    "@unisonlabs/sdk": "workspace:*"
+  }
+}

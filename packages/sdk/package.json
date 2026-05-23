@@ -1,0 +1,37 @@
+{
+  "name": "@unisonlabs/sdk",
+  "version": "0.1.0",
+  "description": "TypeScript SDK for the Unison brain API.",
+  "keywords": ["unison", "brain", "knowledge-base", "sdk", "ai", "agent", "memory"],
+  "homepage": "https://github.com/Unison-Workspace/unison-brain#readme",
+  "bugs": "https://github.com/Unison-Workspace/unison-brain/issues",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Unison-Workspace/unison-brain.git",
+    "directory": "packages/sdk"
+  },
+  "author": "Unison Labs",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "bun": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": ["dist", "src"],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "bun build src/index.ts --target node --outfile dist/index.js && tsc -p tsconfig.json --emitDeclarationOnly --outDir dist",
+    "prepublishOnly": "bun run build"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

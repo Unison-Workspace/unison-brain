@@ -1,0 +1,39 @@
+{
+  "name": "@unisonlabs/cli",
+  "version": "0.1.0",
+  "description": "The `unison` CLI — search and write your Unison brain from the terminal or any agent.",
+  "keywords": ["unison", "brain", "knowledge-base", "cli", "ai", "agent", "memory"],
+  "homepage": "https://github.com/Unison-Workspace/unison-brain#readme",
+  "bugs": "https://github.com/Unison-Workspace/unison-brain/issues",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Unison-Workspace/unison-brain.git",
+    "directory": "packages/cli"
+  },
+  "author": "Unison Labs",
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "unison": "./dist/index.js"
+  },
+  "files": ["dist"],
+  "engines": {
+    "node": ">=18"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "dev": "bun run src/index.ts",
+    "build": "bun ../../scripts/gen-skill.ts && bun build src/index.ts --target node --outfile dist/index.js --external commander --external open --external picocolors",
+    "prepublishOnly": "bun run build"
+  },
+  "dependencies": {
+    "commander": "^12.0.0",
+    "open": "^10.0.0",
+    "picocolors": "^1.0.0"
+  },
+  "devDependencies": {
+    "@unisonlabs/sdk": "workspace:*"
+  }
+}
