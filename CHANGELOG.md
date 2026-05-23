@@ -6,6 +6,12 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Fixed
+
+- `unison --version` now reports the real package version (read from
+  `package.json` at runtime) instead of a hardcoded string that drifted out of
+  sync with the published release.
+
 ## [0.1.0] - 2026-05-23
 
 First public release: the open-source client (SDK, CLI, MCP server, and Agent

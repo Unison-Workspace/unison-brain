@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { readFileSync } from "node:fs";
 import { BrainError } from "@unisonlabs/sdk";
 import { Command } from "commander";
 import { registerAuth } from "./commands/auth";
@@ -16,7 +17,12 @@ import { registerStatus } from "./commands/status";
 import { registerWrite } from "./commands/write";
 import { fail, info } from "./output";
 
-const VERSION = "0.1.0";
+// Read from package.json at runtime so `--version` always matches the published
+// package (npm includes package.json next to dist/ in the tarball). Resolved
+// relative to this module, so it works both from dist/ and `bun run src`.
+const { version: VERSION } = JSON.parse(
+  readFileSync(new URL("../package.json", import.meta.url), "utf8"),
+) as { version: string };
 
 const program = new Command();
 program
