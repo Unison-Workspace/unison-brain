@@ -13,6 +13,7 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   (`work`), `mail`, `chat`, `crm`, `cal`(endar), and `people` — agent access now
   spans the whole workspace, not just the brain. Inputs are typed; domain
   outputs pass through the server's responses as loose `JsonRecord` for now.
+- A pixel-art brain mascot (`assets/brain.svg`) in the README header.
 
 ### Fixed
 

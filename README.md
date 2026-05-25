@@ -1,6 +1,8 @@
 <div align="center">
 
-# 🧠 Unison Brain
+<img src="assets/brain.svg" alt="Unison Brain" width="180" />
+
+# Unison Brain
 
 ### Your agents have the memory of a goldfish.
 
