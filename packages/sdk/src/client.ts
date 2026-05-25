@@ -207,8 +207,12 @@ export class BrainClient {
     return data.results;
   }
 
-  get(path: string, asOf?: string): Promise<BrainDocument> {
-    return this.req<BrainDocument>("GET", `/brain/doc?${qs({ path, asOf })}`);
+  get(path: string): Promise<BrainDocument> {
+    // Point-in-time reads (asOf) exist on search/facts, not on doc-by-path —
+    // the /v1/brain/doc route reads only `path`. Don't advertise a param the
+    // backend ignores; wire it here + in cortex.read together if we ever want
+    // versioned doc reads.
+    return this.req<BrainDocument>("GET", `/brain/doc?${qs({ path })}`);
   }
 
   async list(opts: ListOptions = {}): Promise<BrainDocument[]> {
