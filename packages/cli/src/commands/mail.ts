@@ -89,4 +89,8 @@ export function registerMail(program: Command): void {
       const c = await requireClient();
       printJson(await c.mail.draft(o.thread));
     });
+
+  // Agent-first: these commands always emit JSON. Accept the documented --json
+  // flag for parity so `unison mail <cmd> --json` doesn't error.
+  for (const cmd of mail.commands) cmd.option("--json", "Output JSON (default)");
 }

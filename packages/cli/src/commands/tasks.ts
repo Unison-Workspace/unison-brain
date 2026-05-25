@@ -1,5 +1,6 @@
 import type { Command } from "commander";
 import { requireClient } from "../client-factory";
+import { confirmDestructive } from "../confirm";
 import { printJson } from "../output";
 
 export function registerTasks(program: Command): void {
@@ -121,7 +122,9 @@ export function registerTasks(program: Command): void {
   tasks
     .command("rm <id>")
     .description("Delete a task")
-    .action(async (id: string) => {
+    .option("-y, --yes", "Skip the confirmation prompt")
+    .action(async (id: string, o: { yes?: boolean }) => {
+      if (!(await confirmDestructive(`Delete task ${id}`, Boolean(o.yes)))) return;
       const c = await requireClient();
       printJson(await c.tasks.remove(id));
     });
@@ -134,4 +137,8 @@ export function registerTasks(program: Command): void {
       const c = await requireClient();
       printJson(await c.tasks.projects(o.status));
     });
+
+  // Agent-first: these commands always emit JSON. Accept the documented --json
+  // flag for parity so `unison tasks <cmd> --json` doesn't error.
+  for (const cmd of tasks.commands) cmd.option("--json", "Output JSON (default)");
 }

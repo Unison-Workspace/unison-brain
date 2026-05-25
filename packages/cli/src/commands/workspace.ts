@@ -93,4 +93,8 @@ export function registerWorkspace(program: Command): void {
       const c = await requireClient();
       printJson(await c.workspace.artifactVersions(id));
     });
+
+  // Agent-first: these commands always emit JSON. Accept the documented --json
+  // flag for parity so `unison work <cmd> --json` doesn't error.
+  for (const cmd of work.commands) cmd.option("--json", "Output JSON (default)");
 }

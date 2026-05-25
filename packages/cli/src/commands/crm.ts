@@ -74,4 +74,8 @@ export function registerCrm(program: Command): void {
       const c = await requireClient();
       printJson(await c.crm.createNote({ recordId: o.record, bodyMd: o.body }));
     });
+
+  // Agent-first: these commands always emit JSON. Accept the documented --json
+  // flag for parity so `unison crm <cmd> --json` doesn't error.
+  for (const cmd of crm.commands) cmd.option("--json", "Output JSON (default)");
 }

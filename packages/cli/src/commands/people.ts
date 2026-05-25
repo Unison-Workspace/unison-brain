@@ -7,6 +7,7 @@ export function registerPeople(program: Command): void {
     .command("people <query...>")
     .description("Search people (CRM 'people' records)")
     .option("--limit <n>")
+    .option("--json", "Output JSON (default)")
     .action(async (q: string[], o: { limit?: string }) => {
       const c = await requireClient();
       printJson(

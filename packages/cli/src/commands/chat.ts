@@ -55,4 +55,8 @@ export function registerChat(program: Command): void {
         }),
       );
     });
+
+  // Agent-first: these commands always emit JSON. Accept the documented --json
+  // flag for parity so `unison chat <cmd> --json` doesn't error.
+  for (const cmd of chat.commands) cmd.option("--json", "Output JSON (default)");
 }
