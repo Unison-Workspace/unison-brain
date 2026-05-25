@@ -33,7 +33,7 @@ bun run packages/cli/src/index.ts --help   # run the CLI from source
 
 ## Conventions
 
-- TypeScript, ESM, Biome formatting (tabs, double quotes, 100 cols — see `biome.json`).
+- TypeScript, ESM, Biome formatting (2-space indent, double quotes, 100 cols — see `biome.json`).
 - The SDK has zero runtime dependencies; keep it that way.
 - Human-readable CLI output goes to **stderr**; machine data (and `--json`) goes to
   **stdout**, so piping stays clean.
