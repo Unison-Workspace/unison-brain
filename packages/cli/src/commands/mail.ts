@@ -27,16 +27,22 @@ export function registerMail(program: Command): void {
     .option("--folder <folder>", "inbox | sent | drafts | starred | trash")
     .option("--q <query>")
     .option("--limit <n>")
-    .action(async (o) => {
-      const c = await requireClient();
-      printJson(
-        await c.mail.threads({
-          folder: o.folder,
-          q: o.q,
-          limit: o.limit ? Number(o.limit) : undefined,
-        }),
-      );
-    });
+    .action(
+      async (o: {
+        folder?: "inbox" | "sent" | "drafts" | "starred" | "trash";
+        q?: string;
+        limit?: string;
+      }) => {
+        const c = await requireClient();
+        printJson(
+          await c.mail.threads({
+            folder: o.folder,
+            q: o.q,
+            limit: o.limit ? Number(o.limit) : undefined,
+          }),
+        );
+      },
+    );
 
   mail
     .command("thread <id>")
@@ -54,24 +60,32 @@ export function registerMail(program: Command): void {
     .option("--subject <subject>")
     .option("--body <body>")
     .option("--thread <id>", "reply within a Gmail thread")
-    .action(async (o) => {
-      const c = await requireClient();
-      printJson(
-        await c.mail.send({
-          to: o.to,
-          cc: o.cc,
-          subject: o.subject,
-          body: o.body,
-          threadId: o.thread,
-        }),
-      );
-    });
+    .action(
+      async (o: {
+        to: string[];
+        cc?: string[];
+        subject?: string;
+        body?: string;
+        thread?: string;
+      }) => {
+        const c = await requireClient();
+        printJson(
+          await c.mail.send({
+            to: o.to,
+            cc: o.cc,
+            subject: o.subject,
+            body: o.body,
+            threadId: o.thread,
+          }),
+        );
+      },
+    );
 
   mail
     .command("draft")
     .description("Get the draft for a thread")
     .requiredOption("--thread <id>")
-    .action(async (o) => {
+    .action(async (o: { thread: string }) => {
       const c = await requireClient();
       printJson(await c.mail.draft(o.thread));
     });

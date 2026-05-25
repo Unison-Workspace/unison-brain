@@ -18,7 +18,7 @@ export function registerCrm(program: Command): void {
     .description("Search records")
     .option("--object-slug <slug>")
     .option("--limit <n>")
-    .action(async (q: string[], o) => {
+    .action(async (q: string[], o: { objectSlug?: string; limit?: string }) => {
       const c = await requireClient();
       printJson(
         await c.crm.searchRecords({
@@ -42,7 +42,7 @@ export function registerCrm(program: Command): void {
     .description("Create a record")
     .requiredOption("--object <id>")
     .requiredOption("--name <displayName>")
-    .action(async (o) => {
+    .action(async (o: { object: string; name: string }) => {
       const c = await requireClient();
       printJson(await c.crm.createRecord({ objectId: o.object, displayName: o.name }));
     });
@@ -51,7 +51,7 @@ export function registerCrm(program: Command): void {
     .command("lists")
     .description("List CRM lists")
     .option("--object <id>")
-    .action(async (o) => {
+    .action(async (o: { object?: string }) => {
       const c = await requireClient();
       printJson(await c.crm.lists({ parentObjectId: o.object }));
     });
@@ -60,7 +60,7 @@ export function registerCrm(program: Command): void {
     .command("notes")
     .description("List notes for a record")
     .requiredOption("--record <id>")
-    .action(async (o) => {
+    .action(async (o: { record: string }) => {
       const c = await requireClient();
       printJson(await c.crm.notes(o.record));
     });
@@ -70,7 +70,7 @@ export function registerCrm(program: Command): void {
     .description("Create a note on a record")
     .requiredOption("--record <id>")
     .requiredOption("--body <md>")
-    .action(async (o) => {
+    .action(async (o: { record: string; body: string }) => {
       const c = await requireClient();
       printJson(await c.crm.createNote({ recordId: o.record, bodyMd: o.body }));
     });

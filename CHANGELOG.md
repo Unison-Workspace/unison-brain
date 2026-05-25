@@ -6,6 +6,14 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+
+- **Full `/v1` domain surface** (Phase G) across the SDK, CLI, and MCP. New
+  per-domain clients, command groups, and tools for `tasks`, `workspace`
+  (`work`), `mail`, `chat`, `crm`, `cal`(endar), and `people` — agent access now
+  spans the whole workspace, not just the brain. Inputs are typed; domain
+  outputs pass through the server's responses as loose `JsonRecord` for now.
+
 ### Fixed
 
 - `unison --version` now reports the real package version (read from

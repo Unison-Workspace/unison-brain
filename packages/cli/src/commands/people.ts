@@ -7,7 +7,7 @@ export function registerPeople(program: Command): void {
     .command("people <query...>")
     .description("Search people (CRM 'people' records)")
     .option("--limit <n>")
-    .action(async (q: string[], o) => {
+    .action(async (q: string[], o: { limit?: string }) => {
       const c = await requireClient();
       printJson(
         await c.people.search(q.join(" "), { limit: o.limit ? Number(o.limit) : undefined }),

@@ -26,7 +26,7 @@ export function registerChat(program: Command): void {
     .description("List messages in a channel")
     .requiredOption("--channel <id>")
     .option("--limit <n>")
-    .action(async (o) => {
+    .action(async (o: { channel: string; limit?: string }) => {
       const c = await requireClient();
       printJson(await c.chat.messages(o.channel, { limit: o.limit ? Number(o.limit) : undefined }));
     });
@@ -36,7 +36,7 @@ export function registerChat(program: Command): void {
     .description("Send a message")
     .requiredOption("--channel <id>")
     .requiredOption("--content <text>")
-    .action(async (o) => {
+    .action(async (o: { channel: string; content: string }) => {
       const c = await requireClient();
       printJson(await c.chat.send({ channelId: o.channel, content: o.content }));
     });
@@ -46,7 +46,7 @@ export function registerChat(program: Command): void {
     .description("Search messages")
     .option("--channel <id>")
     .option("--limit <n>")
-    .action(async (q: string[], o) => {
+    .action(async (q: string[], o: { channel?: string; limit?: string }) => {
       const c = await requireClient();
       printJson(
         await c.chat.search(q.join(" "), {

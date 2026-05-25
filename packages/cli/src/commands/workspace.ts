@@ -26,7 +26,7 @@ export function registerWorkspace(program: Command): void {
     .description("Create a team space")
     .requiredOption("--name <name>")
     .option("--description <text>")
-    .action(async (o) => {
+    .action(async (o: { name: string; description?: string }) => {
       const c = await requireClient();
       printJson(await c.workspace.createTeamSpace({ name: o.name, description: o.description }));
     });
@@ -35,7 +35,7 @@ export function registerWorkspace(program: Command): void {
     .command("tree")
     .description("List nodes in a team space")
     .requiredOption("--team-space <id>")
-    .action(async (o) => {
+    .action(async (o: { teamSpace: string }) => {
       const c = await requireClient();
       printJson(await c.workspace.tree(o.teamSpace));
     });
@@ -52,7 +52,7 @@ export function registerWorkspace(program: Command): void {
     .command("artifact <id>")
     .description("Get an artifact (add --resolve for nodes + backings)")
     .option("--resolve")
-    .action(async (id: string, o) => {
+    .action(async (id: string, o: { resolve?: boolean }) => {
       const c = await requireClient();
       printJson(o.resolve ? await c.workspace.resolveArtifact(id) : await c.workspace.artifact(id));
     });
@@ -65,18 +65,26 @@ export function registerWorkspace(program: Command): void {
     .requiredOption("--title <title>")
     .option("--parent <nodeId>")
     .option("--body <md>")
-    .action(async (o) => {
-      const c = await requireClient();
-      printJson(
-        await c.workspace.createArtifact({
-          teamSpaceId: o.teamSpace,
-          type: o.type,
-          title: o.title,
-          parentNodeId: o.parent,
-          bodyMd: o.body,
-        }),
-      );
-    });
+    .action(
+      async (o: {
+        teamSpace: string;
+        type: string;
+        title: string;
+        parent?: string;
+        body?: string;
+      }) => {
+        const c = await requireClient();
+        printJson(
+          await c.workspace.createArtifact({
+            teamSpaceId: o.teamSpace,
+            type: o.type,
+            title: o.title,
+            parentNodeId: o.parent,
+            bodyMd: o.body,
+          }),
+        );
+      },
+    );
 
   work
     .command("artifact-versions <id>")

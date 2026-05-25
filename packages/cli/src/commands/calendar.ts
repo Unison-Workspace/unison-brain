@@ -27,7 +27,7 @@ export function registerCalendar(program: Command): void {
     .description("List events in a time range")
     .requiredOption("--from <datetime>")
     .requiredOption("--to <datetime>")
-    .action(async (o) => {
+    .action(async (o: { from: string; to: string }) => {
       const c = await requireClient();
       printJson(await c.calendar.events({ from: o.from, to: o.to }));
     });
@@ -48,16 +48,24 @@ export function registerCalendar(program: Command): void {
     .requiredOption("--end <datetime>")
     .option("--summary <text>")
     .option("--request-id <uuid>", "idempotency key (default: random)")
-    .action(async (o) => {
-      const c = await requireClient();
-      printJson(
-        await c.calendar.createEvent({
-          calendarId: o.calendar,
-          startAt: o.start,
-          endAt: o.end,
-          summary: o.summary,
-          requestId: o.requestId ?? randomUUID(),
-        }),
-      );
-    });
+    .action(
+      async (o: {
+        calendar: string;
+        start: string;
+        end: string;
+        summary?: string;
+        requestId?: string;
+      }) => {
+        const c = await requireClient();
+        printJson(
+          await c.calendar.createEvent({
+            calendarId: o.calendar,
+            startAt: o.start,
+            endAt: o.end,
+            summary: o.summary,
+            requestId: o.requestId ?? randomUUID(),
+          }),
+        );
+      },
+    );
 }

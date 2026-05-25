@@ -13,24 +13,32 @@ export function registerTasks(program: Command): void {
     .option("--assignee <id>")
     .option("--search <q>")
     .option("--limit <n>")
-    .action(async (o) => {
-      const c = await requireClient();
-      printJson(
-        await c.tasks.list({
-          projectId: o.project,
-          taskBoardId: o.board,
-          assigneeId: o.assignee,
-          search: o.search,
-          limit: o.limit ? Number(o.limit) : undefined,
-        }),
-      );
-    });
+    .action(
+      async (o: {
+        project?: string;
+        board?: string;
+        assignee?: string;
+        search?: string;
+        limit?: string;
+      }) => {
+        const c = await requireClient();
+        printJson(
+          await c.tasks.list({
+            projectId: o.project,
+            taskBoardId: o.board,
+            assigneeId: o.assignee,
+            search: o.search,
+            limit: o.limit ? Number(o.limit) : undefined,
+          }),
+        );
+      },
+    );
 
   tasks
     .command("search <query...>")
     .description("Full-text task search")
     .option("--limit <n>")
-    .action(async (q: string[], o) => {
+    .action(async (q: string[], o: { limit?: string }) => {
       const c = await requireClient();
       printJson(await c.tasks.search(q.join(" "), o.limit ? Number(o.limit) : undefined));
     });
@@ -53,20 +61,30 @@ export function registerTasks(program: Command): void {
     .option("--priority <p>")
     .option("--assignee <id>")
     .option("--due <date>")
-    .action(async (o) => {
-      const c = await requireClient();
-      printJson(
-        await c.tasks.create({
-          title: o.title,
-          description: o.description,
-          projectId: o.project,
-          taskBoardId: o.board,
-          priority: o.priority,
-          assigneeId: o.assignee,
-          dueDate: o.due,
-        }),
-      );
-    });
+    .action(
+      async (o: {
+        title: string;
+        description?: string;
+        project?: string;
+        board?: string;
+        priority?: string;
+        assignee?: string;
+        due?: string;
+      }) => {
+        const c = await requireClient();
+        printJson(
+          await c.tasks.create({
+            title: o.title,
+            description: o.description,
+            projectId: o.project,
+            taskBoardId: o.board,
+            priority: o.priority,
+            assigneeId: o.assignee,
+            dueDate: o.due,
+          }),
+        );
+      },
+    );
 
   tasks
     .command("update <id>")
@@ -76,18 +94,29 @@ export function registerTasks(program: Command): void {
     .option("--priority <p>")
     .option("--assignee <id>")
     .option("--due <date>")
-    .action(async (id: string, o) => {
-      const c = await requireClient();
-      printJson(
-        await c.tasks.update(id, {
-          title: o.title,
-          status: o.status,
-          priority: o.priority,
-          assigneeId: o.assignee,
-          dueDate: o.due,
-        }),
-      );
-    });
+    .action(
+      async (
+        id: string,
+        o: {
+          title?: string;
+          status?: string;
+          priority?: string;
+          assignee?: string;
+          due?: string;
+        },
+      ) => {
+        const c = await requireClient();
+        printJson(
+          await c.tasks.update(id, {
+            title: o.title,
+            status: o.status,
+            priority: o.priority,
+            assigneeId: o.assignee,
+            dueDate: o.due,
+          }),
+        );
+      },
+    );
 
   tasks
     .command("rm <id>")
@@ -101,7 +130,7 @@ export function registerTasks(program: Command): void {
     .command("projects")
     .description("List projects")
     .option("--status <status>", "active | archived | all")
-    .action(async (o) => {
+    .action(async (o: { status?: "active" | "archived" | "all" }) => {
       const c = await requireClient();
       printJson(await c.tasks.projects(o.status));
     });
