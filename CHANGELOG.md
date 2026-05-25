@@ -19,6 +19,9 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `unison --version` now reports the real package version (read from
   `package.json` at runtime) instead of a hardcoded string that drifted out of
   sync with the published release.
+- The MCP server (`@unisonlabs/mcp`) now reports its version from `package.json`
+  at runtime instead of a hardcoded `0.1.0` that had drifted from the published
+  package.
 
 ## [0.1.0] - 2026-05-23
 

@@ -1,9 +1,17 @@
 #!/usr/bin/env node
+import { readFileSync } from "node:fs";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { BrainClient } from "@unisonlabs/sdk";
 import { z } from "zod";
 import { registerDomainTools } from "./domains";
+
+// Read from package.json at runtime so the server reports the real published
+// version (npm includes package.json next to dist/ in the tarball). Resolved
+// relative to this module, so it works both from dist/ and `bun run src`.
+const { version: VERSION } = JSON.parse(
+  readFileSync(new URL("../package.json", import.meta.url), "utf8"),
+) as { version: string };
 
 const apiUrl = process.env.UNISON_API_URL ?? "https://api.unisonlabs.ai";
 const token = process.env.UNISON_TOKEN;
@@ -22,7 +30,7 @@ function asText(data: unknown) {
   return { content: [{ type: "text" as const, text: JSON.stringify(data, null, 2) }] };
 }
 
-const server = new McpServer({ name: "unison-brain", version: "0.1.0" });
+const server = new McpServer({ name: "unison-brain", version: VERSION });
 
 server.tool(
   "brain_search",
