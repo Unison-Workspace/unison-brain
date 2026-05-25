@@ -3,17 +3,24 @@ import { readFileSync } from "node:fs";
 import { BrainError } from "@unisonlabs/sdk";
 import { Command } from "commander";
 import { registerAuth } from "./commands/auth";
+import { registerCalendar } from "./commands/calendar";
+import { registerChat } from "./commands/chat";
 import { registerCompletion } from "./commands/completion";
+import { registerCrm } from "./commands/crm";
 import { registerDocs } from "./commands/docs";
 import { registerEntity } from "./commands/entity";
 import { registerFact } from "./commands/fact";
 import { registerGet } from "./commands/get";
 import { registerJobs } from "./commands/jobs";
 import { registerList } from "./commands/list";
+import { registerMail } from "./commands/mail";
+import { registerPeople } from "./commands/people";
 import { registerReview } from "./commands/review";
 import { registerSearch } from "./commands/search";
 import { registerSkill } from "./commands/skill";
 import { registerStatus } from "./commands/status";
+import { registerTasks } from "./commands/tasks";
+import { registerWorkspace } from "./commands/workspace";
 import { registerWrite } from "./commands/write";
 import { fail, info } from "./output";
 
@@ -67,6 +74,14 @@ registerDocs(program);
 // Graph
 registerEntity(program);
 registerFact(program);
+// Domains (Phase G) — the full /v1 surface
+registerTasks(program);
+registerWorkspace(program);
+registerMail(program);
+registerChat(program);
+registerCrm(program);
+registerCalendar(program);
+registerPeople(program);
 // Admin
 registerReview(program);
 registerJobs(program);

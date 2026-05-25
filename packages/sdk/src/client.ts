@@ -1,3 +1,11 @@
+import type { RequestFn } from "./domains/_request";
+import { type CalendarApi, createCalendarApi } from "./domains/calendar";
+import { type ChatApi, createChatApi } from "./domains/chat";
+import { type CrmApi, createCrmApi } from "./domains/crm";
+import { type MailApi, createMailApi } from "./domains/mail";
+import { type PeopleApi, createPeopleApi } from "./domains/people";
+import { type TasksApi, createTasksApi } from "./domains/tasks";
+import { type WorkspaceApi, createWorkspaceApi } from "./domains/workspace";
 import { API_VERSION, parseResponse, qs, stripTrailingSlash } from "./http";
 import type {
   BrainClientOptions,
@@ -71,6 +79,15 @@ export class BrainClient {
   readonly links: LinksApi;
   readonly review: ReviewApi;
   readonly jobs: JobsApi;
+
+  // Domain APIs over the same /v1 surface (Phase G).
+  readonly tasks: TasksApi;
+  readonly workspace: WorkspaceApi;
+  readonly mail: MailApi;
+  readonly chat: ChatApi;
+  readonly crm: CrmApi;
+  readonly calendar: CalendarApi;
+  readonly people: PeopleApi;
 
   private readonly baseUrl: string;
   private readonly token?: string;
@@ -160,6 +177,16 @@ export class BrainClient {
       retry: (jobId) =>
         this.req<{ retried: boolean }>("POST", `/brain/jobs/${encodeURIComponent(jobId)}/retry`),
     };
+
+    // Domain APIs share the same transport (prefixes /v1).
+    const request: RequestFn = (method, path, body) => this.req(method, path, body);
+    this.tasks = createTasksApi(request);
+    this.workspace = createWorkspaceApi(request);
+    this.mail = createMailApi(request);
+    this.chat = createChatApi(request);
+    this.crm = createCrmApi(request);
+    this.calendar = createCalendarApi(request);
+    this.people = createPeopleApi(request);
   }
 
   // ── Documents ──────────────────────────────────────────────────────────

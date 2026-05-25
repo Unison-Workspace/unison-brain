@@ -3,6 +3,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { BrainClient } from "@unisonlabs/sdk";
 import { z } from "zod";
+import { registerDomainTools } from "./domains";
 
 const apiUrl = process.env.UNISON_API_URL ?? "https://api.unisonlabs.ai";
 const token = process.env.UNISON_TOKEN;
@@ -140,5 +141,9 @@ server.tool(
     return asText(await client.status());
   },
 );
+
+// Phase G — register the non-brain domain tools (tasks/workspace/mail/chat/crm/
+// calendar/people) over the same /v1 client.
+registerDomainTools({ server, client, ensureAuth, asText });
 
 await server.connect(new StdioServerTransport());
