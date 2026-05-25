@@ -8,6 +8,11 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- **Full `/v1` domain surface** (Phase G) across the SDK, CLI, and MCP. New
+  per-domain clients, command groups, and tools for `tasks`, `workspace`
+  (`work`), `mail`, `chat`, `crm`, `cal`(endar), and `people` — agent access now
+  spans the whole workspace, not just the brain. Inputs are typed; domain
+  outputs pass through the server's responses as loose `JsonRecord` for now.
 - A pixel-art brain mascot (`assets/brain.svg`) in the README header.
 
 ### Fixed
@@ -15,6 +20,9 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `unison --version` now reports the real package version (read from
   `package.json` at runtime) instead of a hardcoded string that drifted out of
   sync with the published release.
+- The MCP server (`@unisonlabs/mcp`) now reports its version from `package.json`
+  at runtime instead of a hardcoded `0.1.0` that had drifted from the published
+  package.
 
 ## [0.1.0] - 2026-05-23
 
