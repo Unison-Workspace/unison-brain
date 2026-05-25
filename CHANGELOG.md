@@ -6,6 +6,10 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+
+- A pixel-art brain mascot (`assets/brain.svg`) in the README header.
+
 ### Fixed
 
 - `unison --version` now reports the real package version (read from
