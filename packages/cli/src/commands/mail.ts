@@ -83,12 +83,38 @@ export function registerMail(program: Command): void {
 
   mail
     .command("draft")
-    .description("Get the draft for a thread")
-    .requiredOption("--thread <id>")
-    .action(async (o: { thread: string }) => {
-      const c = await requireClient();
-      printJson(await c.mail.draft(o.thread));
-    });
+    .description("Draft an email into the in-app review surface (new email, or reply-in-thread)")
+    .option("--to <addr...>", "Recipient(s) for a new email")
+    .option("--cc <addr...>")
+    .option("--subject <subject>")
+    .option("--body <body>")
+    .option("--reply-to-thread <id>", "Reply within a Gmail thread (recipients + subject derived)")
+    .option("--reply-mode <mode>", "reply | reply_all")
+    .option("--session <id>", "Agent session to attach to (defaults to $UNISON_SESSION_ID)")
+    .action(
+      async (o: {
+        to?: string[];
+        cc?: string[];
+        subject?: string;
+        body?: string;
+        replyToThread?: string;
+        replyMode?: "reply" | "reply_all";
+        session?: string;
+      }) => {
+        const c = await requireClient();
+        printJson(
+          await c.mail.draft({
+            to: o.to,
+            cc: o.cc,
+            subject: o.subject,
+            body: o.body,
+            replyToThreadId: o.replyToThread,
+            replyMode: o.replyMode,
+            sessionId: o.session,
+          }),
+        );
+      },
+    );
 
   // Agent-first: these commands always emit JSON. Accept the documented --json
   // flag for parity so `unison mail <cmd> --json` doesn't error.

@@ -21,7 +21,7 @@ import {
 import { fail, info, printJson, success } from "../output";
 import { readStdin } from "../stdin";
 
-const SCOPES = ["brain:read", "brain:write", "brain:admin"];
+const SCOPES = ["brain:read", "brain:write", "brain:admin", "work:read", "work:write"];
 const sleep = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
 
 function resultPage(title: string, detail: string): string {

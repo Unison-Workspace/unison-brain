@@ -52,7 +52,7 @@ server.tool(
 server.tool(
   "brain_get",
   "Read a single document from the Unison brain by its path.",
-  { path: z.string().describe("Document path, e.g. /wiki/architecture") },
+  { path: z.string().describe("Document path, e.g. /tenant/projects/architecture.md") },
   async ({ path }) => {
     ensureAuth();
     return asText(await client.get(path));
@@ -63,7 +63,7 @@ server.tool(
   "brain_list",
   "List documents in the Unison brain under a path prefix.",
   {
-    prefix: z.string().optional().describe("Path prefix, e.g. /wiki"),
+    prefix: z.string().optional().describe("Path prefix, e.g. /private or /tenant/people"),
     limit: z.number().int().positive().optional().describe("Max items (default 100)"),
   },
   async ({ prefix, limit }) => {
@@ -74,9 +74,9 @@ server.tool(
 
 server.tool(
   "brain_write",
-  "Write or update a document in the Unison brain so the knowledge persists across sessions and machines. Only /wiki/, /skills/, /actions/ paths are writable.",
+  "Write or update a document in the Unison brain so the knowledge persists across sessions and machines. Writable roots: /private/… (e.g. /private/notes/<slug>.md), /tenant/… (e.g. /tenant/people/<slug>.md), and /teams/<slug>/… . A bare name routes to /private/notes/; legacy /wiki, /actions, /skills roots are gone.",
   {
-    path: z.string().describe("Document path, e.g. /wiki/auth-decision"),
+    path: z.string().describe("Document path, e.g. /private/notes/auth-decision.md"),
     bodyMd: z.string().describe("Markdown content"),
     title: z.string().optional(),
     tags: z.array(z.string()).optional(),
@@ -84,6 +84,20 @@ server.tool(
   async ({ path, bodyMd, title, tags }) => {
     ensureAuth();
     return asText(await client.write({ path, bodyMd, title, tags }));
+  },
+);
+
+server.tool(
+  "brain_edit",
+  "Surgically edit a brain document in place: replace an exact substring (oldStr) with newStr. oldStr must match exactly once — add surrounding context to disambiguate. Cheaper and safer than rewriting the whole doc with brain_write.",
+  {
+    path: z.string().describe("Document path, e.g. /private/notes/auth-decision.md"),
+    oldStr: z.string().describe("Exact text to replace (must occur exactly once)"),
+    newStr: z.string().describe("Replacement text"),
+  },
+  async ({ path, oldStr, newStr }) => {
+    ensureAuth();
+    return asText(await client.editDoc({ path, oldStr, newStr }));
   },
 );
 
@@ -150,8 +164,18 @@ server.tool(
   },
 );
 
-// Phase G — register the non-brain domain tools (tasks/workspace/mail/chat/crm/
-// calendar/people) over the same /v1 client.
+server.tool(
+  "web_search",
+  "Search the open web (server-side web-search proxy). The only route to the open web — use it to verify a claim or gather external facts the brain doesn't already have.",
+  { query: z.string().describe("Search query") },
+  async ({ query }) => {
+    ensureAuth();
+    return asText(await client.research.search(query));
+  },
+);
+
+// Register the non-brain domain tools (work/mail/chat/calendar/people) over the
+// same /v1 client.
 registerDomainTools({ server, client, ensureAuth, asText });
 
 await server.connect(new StdioServerTransport());

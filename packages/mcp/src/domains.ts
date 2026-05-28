@@ -1,9 +1,14 @@
-// Phase G — MCP tools for the non-brain /v1 domains (tasks, workspace, mail,
-// chat, crm, calendar, people). Registered alongside the brain tools so a
-// chat-only / IDE-embedded agent can act over the whole surface, not just memory.
+// MCP tools for the non-brain /v1 domains (work, mail, chat, calendar, people).
+// Registered alongside the brain tools so a chat-only / IDE-embedded agent can
+// act over the whole surface, not just memory.
+//
+// Work is intentionally a small set of tools, not one-per-op: `work_apply` for
+// all writes (it takes the operation DSL directly, matching the in-app agent's
+// tool shape) plus read helpers. Fanning out all ~47 ops would blow past the
+// "use Tool Search when >20 tools" threshold.
 
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { BrainClient } from "@unisonlabs/sdk";
+import type { BrainClient, WorkOperation } from "@unisonlabs/sdk";
 import { z } from "zod";
 
 interface Deps {
@@ -14,70 +19,81 @@ interface Deps {
 }
 
 export function registerDomainTools({ server, client, ensureAuth, asText }: Deps): void {
-  // ── Tasks ──────────────────────────────────────────────────────────────
+  // ── Work ───────────────────────────────────────────────────────────────
   server.tool(
-    "tasks_list",
-    "List tasks, optionally filtered by project/board/assignee or a search term.",
+    "work_apply",
+    "Apply Work primitive operations (the canonical write path for folders, documents, tables, fields, records, record sets, views, artifacts, and assets). Pass the operation DSL directly. Set dryRun to validate without writing.",
     {
-      project: z.string().optional(),
-      board: z.string().optional(),
-      assignee: z.string().optional(),
-      search: z.string().optional(),
-      limit: z.number().int().positive().optional(),
+      operations: z
+        .array(z.record(z.string(), z.unknown()))
+        .describe(
+          'Operation DSL objects, each with an "op" discriminator, e.g. { op: "record.upsert", tableId, values }',
+        ),
+      dryRun: z.boolean().optional(),
     },
-    async ({ project, board, assignee, search, limit }) => {
+    async ({ operations, dryRun }) => {
       ensureAuth();
       return asText(
-        await client.tasks.list({
-          projectId: project,
-          taskBoardId: board,
-          assigneeId: assignee,
-          search,
-          limit,
-        }),
+        await client.work.apply({ operations: operations as unknown as WorkOperation[], dryRun }),
       );
     },
   );
   server.tool(
-    "tasks_create",
-    "Create a task. Provide a project or board to file it under.",
+    "work_query",
+    "Query a Work view by id (returns the view's records with its filters/sorts applied).",
     {
-      title: z.string(),
-      description: z.string().optional(),
-      project: z.string().optional(),
-      board: z.string().optional(),
-      priority: z.string().optional(),
-      assignee: z.string().optional(),
-      dueDate: z.string().optional(),
+      viewId: z.string(),
+      query: z
+        .record(z.string(), z.unknown())
+        .optional()
+        .describe("Optional filters / sorts / limit"),
     },
-    async ({ title, description, project, board, priority, assignee, dueDate }) => {
+    async ({ viewId, query }) => {
       ensureAuth();
-      return asText(
-        await client.tasks.create({
-          title,
-          description,
-          projectId: project,
-          taskBoardId: board,
-          priority,
-          assigneeId: assignee,
-          dueDate,
-        }),
-      );
+      return asText(await client.work.query({ viewId, query }));
     },
   );
-
-  // ── Workspace ──────────────────────────────────────────────────────────
-  server.tool("workspace_team_spaces", "List the workspace team spaces.", {}, async () => {
-    ensureAuth();
-    return asText(await client.workspace.teamSpaces());
-  });
   server.tool(
-    "workspace_tree",
-    "List the node tree (folders + artifacts) of a team space.",
-    { teamSpaceId: z.string() },
+    "work_search",
+    "Search across Work folders, artifacts, documents, tables, records, and assets.",
+    { query: z.string(), limit: z.number().int().positive().optional() },
+    async ({ query, limit }) => {
+      ensureAuth();
+      return asText(await client.work.search({ query, limit }));
+    },
+  );
+  server.tool(
+    "work_inspect",
+    "Inspect a single Work primitive by kind and id.",
+    {
+      kind: z.enum(["folder", "artifact", "document", "table", "record_set", "view", "asset"]),
+      id: z.string(),
+    },
+    async ({ kind, id }) => {
+      ensureAuth();
+      return asText(await client.work.inspect({ kind, id }));
+    },
+  );
+  server.tool(
+    "work_tree",
+    "Read the Work folder + artifact tree (optionally scoped to a team space).",
+    { teamSpaceId: z.string().optional() },
     async ({ teamSpaceId }) => {
       ensureAuth();
-      return asText(await client.workspace.tree(teamSpaceId));
+      return asText(await client.work.tree({ teamSpaceId }));
+    },
+  );
+  server.tool("work_folder", "Get a Work folder by id.", { id: z.string() }, async ({ id }) => {
+    ensureAuth();
+    return asText(await client.work.folder(id));
+  });
+  server.tool(
+    "work_artifact",
+    "Get a mounted Work artifact by id.",
+    { id: z.string() },
+    async ({ id }) => {
+      ensureAuth();
+      return asText(await client.work.artifact(id));
     },
   );
 
@@ -122,30 +138,6 @@ export function registerDomainTools({ server, client, ensureAuth, asText }: Deps
     async ({ channelId, content }) => {
       ensureAuth();
       return asText(await client.chat.send({ channelId, content }));
-    },
-  );
-
-  // ── CRM ────────────────────────────────────────────────────────────────
-  server.tool(
-    "crm_search_records",
-    "Search CRM records (people, companies, deals, …).",
-    {
-      query: z.string(),
-      objectSlug: z.string().optional(),
-      limit: z.number().int().positive().optional(),
-    },
-    async ({ query, objectSlug, limit }) => {
-      ensureAuth();
-      return asText(await client.crm.searchRecords({ q: query, objectSlug, limit }));
-    },
-  );
-  server.tool(
-    "crm_create_note",
-    "Add a note to a CRM record.",
-    { recordId: z.string(), bodyMd: z.string() },
-    async ({ recordId, bodyMd }) => {
-      ensureAuth();
-      return asText(await client.crm.createNote({ recordId, bodyMd }));
     },
   );
 

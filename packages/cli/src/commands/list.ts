@@ -124,7 +124,7 @@ export function registerList(program: Command): void {
 
   program
     .command("find <glob>")
-    .description("Find documents whose path matches a glob (e.g. '/wiki/**', '*auth*')")
+    .description("Find documents whose path matches a glob (e.g. '/private/**', '*auth*')")
     .option("-k, --limit <n>", "Max documents to scan", "1000")
     .option("--json", "Output JSON")
     .action(async (glob: string, opts: { limit: string; json?: boolean }) => {
