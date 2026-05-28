@@ -77,34 +77,36 @@ skill wraps the CLI — one API contract, four surfaces.
 ## Quickstart
 
 ```bash
-unison auth login                 # opens your browser to sign in
-unison status                     # confirm you're connected
-unison search "auth decision"     # search the brain
-unison get /wiki/architecture.md  # read a document
-echo "We chose X because Y." | unison write /wiki/x.md   # paths end in .md
-unison entity resolve "Daniel"    # knowledge-graph lookup
-unison fact ls --entity <id>      # facts about an entity
+unison auth login                          # opens your browser to sign in
+unison status                              # confirm you're connected
+unison search "auth decision"              # search the brain
+unison get /tenant/projects/architecture.md   # read a document
+echo "We chose X because Y." | unison write /private/notes/x.md   # paths end in .md
+unison edit /private/notes/x.md --old "X" --new "Z"   # surgical in-place edit
+unison entity resolve "Daniel"             # knowledge-graph lookup
+unison fact ls --entity <id>               # facts about an entity
 ```
 
-Documents: `search`, `grep`, `cat`/`get`, `ls`, `tree`, `find`, `write`, `rm`,
-`tag`, `share`, `neighbors`, `links`, `link`. Graph: `entity …`, `fact …`,
-`timeline`. Admin: `review …`, `jobs …`. Add `--json` to any command. Full
-surface and the backend contract are in [`SPEC.md`](./SPEC.md).
+Documents: `search`, `grep`, `cat`/`get`, `ls`, `tree`, `find`, `write`, `edit`,
+`rm`, `tag`, `share`, `neighbors`, `links`, `link`. Graph: `entity …`, `fact …`,
+`timeline`. Work (tasks/docs/tables/records/views): `work apply`, `work query`,
+`work search`, `work tree`, … Admin: `review …`, `jobs …`. Add `--json` to any
+command. Full surface and the backend contract are in [`SPEC.md`](./SPEC.md).
 
 ## Browse the brain like a filesystem
 
-The brain is path-addressable (`/wiki/`, `/sources/`, `/raw/`, `/system/`), so it
-navigates with the commands you already know:
+The brain is path-addressable (`/private/`, `/tenant/`, `/teams/<slug>/`,
+`/system/`), so it navigates with the commands you already know:
 
 ```bash
-unison ls                       # entries at the root (dirs + files)
-unison ls /wiki                 # entries under /wiki
-unison ls /wiki --docs          # documents with titles instead of the dir view
-unison tree /wiki               # recursive tree under /wiki
-unison find '/wiki/**auth*'     # paths matching a glob
-unison cat /wiki/architecture.md  # read a document (alias of `get`)
-unison cat --raw '/system/...'  # read any tier, including synthetic ones
-unison grep "TODO" --json       # regex scan over document bodies
+unison ls                          # entries at the root (dirs + files)
+unison ls /private                 # entries under /private
+unison ls /tenant/people --docs    # documents with titles instead of the dir view
+unison tree /private               # recursive tree under /private
+unison find '/private/**auth*'     # paths matching a glob
+unison cat /tenant/projects/architecture.md  # read a document (alias of `get`)
+unison cat --raw '/system/...'     # read any tier, including synthetic ones
+unison grep "TODO" --json          # regex scan over document bodies
 ```
 
 ## Query the knowledge graph
@@ -117,7 +119,7 @@ id=$(unison entity resolve "Daniel" --json | jq -r .entity.id)
 unison fact ls --entity "$id"          # what the brain knows about Daniel
 unison timeline "$id"                   # facts over time
 unison fact add "$id" works_at "Joined Unison in 2026" --confidence 0.9
-unison neighbors /wiki/architecture.md  # linked documents
+unison neighbors /tenant/projects/architecture.md  # linked documents
 ```
 
 ## For agents
@@ -135,7 +137,7 @@ skill in with `unison skill install`, or run `unison --help` / `unison <cmd>
 
 ```bash
 unison search "rate limiting" -k 5 --json | jq '.[].doc.path'
-unison get /wiki/architecture.md --json
+unison get /tenant/projects/architecture.md --json
 ```
 
 ## Authentication
@@ -203,8 +205,18 @@ unison completion fish > ~/.config/fish/completions/unison.fish
 
 ```ts
 import { BrainClient } from "@unisonlabs/sdk";
-const brain = new BrainClient({ baseUrl: "https://api.unisonlabs.ai", token: process.env.UNISON_TOKEN });
-const hits = await brain.search("auth decision", { limit: 5 });
+const u = new BrainClient({ baseUrl: "https://api.unisonlabs.ai", token: process.env.UNISON_TOKEN });
+
+// Brain: search, write, and surgically edit knowledge.
+const hits = await u.search("auth decision", { limit: 5 });
+await u.write({ path: "/private/notes/auth.md", bodyMd: "We chose device-flow because …" });
+await u.editDoc({ path: "/private/notes/auth.md", oldStr: "device-flow", newStr: "PKCE device-flow" });
+
+// Work: one apply endpoint takes the operation DSL (tasks/docs/tables/records/views).
+await u.work.apply({
+  operations: [{ op: "record.upsert", tableId: { ref: "tasks" }, primaryText: "Ship SDK v1" }],
+});
+const tasks = await u.work.search({ query: "ship", limit: 5 });
 ```
 
 See [`examples/`](./examples) for more.

@@ -1,11 +1,12 @@
 import type { RequestFn } from "./domains/_request";
 import { type CalendarApi, createCalendarApi } from "./domains/calendar";
 import { type ChatApi, createChatApi } from "./domains/chat";
-import { type CrmApi, createCrmApi } from "./domains/crm";
 import { type MailApi, createMailApi } from "./domains/mail";
 import { type PeopleApi, createPeopleApi } from "./domains/people";
-import { type TasksApi, createTasksApi } from "./domains/tasks";
-import { type WorkspaceApi, createWorkspaceApi } from "./domains/workspace";
+import { type ResearchApi, createResearchApi } from "./domains/research";
+import { type WorkApi, createWorkApi } from "./domains/work";
+import { BrainError } from "./errors";
+import { routeBrainWritePath } from "./fs-contract";
 import { API_VERSION, parseResponse, qs, stripTrailingSlash } from "./http";
 import type {
   BrainClientOptions,
@@ -80,14 +81,13 @@ export class BrainClient {
   readonly review: ReviewApi;
   readonly jobs: JobsApi;
 
-  // Domain APIs over the same /v1 surface (Phase G).
-  readonly tasks: TasksApi;
-  readonly workspace: WorkspaceApi;
+  // Domain APIs over the same /v1 surface.
+  readonly work: WorkApi;
   readonly mail: MailApi;
   readonly chat: ChatApi;
-  readonly crm: CrmApi;
   readonly calendar: CalendarApi;
   readonly people: PeopleApi;
+  readonly research: ResearchApi;
 
   private readonly baseUrl: string;
   private readonly token?: string;
@@ -178,15 +178,15 @@ export class BrainClient {
         this.req<{ retried: boolean }>("POST", `/brain/jobs/${encodeURIComponent(jobId)}/retry`),
     };
 
-    // Domain APIs share the same transport (prefixes /v1).
+    // Domain APIs share the same transport (prefixes /v1). work.assets.upload
+    // also PUTs to absolute signed URLs, so it gets the raw fetch impl.
     const request: RequestFn = (method, path, body) => this.req(method, path, body);
-    this.tasks = createTasksApi(request);
-    this.workspace = createWorkspaceApi(request);
+    this.work = createWorkApi(request, this.fetchImpl);
     this.mail = createMailApi(request);
     this.chat = createChatApi(request);
-    this.crm = createCrmApi(request);
     this.calendar = createCalendarApi(request);
     this.people = createPeopleApi(request);
+    this.research = createResearchApi(request);
   }
 
   // ── Documents ──────────────────────────────────────────────────────────
@@ -235,8 +235,40 @@ export class BrainClient {
     );
   }
 
-  write(input: WriteInput): Promise<BrainDocument> {
-    return this.req<BrainDocument>("PUT", "/brain/doc", input);
+  async write(input: WriteInput): Promise<BrainDocument> {
+    // Route through the FS contract: bare/unqualified paths default to
+    // /private/notes/<slug>.md; non-contract namespaces fail fast. The server's
+    // checkWritable remains authoritative — this just turns a 4xx into a clear
+    // client error and applies the same default routing the in-app agent gets.
+    // async so a routing error surfaces as a rejection, not a sync throw.
+    const path = routeBrainWritePath(input.path);
+    return this.req<BrainDocument>("PUT", "/brain/doc", { ...input, path });
+  }
+
+  /**
+   * Surgical in-place edit, mirroring Claude Code's `Edit`: replace an exact
+   * `oldStr` with `newStr`. `oldStr` must match the document body exactly once,
+   * or the edit refuses (add surrounding context to disambiguate).
+   *
+   * Routes to `PATCH /brain/doc`, which performs the match + replace
+   * server-side inside the write transaction — atomic and uniqueness-checked,
+   * so there is no racy client read-modify-write and metadata is preserved.
+   * Pass `expectedContentHash` for optimistic-concurrency on hot docs.
+   */
+  async editDoc(input: {
+    path: string;
+    oldStr: string;
+    newStr: string;
+    expectedContentHash?: string;
+  }): Promise<BrainDocument> {
+    if (input.oldStr === input.newStr) {
+      throw new BrainError(
+        "edit_noop",
+        "oldStr and newStr are identical — nothing to change.",
+        422,
+      );
+    }
+    return this.req<BrainDocument>("PATCH", "/brain/doc", input);
   }
 
   delete(path: string): Promise<{ deleted: boolean }> {

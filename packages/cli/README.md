@@ -14,16 +14,19 @@ unison auth login             # browser sign-in (or UNISON_TOKEN=usk_... for CI)
 
 ```bash
 unison search "auth decision" -k 5      # hybrid keyword + semantic search
-unison cat /wiki/architecture.md         # read a document (alias of get)
-unison ls /wiki                          # directory view; also: tree, find
-echo "We chose X because Y." | unison write /wiki/x.md   # paths end in .md
+unison cat /tenant/projects/architecture.md   # read a document (alias of get)
+unison ls /private                       # directory view; also: tree, find
+echo "We chose X because Y." | unison write /private/notes/x.md   # paths end in .md
+unison edit /private/notes/x.md --old "X" --new "Z"   # surgical in-place edit
+unison work search "vendors"             # search the Work surface (tasks/docs/tables)
 unison entity resolve "Daniel"           # knowledge-graph lookup
-unison fact ls --entity <id>             # facts about an entity
 unison skill install                     # drop the Agent Skill into ~/.claude/skills
 ```
 
-Documents: `search`, `grep`, `cat`/`get`, `ls`, `tree`, `find`, `write`, `rm`,
-`tag`, `share`, `neighbors`, `links`, `link`. Graph: `entity`, `fact`, `timeline`.
+Documents: `search`, `grep`, `cat`/`get`, `ls`, `tree`, `find`, `write`, `edit`,
+`rm`, `tag`, `share`, `neighbors`, `links`, `link`. Work: `work apply`,
+`work query`, `work search`, `work inspect`, `work tree`, `work folder`,
+`work artifact`, `work table`, `work view`. Graph: `entity`, `fact`, `timeline`.
 Admin: `review`, `jobs`. Run `unison --help` or `unison <cmd> --help`.
 
 ## For agents

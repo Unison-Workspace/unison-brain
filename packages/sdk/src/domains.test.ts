@@ -16,40 +16,69 @@ function client(handler: (url: string, init?: RequestInit) => Response): BrainCl
 }
 
 describe("domain clients build correct /v1 requests", () => {
-  test("tasks.list unwraps {tasks} and passes filters", async () => {
+  test("work.apply POSTs operations to /v1/work/apply", async () => {
     let url = "";
-    const c = client((u) => {
-      url = u;
-      return json({ tasks: [{ id: "t1" }] });
-    });
-    const res = await c.tasks.list({ projectId: "p1", limit: 5 });
-    expect(url).toContain("/v1/tasks?");
-    expect(url).toContain("projectId=p1");
-    expect(url).toContain("limit=5");
-    expect(res).toEqual([{ id: "t1" }]);
-  });
-
-  test("tasks.create POSTs the body", async () => {
     let method = "";
     let body = "";
-    const c = client((_u, init) => {
+    const c = client((u, init) => {
+      url = u;
       method = init?.method ?? "";
       body = String(init?.body ?? "");
-      return json({ id: "t2" });
+      return json({ results: [{ id: "rec1" }] });
     });
-    await c.tasks.create({ title: "Do it", priority: "high" });
+    await c.work.apply({
+      operations: [{ op: "record.upsert", tableId: { ref: "t" }, primaryText: "Acme" }],
+    });
+    expect(url).toContain("/v1/work/apply");
+    expect(url).not.toContain("apply:dry-run");
     expect(method).toBe("POST");
-    expect(JSON.parse(body)).toEqual({ title: "Do it", priority: "high" });
+    expect(JSON.parse(body).operations[0].op).toBe("record.upsert");
   });
 
-  test("workspace.tree unwraps {nodes} with teamSpaceId", async () => {
+  test("work.apply routes dryRun to /v1/work/apply:dry-run", async () => {
     let url = "";
     const c = client((u) => {
       url = u;
-      return json({ nodes: [] });
+      return json({ results: [] });
     });
-    await c.workspace.tree("ts1");
-    expect(url).toContain("/v1/workspace/tree?teamSpaceId=ts1");
+    await c.work.apply({ operations: [{ op: "folder.create", name: "X" }], dryRun: true });
+    expect(url).toContain("/v1/work/apply:dry-run");
+  });
+
+  test("work.search POSTs {query, limit} to /v1/work/search", async () => {
+    let url = "";
+    let body = "";
+    const c = client((u, init) => {
+      url = u;
+      body = String(init?.body ?? "");
+      return json({ results: [] });
+    });
+    await c.work.search({ query: "vendors", limit: 5 });
+    expect(url).toContain("/v1/work/search");
+    expect(JSON.parse(body)).toEqual({ query: "vendors", limit: 5 });
+  });
+
+  test("work.tree GETs /v1/work/tree with teamSpaceId", async () => {
+    let url = "";
+    const c = client((u) => {
+      url = u;
+      return json({ folders: [], artifacts: [] });
+    });
+    await c.work.tree({ teamSpaceId: "ts1" });
+    expect(url).toContain("/v1/work/tree?teamSpaceId=ts1");
+  });
+
+  test("work.viewQuery POSTs to /v1/work/views/:id/query", async () => {
+    let url = "";
+    let method = "";
+    const c = client((u, init) => {
+      url = u;
+      method = init?.method ?? "";
+      return json({ rows: [] });
+    });
+    await c.work.viewQuery("v1", { limit: 10 });
+    expect(url).toContain("/v1/work/views/v1/query");
+    expect(method).toBe("POST");
   });
 
   test("mail.send POSTs to /v1/mail/send", async () => {
@@ -73,18 +102,6 @@ describe("domain clients build correct /v1 requests", () => {
     });
     await c.chat.send({ channelId: "c1", content: "yo" });
     expect(url).toContain("/v1/chat/messages");
-  });
-
-  test("crm.searchRecords builds the search query", async () => {
-    let url = "";
-    const c = client((u) => {
-      url = u;
-      return json({ results: [] });
-    });
-    await c.crm.searchRecords({ q: "jane", objectSlug: "people", limit: 3 });
-    expect(url).toContain("/v1/crm/records/search?");
-    expect(url).toContain("q=jane");
-    expect(url).toContain("objectSlug=people");
   });
 
   test("calendar.events unwraps {events} with the range", async () => {

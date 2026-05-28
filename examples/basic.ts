@@ -30,13 +30,21 @@ if (hits[0]) {
   console.log(`\n--- ${doc.path} ---\n${doc.bodyMd.slice(0, 400)}`);
 }
 
-// 3. Write a note (requires the key to have brain:write).
+// 3. Write a note (requires the key to have brain:write). Paths follow the FS
+//    contract: /private/… is your private space; a bare name routes there too.
 const note = await client.write({
-  path: "/wiki/sdk-example",
+  path: "/private/notes/sdk-example.md",
   bodyMd: `Written by examples/basic.ts at ${new Date().toISOString()}`,
   title: "SDK example",
 });
 console.log(`\nWrote ${note.path}`);
 
-// 4. Brain health.
+// 4. Surgical in-place edit — replace an exact string without rewriting the doc.
+await client.editDoc({ path: note.path, oldStr: "Written by", newStr: "Updated by" });
+
+// 5. Search the Work surface (tasks/docs/tables/records) — needs a work:read key.
+const work = await client.work.search({ query, limit: 5 });
+console.log("\nWork search:", JSON.stringify(work).slice(0, 300));
+
+// 6. Brain health.
 console.log("\nStatus:", await client.status());

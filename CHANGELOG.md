@@ -6,13 +6,60 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [1.0.0]
+
+**Breaking change.** The server collapsed `/v1/tasks`, `/v1/workspace`, and
+`/v1/crm` into a single `/v1/work` surface with an operation-DSL apply endpoint.
+This release tracks that change: the `tasks`, `workspace`, and `crm` domains are
+**removed** (no compat alias — they would 404 against a current server) and a new
+`work` domain replaces them. Pin `@unisonlabs/sdk@^0.2` if you still talk to a
+pre-`/v1/work` server.
+
+### Removed
+
+- `u.tasks.*`, `u.workspace.*`, `u.crm.*` (SDK); the `tasks`, `crm`, and
+  `workspace` CLI command groups; and the `tasks_*` / `workspace_*` / `crm_*`
+  MCP tools. All of `/v1/tasks/*`, `/v1/workspace/*`, and `/v1/crm/*` are gone.
+
 ### Added
 
-- **Full `/v1` domain surface** (Phase G) across the SDK, CLI, and MCP. New
-  per-domain clients, command groups, and tools for `tasks`, `workspace`
-  (`work`), `mail`, `chat`, `crm`, `cal`(endar), and `people` — agent access now
-  spans the whole workspace, not just the brain. Inputs are typed; domain
-  outputs pass through the server's responses as loose `JsonRecord` for now.
+- **`u.work.*`** (SDK): `apply({ operations, dryRun? })` — the one write entry
+  point, taking the canonical operation DSL — plus `query`, `search`, `inspect`,
+  `tree`, `folder`, `artifact`, `tableSchema`, `viewQuery`, and
+  `assets.upload / create / readUrl`. Operation types ship as
+  `WorkOperation` (a snapshot of the server's `@unison/agent-shared` schemas).
+- **`unison work`** CLI: `apply`, `query`, `search`, `inspect`, `tree`,
+  `folder`, `artifact`, `table`, `view`.
+- **`work_apply` / `work_query` / `work_search` / `work_inspect` / `work_tree` /
+  `work_folder` / `work_artifact`** MCP tools (a focused set — `work_apply`
+  takes the op DSL directly rather than fanning out 47 per-op tools).
+- **Surgical editing**: `u.brain.editDoc({ path, oldStr, newStr })` (SDK — an
+  atomic server-side `str_replace` via `PATCH /brain/doc`, matched + applied in
+  one transaction with a uniqueness check, matching Claude Code's `Edit`
+  semantics), the `unison edit <path> --old … --new …` CLI command, and the
+  `brain_edit` MCP tool.
+- **Web search**: `u.research.search(query)` (SDK), `unison web-search <query>`
+  (CLI), and the `web_search` MCP tool — a server-side proxy that is the
+  client's route to the open web.
+- **FS-contract write routing**: `client.write` now routes through the brain FS
+  contract — a bare or unqualified `*.md` write lands in `/private/notes/<slug>.md`,
+  and a non-contract namespace (legacy `/wiki/`, `/actions/`, `/skills/`, …)
+  fails fast with a clear message before the round-trip. The server's
+  `checkWritable` remains authoritative. Exported as `routeBrainWritePath` /
+  `WRITABLE_BRAIN_ROOTS` / `BrainContractError`.
+
+#### Migration
+
+| Was (`0.2.x`) | Now (`1.0.0`) |
+|---|---|
+| `u.tasks.list(...)` / `u.tasks.create(...)` | `u.work.query({ viewId })` / `u.work.apply({ operations: [{ op: "record.upsert", tableId, values }] })` |
+| `u.crm.searchRecords(...)` / `u.crm.createNote(...)` | `u.work.search({ query })` / `u.work.apply({ operations: [...] })` |
+| `u.workspace.tree(id)` / `u.workspace.createArtifact(...)` | `u.work.tree({ teamSpaceId })` / `u.work.apply({ operations: [{ op: "artifact.mount", ... }] })` |
+| `unison tasks list` / `unison crm …` / `unison workspace …` | `unison work query …` / `unison work search …` / `unison work apply` |
+| `write /wiki/x.md` | `write /private/notes/x.md` (bare names auto-route) |
+
+### Previously unreleased (folded into 1.0.0)
+
 - A pixel-art brain mascot (`assets/brain.svg`) in the README header.
 
 ### Fixed
@@ -56,5 +103,6 @@ Skill) for the hosted Unison brain at `https://api.unisonlabs.ai`.
 - JSON auto-compacts when piped (pretty on a TTY) to save agent tokens.
 - `--help` documents `--json`, env vars, exit codes, and usage examples.
 
-[Unreleased]: https://github.com/Unison-Workspace/unison-brain/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/Unison-Workspace/unison-brain/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/Unison-Workspace/unison-brain/compare/v0.1.0...v1.0.0
 [0.1.0]: https://github.com/Unison-Workspace/unison-brain/releases/tag/v0.1.0

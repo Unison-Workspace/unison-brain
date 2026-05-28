@@ -63,7 +63,7 @@ unison status                 # brain health + document / entity / fact counts
 - **When the user states a decision, convention, or who's-who, persist it** so the
   next agent inherits it:
   ```bash
-  echo "We chose X because Y." | unison write /wiki/<topic>.md   # paths end in .md
+  echo "We chose X because Y." | unison write /private/notes/<topic>.md   # bare names route here too
   unison fact add <entityId> <predicate> "<fact in natural language>"
   ```
 - **When a name, project, or system you lack context on comes up, resolve it**

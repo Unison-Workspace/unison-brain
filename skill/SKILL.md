@@ -29,9 +29,15 @@ unison get <path>                         # read one document (prints raw conten
 unison ls [path]                          # directory view (--docs for titles)
 unison tree [path]                        # recursive tree under a path
 unison write <path> -m "<content>"        # write/update a doc (path ends in .md)
+unison edit <path> --old "…" --new "…"    # surgical in-place edit (old must match once)
 unison neighbors <idOrPath>               # linked documents
 unison status                             # brain health + counts
 ```
+
+Writable paths follow the brain FS contract: `/private/…` (your private notes,
+e.g. `/private/notes/<slug>.md`), `/tenant/…` (workspace-shared, e.g.
+`/tenant/people/<slug>.md`), and `/teams/<slug>/…` (team docs). A bare name like
+`auth.md` routes to `/private/notes/auth.md`; legacy `/wiki/…` paths are gone.
 
 Knowledge graph (when names/relationships matter):
 ```bash
@@ -47,7 +53,7 @@ Add `--json` to any command for machine-readable output you can pipe to `jq`.
 
 ```bash
 unison search "auth approach" -k 5 --json
-cat decision.md | unison write /wiki/auth-2026-05.md
+cat decision.md | unison write /private/notes/auth-2026-05.md
 ```
 
 **For agents:** prefer `--json` — results are JSON on **stdout**; errors are a JSON

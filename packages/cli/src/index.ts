@@ -6,8 +6,8 @@ import { registerAuth } from "./commands/auth";
 import { registerCalendar } from "./commands/calendar";
 import { registerChat } from "./commands/chat";
 import { registerCompletion } from "./commands/completion";
-import { registerCrm } from "./commands/crm";
 import { registerDocs } from "./commands/docs";
+import { registerEdit } from "./commands/edit";
 import { registerEntity } from "./commands/entity";
 import { registerFact } from "./commands/fact";
 import { registerGet } from "./commands/get";
@@ -15,12 +15,12 @@ import { registerJobs } from "./commands/jobs";
 import { registerList } from "./commands/list";
 import { registerMail } from "./commands/mail";
 import { registerPeople } from "./commands/people";
+import { registerResearch } from "./commands/research";
 import { registerReview } from "./commands/review";
 import { registerSearch } from "./commands/search";
 import { registerSkill } from "./commands/skill";
 import { registerStatus } from "./commands/status";
-import { registerTasks } from "./commands/tasks";
-import { registerWorkspace } from "./commands/workspace";
+import { registerWork } from "./commands/work";
 import { registerWrite } from "./commands/write";
 import { fail, info } from "./output";
 
@@ -56,10 +56,12 @@ Exit codes:
 Examples:
   unison auth login
   unison search "auth decision" -k 5 --json
-  unison get /wiki/architecture.md
-  echo "We chose X because Y." | unison write /wiki/x.md
+  unison get /tenant/projects/architecture.md
+  echo "We chose X because Y." | unison write /private/notes/x.md
+  unison edit /private/notes/x.md --old "We chose X" --new "We chose Z"
+  unison work search "vendors" --json
   unison entity resolve "Daniel" --json
-  unison rm /wiki/old --yes        # destructive cmds need --yes when non-interactive
+  unison rm /private/notes/old.md --yes   # destructive cmds need --yes when non-interactive
 `,
   );
 
@@ -69,19 +71,19 @@ registerAuth(program);
 registerSearch(program);
 registerGet(program);
 registerWrite(program);
+registerEdit(program);
 registerList(program);
 registerDocs(program);
 // Graph
 registerEntity(program);
 registerFact(program);
-// Domains (Phase G) — the full /v1 surface
-registerTasks(program);
-registerWorkspace(program);
+// Domains — the full /v1 surface
+registerWork(program);
 registerMail(program);
 registerChat(program);
-registerCrm(program);
 registerCalendar(program);
 registerPeople(program);
+registerResearch(program);
 // Admin
 registerReview(program);
 registerJobs(program);

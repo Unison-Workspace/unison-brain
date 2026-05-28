@@ -40,7 +40,7 @@ describe("BrainClient documents", () => {
     expect(auth).toBe("Bearer tok");
   });
 
-  test("write PUTs the document body", async () => {
+  test("write PUTs the document body to a contract path", async () => {
     let method = "";
     let captured = "";
     const client = new BrainClient({
@@ -49,14 +49,88 @@ describe("BrainClient documents", () => {
       fetch: stubFetch((_u, init) => {
         method = init?.method ?? "";
         captured = String(init?.body ?? "");
-        return json({ id: "1", path: "/wiki/x", kind: "wiki_page", bodyMd: "hi" });
+        return json({ id: "1", path: "/private/notes/x.md", kind: "note", bodyMd: "hi" });
       }),
     });
 
-    const doc = await client.write({ path: "/wiki/x", bodyMd: "hi", kind: "wiki_page" });
+    const doc = await client.write({ path: "/private/notes/x.md", bodyMd: "hi" });
     expect(method).toBe("PUT");
+    expect(JSON.parse(captured).path).toBe("/private/notes/x.md");
     expect(JSON.parse(captured).bodyMd).toBe("hi");
-    expect(doc.path).toBe("/wiki/x");
+    expect(doc.path).toBe("/private/notes/x.md");
+  });
+
+  test("write default-routes a bare name to /private/notes", async () => {
+    let captured = "";
+    const client = new BrainClient({
+      baseUrl: "https://api.test",
+      token: "tok",
+      fetch: stubFetch((_u, init) => {
+        captured = String(init?.body ?? "");
+        return json({
+          id: "1",
+          path: "/private/notes/auth-decision.md",
+          kind: "note",
+          bodyMd: "x",
+        });
+      }),
+    });
+
+    await client.write({ path: "Auth Decision.md", bodyMd: "x" });
+    expect(JSON.parse(captured).path).toBe("/private/notes/auth-decision.md");
+  });
+
+  test("write rejects a non-contract namespace before the round-trip", async () => {
+    let called = false;
+    const client = new BrainClient({
+      baseUrl: "https://api.test",
+      token: "tok",
+      fetch: stubFetch(() => {
+        called = true;
+        return json({});
+      }),
+    });
+
+    await expect(client.write({ path: "/wiki/x.md", bodyMd: "x" })).rejects.toThrow(/FS contract/);
+    expect(called).toBe(false);
+  });
+
+  test("editDoc sends one atomic PATCH with oldStr/newStr (server does match + uniqueness)", async () => {
+    const calls: { method: string; url: string; body: string }[] = [];
+    const client = new BrainClient({
+      baseUrl: "https://api.test",
+      token: "tok",
+      fetch: stubFetch((u, init) => {
+        calls.push({ method: init?.method ?? "", url: u, body: String(init?.body ?? "") });
+        return json({ id: "1", path: "/private/notes/x.md", bodyMd: "alpha BETA gamma" });
+      }),
+    });
+
+    await client.editDoc({ path: "/private/notes/x.md", oldStr: "beta", newStr: "BETA" });
+    // No client read-modify-write: a single PATCH, server matches + replaces.
+    expect(calls).toHaveLength(1);
+    expect(calls[0]?.method).toBe("PATCH");
+    expect(calls[0]?.url).toContain("/v1/brain/doc");
+    const body = JSON.parse(calls[0]?.body ?? "{}");
+    expect(body.oldStr).toBe("beta");
+    expect(body.newStr).toBe("BETA");
+  });
+
+  test("editDoc refuses a no-op (oldStr === newStr) without a round-trip", async () => {
+    let called = false;
+    const client = new BrainClient({
+      baseUrl: "https://api.test",
+      token: "tok",
+      fetch: stubFetch(() => {
+        called = true;
+        return json({ id: "1", path: "/private/notes/x.md" });
+      }),
+    });
+
+    await expect(
+      client.editDoc({ path: "/private/notes/x.md", oldStr: "a", newStr: "a" }),
+    ).rejects.toThrow(/identical/);
+    expect(called).toBe(false);
   });
 });
 
