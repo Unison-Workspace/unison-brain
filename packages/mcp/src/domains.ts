@@ -133,11 +133,42 @@ export function registerDomainTools({ server, client, ensureAuth, asText }: Deps
   });
   server.tool(
     "chat_send",
-    "Send a chat message to a channel.",
+    "Send a chat message to a channel. Confirm with the user before sending.",
     { channelId: z.string(), content: z.string() },
     async ({ channelId, content }) => {
       ensureAuth();
       return asText(await client.chat.send({ channelId, content }));
+    },
+  );
+  server.tool(
+    "chat_messages",
+    "Read recent messages in a chat channel.",
+    {
+      channelId: z.string(),
+      limit: z.number().int().positive().optional(),
+      cursor: z.string().optional(),
+    },
+    async ({ channelId, limit, cursor }) => {
+      ensureAuth();
+      return asText(await client.chat.messages(channelId, { limit, cursor }));
+    },
+  );
+  server.tool(
+    "chat_members",
+    "List or search workspace members to resolve a teammate name to a user id (use before chat_dm). Optional q filters by display name.",
+    { q: z.string().optional() },
+    async ({ q }) => {
+      ensureAuth();
+      return asText(await client.chat.members(q));
+    },
+  );
+  server.tool(
+    "chat_dm",
+    "Open or create a direct-message channel with another user; returns its channelId. Resolve the user id with chat_members first.",
+    { otherUserId: z.string() },
+    async ({ otherUserId }) => {
+      ensureAuth();
+      return asText(await client.chat.openDm(otherUserId));
     },
   );
 

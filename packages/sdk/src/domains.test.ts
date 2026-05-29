@@ -104,6 +104,46 @@ describe("domain clients build correct /v1 requests", () => {
     expect(url).toContain("/v1/chat/messages");
   });
 
+  test("chat.openDm POSTs {otherUserId} to /v1/chat/dms", async () => {
+    let url = "";
+    let method = "";
+    let body = "";
+    const c = client((u, init) => {
+      url = u;
+      method = init?.method ?? "";
+      body = String(init?.body ?? "");
+      return json({ channelId: "dm1" });
+    });
+    const out = await c.chat.openDm("u2");
+    expect(url).toContain("/v1/chat/dms");
+    expect(method).toBe("POST");
+    expect(JSON.parse(body)).toEqual({ otherUserId: "u2" });
+    expect(out).toEqual({ channelId: "dm1" });
+  });
+
+  test("chat.members unwraps {members} and passes q", async () => {
+    let url = "";
+    const c = client((u) => {
+      url = u;
+      return json({ members: [{ id: "u1", name: "Raf" }] });
+    });
+    const out = await c.chat.members("Raf");
+    expect(url).toContain("/v1/chat/members?");
+    expect(url).toContain("q=Raf");
+    expect(out).toEqual([{ id: "u1", name: "Raf" }]);
+  });
+
+  test("chat.members omits the query string when no filter is given", async () => {
+    let url = "";
+    const c = client((u) => {
+      url = u;
+      return json({ members: [] });
+    });
+    await c.chat.members();
+    expect(url).toContain("/v1/chat/members");
+    expect(url).not.toContain("?");
+  });
+
   test("calendar.events unwraps {events} with the range", async () => {
     let url = "";
     const c = client((u) => {

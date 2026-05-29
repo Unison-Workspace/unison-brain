@@ -1,4 +1,5 @@
 import type { RequestFn } from "./domains/_request";
+import { type AgentApi, createAgentApi } from "./domains/agent";
 import { type CalendarApi, createCalendarApi } from "./domains/calendar";
 import { type ChatApi, createChatApi } from "./domains/chat";
 import { type MailApi, createMailApi } from "./domains/mail";
@@ -88,6 +89,8 @@ export class BrainClient {
   readonly calendar: CalendarApi;
   readonly people: PeopleApi;
   readonly research: ResearchApi;
+  /** Streaming server-side agent (POST /v1/agent). The "robot" is on the backend. */
+  readonly agent: AgentApi;
 
   private readonly baseUrl: string;
   private readonly token?: string;
@@ -187,6 +190,11 @@ export class BrainClient {
     this.calendar = createCalendarApi(request);
     this.people = createPeopleApi(request);
     this.research = createResearchApi(request);
+    this.agent = createAgentApi({
+      baseUrl: this.baseUrl,
+      token: this.token,
+      fetchImpl: this.fetchImpl,
+    });
   }
 
   // ── Documents ──────────────────────────────────────────────────────────
