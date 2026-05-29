@@ -24,6 +24,10 @@ export interface ChatApi {
     threadRootId: string,
     opts?: { limit?: number; cursor?: string },
   ): Promise<JsonRecord>;
+  /** Open or create a 1:1 DM channel with another user; returns `{ channelId }`. */
+  openDm(otherUserId: string): Promise<JsonRecord>;
+  /** List/search workspace members (resolve a teammate name to a user id). */
+  members(q?: string): Promise<JsonRecord[]>;
 }
 
 export function createChatApi(req: RequestFn): ChatApi {
@@ -38,5 +42,11 @@ export function createChatApi(req: RequestFn): ChatApi {
       req("GET", `/chat/search?${qs({ query, channelId: o.channelId, limit: o.limit })}`),
     threadReplies: (threadRootId, o = {}) =>
       req("GET", `/chat/threads/replies?${qs({ threadRootId, limit: o.limit, cursor: o.cursor })}`),
+    openDm: (otherUserId) => req("POST", "/chat/dms", { otherUserId }),
+    members: (q) =>
+      req<{ members: JsonRecord[] }>(
+        "GET",
+        q ? `/chat/members?${qs({ q })}` : "/chat/members",
+      ).then((d) => d.members),
   };
 }

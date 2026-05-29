@@ -2,6 +2,7 @@
 import { readFileSync } from "node:fs";
 import { BrainError } from "@unisonlabs/sdk";
 import { Command } from "commander";
+import { runAgent } from "./commands/agent";
 import { registerAuth } from "./commands/auth";
 import { registerCalendar } from "./commands/calendar";
 import { registerChat } from "./commands/chat";
@@ -147,6 +148,35 @@ function reportError(err: unknown): number {
   return 1;
 }
 
-program.parseAsync(process.argv).catch((err: unknown) => {
-  process.exit(reportError(err));
-});
+// `unison "<natural language>"` — one-shot server-side agent. The CLI is a thin
+// transport: it POSTs the prompt to the backend's /v1/agent streaming endpoint
+// and renders the SSE event stream. Scope is enforced server-side by the
+// `usk_` key — there is no client-side write gate. The agent runs on the
+// backend; nothing local. Detected before Commander parses so the bare prompt
+// form isn't mistaken for an unknown subcommand; a leading token that matches
+// a registered command, or -h/-V, always routes to Commander.
+const knownCommands = new Set<string>();
+for (const cmd of program.commands) {
+  knownCommands.add(cmd.name());
+  for (const alias of cmd.aliases()) knownCommands.add(alias);
+}
+const argv = process.argv.slice(2);
+const firstPositional = argv.find((a) => !a.startsWith("-"));
+const isAgentPrompt =
+  firstPositional !== undefined &&
+  !knownCommands.has(firstPositional) &&
+  !argv.includes("-h") &&
+  !argv.includes("--help") &&
+  !argv.includes("-V") &&
+  !argv.includes("--version");
+
+if (isAgentPrompt) {
+  const prompt = argv.filter((a) => !a.startsWith("-")).join(" ");
+  runAgent(prompt)
+    .then((code) => process.exit(code))
+    .catch((err: unknown) => process.exit(reportError(err)));
+} else {
+  program.parseAsync(process.argv).catch((err: unknown) => {
+    process.exit(reportError(err));
+  });
+}
