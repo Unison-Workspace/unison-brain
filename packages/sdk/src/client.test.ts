@@ -40,6 +40,44 @@ describe("BrainClient documents", () => {
     expect(auth).toBe("Bearer tok");
   });
 
+  test("search returns body-less doc summaries (no bodyMd)", async () => {
+    // The /v1/brain/search endpoint returns metadata-only docs (SPEC §5.1).
+    // SearchResult.doc is typed as BrainDocumentSummary so callers can't read
+    // a `bodyMd` that is never present — they must fetch it via get().
+    const client = new BrainClient({
+      baseUrl: "https://api.test",
+      token: "tok",
+      fetch: stubFetch(() =>
+        json({
+          results: [
+            {
+              doc: {
+                id: "d1",
+                path: "/private/notes/auth.md",
+                kind: "note",
+                title: "Auth decision",
+                tldr: "We chose device-flow.",
+                tags: ["auth"],
+                visibility: "tenant",
+                updatedAt: "2026-05-31T00:00:00Z",
+                contentHash: "abc",
+              },
+              score: 0.9,
+              sources: ["vector"],
+            },
+          ],
+        }),
+      ),
+    });
+
+    const results = await client.search("auth decision");
+    expect(results).toHaveLength(1);
+    expect(results[0]?.doc.path).toBe("/private/notes/auth.md");
+    expect(results[0]?.doc.tldr).toBe("We chose device-flow.");
+    // The hit is a summary: no body is sent over the wire.
+    expect("bodyMd" in (results[0]?.doc ?? {})).toBe(false);
+  });
+
   test("write PUTs the document body to a contract path", async () => {
     let method = "";
     let captured = "";
