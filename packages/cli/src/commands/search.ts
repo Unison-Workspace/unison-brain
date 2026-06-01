@@ -46,7 +46,8 @@ export function registerSearch(program: Command): void {
         for (const r of results) {
           out(`${pc.cyan(r.doc.path)}  ${pc.dim(`(${r.score.toFixed(2)})`)}`);
           if (r.doc.title) out(`  ${pc.bold(r.doc.title)}`);
-          const preview = r.highlight ?? r.doc.tldr ?? r.doc.bodyMd ?? "";
+          // Search hits are summaries (no body); preview from highlight/tldr only.
+          const preview = r.highlight ?? r.doc.tldr ?? "";
           if (preview)
             out(
               `  ${preview

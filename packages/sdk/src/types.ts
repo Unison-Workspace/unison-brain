@@ -26,9 +26,16 @@ export interface BrainDocument {
   contentHash?: string | null;
 }
 
+/**
+ * A document summary as returned by search hits — metadata only, NO body.
+ * The search endpoint never includes `bodyMd` (SPEC §5.1: "doc is a summary
+ * (no body)"); fetch the full document with `client.get(path)`.
+ */
+export type BrainDocumentSummary = Omit<BrainDocument, "bodyMd">;
+
 /** A ranked search hit — the document is nested under `doc` (matches cortex.search). */
 export interface SearchResult {
-  doc: BrainDocument;
+  doc: BrainDocumentSummary;
   score: number;
   highlight?: string;
   sources: ("bm25" | "vector")[];
