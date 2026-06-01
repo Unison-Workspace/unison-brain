@@ -18,6 +18,7 @@ export type {
   WorkInspectInput,
   WorkInspectKind,
   WorkQueryInput,
+  WorkRecordsInput,
   WorkSearchInput,
   WorkTreeInput,
   WorkViewQuery,

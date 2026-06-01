@@ -19,6 +19,14 @@ export interface WorkSearchInput {
   limit?: number;
 }
 
+export interface WorkRecordsInput {
+  /** Read this exact table's records. */
+  tableId?: string;
+  /** Or resolve the canonical CRM/Tasks table: company | person | deal | task. */
+  semanticKind?: string;
+  limit?: number;
+}
+
 export type WorkInspectKind =
   | "folder"
   | "artifact"
@@ -77,6 +85,13 @@ export interface WorkApi {
   apply(input: WorkApplyInput): Promise<JsonRecord>;
   /** Query a Work view by id (filters / sorts come from `query`). */
   query(input: WorkQueryInput): Promise<JsonRecord>;
+  /**
+   * List the records of a table directly — no view needed. Pass `tableId` for any
+   * table, or `semanticKind` (company/person/deal/task) to read the canonical
+   * CRM/Tasks table without first discovering its id. Use this to list/count/
+   * summarize the CRM (it is tenant-scoped and never appears in `tree()`).
+   */
+  records(input: WorkRecordsInput): Promise<JsonRecord>;
   /** Search folders, artifacts, documents, tables, records, and assets. */
   search(input: WorkSearchInput): Promise<JsonRecord>;
   /** Inspect a single primitive by kind + id. */
@@ -163,6 +178,15 @@ export function createWorkApi(req: RequestFn, rawFetch: typeof fetch): WorkApi {
         viewId: input.viewId,
         ...(input.query ? { query: input.query } : {}),
       }),
+    records: (input) =>
+      req(
+        "GET",
+        `/work/records?${qs({
+          tableId: input.tableId,
+          semanticKind: input.semanticKind,
+          limit: input.limit,
+        })}`,
+      ),
     search: (input) => req("POST", "/work/search", input),
     inspect: (input) => req("POST", "/work/inspect", input),
     tree: (o = {}) => req("GET", `/work/tree?${qs({ teamSpaceId: o.teamSpaceId })}`),
