@@ -1,4 +1,4 @@
-# Unison SDK — agent method reference (v1.3.1)
+# Unison SDK — agent method reference (v1.3.2)
 
 Generated from the `@unisonlabs/sdk` type declarations. Call the brain
 through the SDK, never by hand-rolling `fetch()` to `/v1/…` paths:
@@ -18,11 +18,22 @@ Documents + filesystem on the brain — called directly on the client.
 search(query: string, opts?: SearchOptions): Promise<SearchResult[]>
 ```
 
+`opts?` (`SearchOptions`):
+- `limit?: number`
+- `kinds?: DocKind[]`
+- `tags?: string[]`
+- `memoryType?: MemoryType`
+- `asOf?: string`
+
 ### `u.grep`
 
 ```ts
 grep(pattern: string, opts?: GrepOptions): Promise<BrainDocument[]>
 ```
+
+`opts?` (`GrepOptions`):
+- `caseSensitive?: boolean`
+- `limit?: number`
 
 ### `u.get`
 
@@ -35,6 +46,12 @@ get(path: string): Promise<BrainDocument>
 ```ts
 list(opts?: ListOptions): Promise<BrainDocument[]>
 ```
+
+`opts?` (`ListOptions`):
+- `prefix?: string`
+- `kinds?: DocKind[]`
+- `tags?: string[]`
+- `limit?: number`
 
 ### `u.listFs`
 
@@ -53,6 +70,17 @@ getRaw(path: string): Promise<{ content: string | null; path: string; }>
 ```ts
 write(input: WriteInput): Promise<BrainDocument>
 ```
+
+`input` (`WriteInput`):
+- `path: string`
+- `bodyMd: string`
+- `kind?: DocKind`
+- `title?: string`
+- `tldr?: string`
+- `tags?: string[]`
+- `visibility?: Visibility`
+- `expectedContentHash?: string`
+- `source?: { kind: string; ref: string; }`
 
 ### `u.editDoc`
 
@@ -81,6 +109,10 @@ delete(path: string): Promise<{ deleted: boolean; }>
 tag(path: string, input: TagInput): Promise<BrainDocument>
 ```
 
+`input` (`TagInput`):
+- `add?: string[]`
+- `remove?: string[]`
+
 ### `u.share`
 
 ```ts
@@ -92,6 +124,10 @@ share(kind: ShareKind, id: string): Promise<{ shared: boolean; }>
 ```ts
 neighbors(idOrPath: string, opts?: NeighborsOptions): Promise<BrainDocument[]>
 ```
+
+`opts?` (`NeighborsOptions`):
+- `kinds?: LinkKind[]`
+- `limit?: number`
 
 ### `u.status`
 
@@ -115,6 +151,11 @@ Knowledge-graph entities (people, companies, projects, …).
 list(opts?: ListEntitiesOptions): Promise<BrainEntity[]>
 ```
 
+`opts?` (`ListEntitiesOptions`):
+- `kinds?: string[]`
+- `status?: EntityStatus`
+- `limit?: number`
+
 ### `u.entities.resolve`
 
 ```ts
@@ -133,6 +174,14 @@ get(id: string): Promise<BrainEntity>
 upsert(input: UpsertEntityInput): Promise<BrainEntity>
 ```
 
+`input` (`UpsertEntityInput`):
+- `kind: EntityKind`
+- `displayName: string`
+- `slug?: string`
+- `aliases?: string[]`
+- `props?: Record<string, unknown>`
+- `status?: EntityStatus`
+
 ## facts
 
 Bitemporal facts about entities.
@@ -149,11 +198,19 @@ list(opts?: { limit?: number; includeInvalidated?: boolean; }): Promise<BrainFac
 about(entityId: string, opts?: FactsAboutOptions): Promise<BrainFact[]>
 ```
 
+`opts?` (`FactsAboutOptions`):
+- `asOf?: string`
+- `includeInvalidated?: boolean`
+
 ### `u.facts.timeline`
 
 ```ts
 timeline(entityId: string, opts?: TimelineOptions): Promise<BrainFact[]>
 ```
+
+`opts?` (`TimelineOptions`):
+- `from?: string`
+- `to?: string`
 
 ### `u.facts.record`
 
@@ -161,11 +218,29 @@ timeline(entityId: string, opts?: TimelineOptions): Promise<BrainFact[]>
 record(input: RecordFactInput): Promise<BrainFact>
 ```
 
+`input` (`RecordFactInput`):
+- `subjectId: string`
+- `predicate: string`
+- `factText: string`
+- `objectJson?: unknown`
+- `objectEntityId?: string`
+- `validFrom?: string`
+- `validTo?: string`
+- `confidence?: number`
+- `supersedesId?: string`
+
 ### `u.facts.correct`
 
 ```ts
 correct(factId: string, input: CorrectFactInput): Promise<BrainFact>
 ```
+
+`input` (`CorrectFactInput`):
+- `predicate?: string`
+- `factText?: string`
+- `objectJson?: unknown`
+- `objectEntityId?: string`
+- `confidence?: number`
 
 ### `u.facts.invalidate`
 
@@ -227,6 +302,11 @@ Background brain maintenance jobs.
 list(opts?: ListJobsOptions): Promise<BrainJob[]>
 ```
 
+`opts?` (`ListJobsOptions`):
+- `status?: JobStatus`
+- `kind?: string`
+- `limit?: number`
+
 ### `u.jobs.stats`
 
 ```ts
@@ -252,6 +332,11 @@ apply(input: WorkApplyInput): Promise<JsonRecord>
 Atomically apply Work primitive operations. Set `dryRun` to validate
 without writing (routes to `/v1/work/apply:dry-run`).
 
+`input` (`WorkApplyInput`):
+- `operations: WorkOperation[]`
+- `dryRun?: boolean`
+- `idempotencyKey?: string`
+
 ### `u.work.applyDryRun`
 
 ```ts
@@ -262,6 +347,11 @@ Validate operations WITHOUT writing — the dedicated, discoverable dry-run
 entry point. Same shape + result as `apply`; routes to
 `/v1/work/apply:dry-run`. Prefer this over `apply({ dryRun: true })`.
 
+`input` (`Omit<WorkApplyInput, "dryRun">`):
+- `operations: WorkOperation[]`
+- `dryRun?: boolean`
+- `idempotencyKey?: string`
+
 ### `u.work.query`
 
 ```ts
@@ -269,6 +359,10 @@ query(input: WorkQueryInput): Promise<JsonRecord>
 ```
 
 Query a Work view by id (filters / sorts come from `query`).
+
+`input` (`WorkQueryInput`):
+- `viewId: string`
+- `query?: WorkViewQuery`
 
 ### `u.work.records`
 
@@ -281,6 +375,11 @@ table, or `semanticKind` (company/person/deal/task) to read the canonical
 CRM/Tasks table without first discovering its id. Use this to list/count/
 summarize the CRM (it is tenant-scoped and never appears in `tree()`).
 
+`input` (`WorkRecordsInput`):
+- `tableId?: string` — Read this exact table's records.
+- `semanticKind?: string` — Or resolve the canonical CRM/Tasks table: company | person | deal | task.
+- `limit?: number`
+
 ### `u.work.search`
 
 ```ts
@@ -288,6 +387,10 @@ search(input: WorkSearchInput): Promise<JsonRecord>
 ```
 
 Search folders, artifacts, documents, tables, records, and assets.
+
+`input` (`WorkSearchInput`):
+- `query: string`
+- `limit?: number`
 
 ### `u.work.inspect`
 
@@ -297,6 +400,10 @@ inspect(input: WorkInspectInput): Promise<JsonRecord>
 
 Inspect a single primitive by kind + id.
 
+`input` (`WorkInspectInput`):
+- `kind: WorkInspectKind`
+- `id: string`
+
 ### `u.work.tree`
 
 ```ts
@@ -304,6 +411,9 @@ tree(input?: WorkTreeInput): Promise<JsonRecord>
 ```
 
 Read the folder + artifact tree (optionally scoped to a team space).
+
+`input?` (`WorkTreeInput`):
+- `teamSpaceId?: string`
 
 ### `u.work.folder`
 
@@ -329,6 +439,42 @@ tableSchema(id: string): Promise<JsonRecord>
 viewQuery(id: string, query?: WorkViewQuery): Promise<JsonRecord>
 ```
 
+### `u.work.assets.uploadUrl`
+
+```ts
+uploadUrl(input: WorkAssetUploadUrlInput): Promise<JsonRecord>
+```
+
+### `u.work.assets.create`
+
+```ts
+create(input: WorkAssetCompleteInput): Promise<JsonRecord>
+```
+
+### `u.work.assets.readUrl`
+
+```ts
+readUrl(id: string, opts?: WorkAssetReadUrlOptions): Promise<JsonRecord>
+```
+
+`opts?` (`WorkAssetReadUrlOptions`):
+- `expiresIn?: number` — Signed-URL lifetime in seconds (server default ~600s).
+
+### `u.work.assets.upload`
+
+```ts
+upload(input: WorkAssetUploadInput): Promise<JsonRecord>
+```
+
+`input` (`WorkAssetUploadInput`):
+- `filename: string`
+- `mimeType: string`
+- `data: ArrayBuffer | Uint8Array | Blob`
+- `sizeBytes?: number` — Defaults to the byte length of `data`.
+- `displayName?: string`
+- `sha256?: string | null`
+- `metadata?: JsonRecord`
+
 ## mail
 
 Gmail — threads, drafts, send.
@@ -351,6 +497,12 @@ folders(): Promise<JsonRecord>
 threads(opts?: MailThreadsOptions): Promise<JsonRecord>
 ```
 
+`opts?` (`MailThreadsOptions`):
+- `folder?: "inbox" | "sent" | "drafts" | "starred" | "trash"`
+- `q?: string`
+- `cursor?: string`
+- `limit?: number`
+
 ### `u.mail.thread`
 
 ```ts
@@ -363,6 +515,14 @@ thread(id: string, opts?: { allowImages?: boolean; }): Promise<JsonRecord>
 send(input: MailSendInput): Promise<JsonRecord>
 ```
 
+`input` (`MailSendInput`):
+- `to: string[]`
+- `cc?: string[]`
+- `bcc?: string[]`
+- `subject?: string`
+- `body?: string`
+- `threadId?: string`
+
 ### `u.mail.draft`
 
 ```ts
@@ -374,6 +534,15 @@ review, edit, approve/send, or discard — the human-in-the-loop email flow.
 Use this for ALL drafting (new emails AND replies via `replyToThreadId`).
 Drafting needs no Gmail connection; sending (from the surface) does. This is
 the only draft path — there is no "save to Gmail Drafts" tool.
+
+`input` (`MailDraftInput`):
+- `to?: MailAddressInput[]` — Recipients for a NEW email. Omit for a reply — when `replyToThreadId` is set the recipients + subject are derived from the thread automatically.
+- `cc?: MailAddressInput[]`
+- `subject?: string`
+- `body?: string`
+- `replyToThreadId?: string` — Reply INTO an existing Gmail thread. The server builds the thread headers (In-Reply-To / References) + recipient sets from the thread, so the draft sends as a proper threaded reply when the user approves it.
+- `replyMode?: "reply" | "reply_all"` — "reply" = sender only, "reply_all" = everyone on the thread (default for replies).
+- `sessionId?: string` — Session the draft attaches to (drives the canvas `app:emails` review surface). In the agent's Deno sandbox it defaults to the injected UNISON_SESSION_ID, so the agent normally doesn't pass it.
 
 ## chat
 
@@ -397,11 +566,22 @@ channel(id: string): Promise<JsonRecord>
 messages(channelId: string, opts?: ChatMessagesOptions): Promise<JsonRecord>
 ```
 
+`opts?` (`ChatMessagesOptions`):
+- `limit?: number`
+- `cursor?: string`
+
 ### `u.chat.send`
 
 ```ts
 send(input: ChatSendInput): Promise<JsonRecord>
 ```
+
+`input` (`ChatSendInput`):
+- `channelId: string`
+- `content?: string`
+- `mentionUserIds?: string[]`
+- `replyToMessageId?: string`
+- `threadRootId?: string`
 
 ### `u.chat.search`
 
@@ -465,6 +645,20 @@ event(id: string): Promise<JsonRecord>
 createEvent(input: CalendarEventCreateInput): Promise<JsonRecord>
 ```
 
+`input` (`CalendarEventCreateInput`):
+- `calendarId: string`
+- `summary?: string`
+- `description?: string`
+- `location?: string`
+- `startAt: string`
+- `endAt: string`
+- `allDay?: boolean`
+- `attendees?: { email: string; displayName?: string; }[]`
+- `addMeetLink?: boolean`
+- `recurrencePreset?: "none" | "daily" | "weekly" | "monthly_nth_weekday" | "annually"`
+- `requestId: string` — Idempotency key (uuid) — required by the API.
+- `sendUpdates?: "all" | "none"`
+
 ## people
 
 CRM people search.
@@ -477,6 +671,10 @@ search(query: string, opts?: PeopleListOpts): Promise<JsonRecord>
 
 Search people (CRM records of the "people" object).
 
+`opts?` (`PeopleListOpts`):
+- `objectSlug?: string`
+- `limit?: number`
+
 ### `u.people.list`
 
 ```ts
@@ -486,6 +684,10 @@ list(opts?: PeopleListOpts): Promise<JsonRecord>
 List people without a query — the CRUD-style entry point agents expect for
 symmetry with `work.records`. Delegates to `search` with an empty query
 (the people domain is search-backed; there is no separate list endpoint).
+
+`opts?` (`PeopleListOpts`):
+- `objectSlug?: string`
+- `limit?: number`
 
 ## research
 
