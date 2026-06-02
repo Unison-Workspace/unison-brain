@@ -83,6 +83,10 @@ export interface WorkApi {
   /** Atomically apply Work primitive operations. Set `dryRun` to validate
    * without writing (routes to `/v1/work/apply:dry-run`). */
   apply(input: WorkApplyInput): Promise<JsonRecord>;
+  /** Validate operations WITHOUT writing — the dedicated, discoverable dry-run
+   * entry point. Same shape + result as `apply`; routes to
+   * `/v1/work/apply:dry-run`. Prefer this over `apply({ dryRun: true })`. */
+  applyDryRun(input: Omit<WorkApplyInput, "dryRun">): Promise<JsonRecord>;
   /** Query a Work view by id (filters / sorts come from `query`). */
   query(input: WorkQueryInput): Promise<JsonRecord>;
   /**
@@ -173,6 +177,7 @@ export function createWorkApi(req: RequestFn, rawFetch: typeof fetch): WorkApi {
 
   return {
     apply: (input) => req("POST", input.dryRun ? "/work/apply:dry-run" : "/work/apply", input),
+    applyDryRun: (input) => req("POST", "/work/apply:dry-run", { ...input, dryRun: true }),
     query: (input) =>
       req("POST", "/work/query", {
         viewId: input.viewId,
