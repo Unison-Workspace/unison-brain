@@ -193,4 +193,163 @@ export function registerDomainTools({ server, client, ensureAuth, asText }: Deps
       return asText(await client.people.search(query, { limit }));
     },
   );
+  server.tool(
+    "people_list",
+    "List people (CRM 'people' records) with no query — the way to enumerate/count everyone.",
+    { limit: z.number().int().positive().optional() },
+    async ({ limit }) => {
+      ensureAuth();
+      return asText(await client.people.list({ limit }));
+    },
+  );
+
+  // ── Work (reads kept in parity with the SDK) ─────────────────────────────
+  server.tool(
+    "work_records",
+    "List a Work table's records directly (no view). Pass tableId for any table, or semanticKind (company/person/deal/task) to read the canonical CRM/Tasks table without discovering its id — the way to list/count/summarize the CRM.",
+    {
+      tableId: z.string().optional(),
+      semanticKind: z.enum(["company", "person", "deal", "task"]).optional(),
+      limit: z.number().int().positive().optional(),
+    },
+    async ({ tableId, semanticKind, limit }) => {
+      ensureAuth();
+      return asText(await client.work.records({ tableId, semanticKind, limit }));
+    },
+  );
+  server.tool(
+    "work_table_schema",
+    "Get a Work table's field schema by table id.",
+    { id: z.string() },
+    async ({ id }) => {
+      ensureAuth();
+      return asText(await client.work.tableSchema(id));
+    },
+  );
+  server.tool(
+    "work_view_query",
+    "Run a Work view's query by view id (optional filters/sorts/limit override).",
+    { id: z.string(), query: z.record(z.string(), z.unknown()).optional() },
+    async ({ id, query }) => {
+      ensureAuth();
+      return asText(await client.work.viewQuery(id, query));
+    },
+  );
+  // Asset reads only: a short-lived signed download URL. Asset *uploads* are
+  // CLI/SDK-only — raw file bytes can't ride over MCP's JSON tool args.
+  server.tool(
+    "work_asset_read_url",
+    "Get a short-lived signed download URL for a Work asset by id.",
+    { id: z.string(), expiresIn: z.number().int().positive().optional() },
+    async ({ id, expiresIn }) => {
+      ensureAuth();
+      return asText(await client.work.assets.readUrl(id, { expiresIn }));
+    },
+  );
+
+  // ── Mail (parity) ────────────────────────────────────────────────────────
+  server.tool("mail_connection", "Get the Gmail connection status.", {}, async () => {
+    ensureAuth();
+    return asText(await client.mail.connection());
+  });
+  server.tool("mail_folders", "List Gmail folders/labels.", {}, async () => {
+    ensureAuth();
+    return asText(await client.mail.folders());
+  });
+  server.tool(
+    "mail_thread",
+    "Read a single mail thread by id (full messages).",
+    { id: z.string(), allowImages: z.boolean().optional() },
+    async ({ id, allowImages }) => {
+      ensureAuth();
+      return asText(await client.mail.thread(id, { allowImages }));
+    },
+  );
+  server.tool(
+    "mail_draft",
+    "Open an editable email draft for the user to review/send (the ONLY draft surface; drafting needs no Gmail connection). New email: pass to+subject+body. Reply: pass replyToThreadId (+body).",
+    {
+      to: z.array(z.string()).optional(),
+      cc: z.array(z.string()).optional(),
+      subject: z.string().optional(),
+      body: z.string(),
+      replyToThreadId: z.string().optional(),
+      replyMode: z.enum(["reply", "reply_all"]).optional(),
+    },
+    async ({ to, cc, subject, body, replyToThreadId, replyMode }) => {
+      ensureAuth();
+      return asText(await client.mail.draft({ to, cc, subject, body, replyToThreadId, replyMode }));
+    },
+  );
+
+  // ── Chat (parity) ──────────────────────────────────────────────────────
+  server.tool("chat_channel", "Get a chat channel by id.", { id: z.string() }, async ({ id }) => {
+    ensureAuth();
+    return asText(await client.chat.channel(id));
+  });
+  server.tool(
+    "chat_search",
+    "Search chat messages across channels.",
+    { query: z.string(), limit: z.number().int().positive().optional() },
+    async ({ query, limit }) => {
+      ensureAuth();
+      return asText(await client.chat.search(query, { limit }));
+    },
+  );
+  server.tool(
+    "chat_thread_replies",
+    "List the replies under a thread root message.",
+    {
+      threadRootId: z.string(),
+      limit: z.number().int().positive().optional(),
+      cursor: z.string().optional(),
+    },
+    async ({ threadRootId, limit, cursor }) => {
+      ensureAuth();
+      return asText(await client.chat.threadReplies(threadRootId, { limit, cursor }));
+    },
+  );
+
+  // ── Calendar (parity) ────────────────────────────────────────────────────
+  server.tool("calendar_connection", "Get the Calendar connection status.", {}, async () => {
+    ensureAuth();
+    return asText(await client.calendar.connection());
+  });
+  server.tool("calendar_calendars", "List the user's calendars.", {}, async () => {
+    ensureAuth();
+    return asText(await client.calendar.calendars());
+  });
+  server.tool(
+    "calendar_event",
+    "Get a single calendar event by id.",
+    { id: z.string() },
+    async ({ id }) => {
+      ensureAuth();
+      return asText(await client.calendar.event(id));
+    },
+  );
+  server.tool(
+    "calendar_create_event",
+    "Create a calendar event. Confirm details with the user first.",
+    { event: z.record(z.string(), z.unknown()).describe("Event fields (summary, start, end, …)") },
+    async ({ event }) => {
+      ensureAuth();
+      return asText(
+        await client.calendar.createEvent(
+          event as unknown as Parameters<typeof client.calendar.createEvent>[0],
+        ),
+      );
+    },
+  );
+
+  // ── Research (parity) ────────────────────────────────────────────────────
+  server.tool(
+    "research_search",
+    "Run a web/research search and return ranked results.",
+    { query: z.string() },
+    async ({ query }) => {
+      ensureAuth();
+      return asText(await client.research.search(query));
+    },
+  );
 }
