@@ -21,14 +21,17 @@
       "bun": "./src/index.ts",
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
-    }
+    },
+    "./agent-reference.json": "./agent-reference.json",
+    "./AGENT-REFERENCE.md": "./AGENT-REFERENCE.md"
   },
-  "files": ["dist", "src"],
+  "files": ["dist", "src", "AGENT-REFERENCE.md", "agent-reference.json"],
   "engines": {
     "node": ">=18"
   },
   "scripts": {
-    "build": "bun build src/index.ts --target node --outfile dist/index.js && tsc -p tsconfig.json --emitDeclarationOnly --outDir dist",
+    "build": "bun build src/index.ts --target node --outfile dist/index.js && tsc -p tsconfig.json --emitDeclarationOnly --outDir dist && bun run scripts/gen-agent-reference.ts",
+    "gen:agent-docs": "bun run scripts/gen-agent-reference.ts",
     "prepublishOnly": "bun run build"
   },
   "publishConfig": {
