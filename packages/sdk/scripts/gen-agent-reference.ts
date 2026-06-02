@@ -68,11 +68,25 @@ const DOMAINS: { key: string; prop: string | null; api: string | null; intro: st
   },
 ];
 
+interface Field {
+  name: string;
+  type: string;
+  optional: boolean;
+  doc: string;
+}
+interface Param {
+  name: string;
+  type: string;
+  // Expanded one level when the param's type is a local interface, so the agent
+  // sees required fields (e.g. calendar `requestId`) instead of an opaque alias.
+  fields?: Field[];
+}
 interface Method {
   name: string;
   signature: string;
   doc: string;
   sdkCall: string;
+  params: Param[];
 }
 
 // Pull the JSDoc text off a node's leading comment, stripped of ` * ` markers.
@@ -108,13 +122,12 @@ const sources = program
   .getSourceFiles()
   .filter((sf) => sf.fileName.includes("/dist/") && sf.fileName.endsWith(".d.ts"));
 
-function findInterface(name: string): { node: ts.InterfaceDeclaration; sf: ts.SourceFile } | null {
-  for (const sf of sources) {
-    for (const stmt of sf.statements) {
-      if (ts.isInterfaceDeclaration(stmt) && stmt.name.text === name) return { node: stmt, sf };
-    }
+// Every interface in the published surface, by name — used to expand param shapes.
+const interfaceMap = new Map<string, { node: ts.InterfaceDeclaration; sf: ts.SourceFile }>();
+for (const sf of sources) {
+  for (const stmt of sf.statements) {
+    if (ts.isInterfaceDeclaration(stmt)) interfaceMap.set(stmt.name.text, { node: stmt, sf });
   }
-  return null;
 }
 
 function findClass(name: string): { node: ts.ClassDeclaration; sf: ts.SourceFile } | null {
@@ -126,19 +139,81 @@ function findClass(name: string): { node: ts.ClassDeclaration; sf: ts.SourceFile
   return null;
 }
 
+function typeText(node: ts.Node | undefined, sf: ts.SourceFile): string {
+  return node ? node.getText(sf).replace(/\s+/g, " ").trim() : "unknown";
+}
+
+// One level of field expansion for an interface — enough to surface required
+// fields without exploding deep unions (e.g. WorkOperation stays a named type).
+function expandInterface(name: string): Field[] | undefined {
+  const found = interfaceMap.get(name);
+  if (!found) return undefined;
+  const out: Field[] = [];
+  for (const mem of found.node.members) {
+    if (!ts.isPropertySignature(mem) || !mem.name) continue;
+    out.push({
+      name: mem.name.getText(found.sf),
+      type: typeText(mem.type, found.sf),
+      optional: !!mem.questionToken,
+      doc: jsDoc(mem, found.sf),
+    });
+  }
+  return out.length ? out : undefined;
+}
+
+// First locally-declared interface referenced anywhere in a param's type node
+// (handles `WorkApplyInput`, `Omit<WorkApplyInput, …>`, `X | undefined`, etc.).
+function referencedInterface(
+  typeNode: ts.TypeNode | undefined,
+  sf: ts.SourceFile,
+): string | undefined {
+  if (!typeNode) return undefined;
+  let hit: string | undefined;
+  const visit = (n: ts.Node): void => {
+    if (hit) return;
+    if (ts.isTypeReferenceNode(n)) {
+      const nm = n.typeName.getText(sf);
+      if (interfaceMap.has(nm)) {
+        hit = nm;
+        return;
+      }
+    }
+    ts.forEachChild(n, visit);
+  };
+  visit(typeNode);
+  return hit;
+}
+
+function paramsOf(m: ts.MethodSignature | ts.MethodDeclaration, sf: ts.SourceFile): Param[] {
+  return m.parameters.map((p) => {
+    const name = `${p.name.getText(sf)}${p.questionToken ? "?" : ""}`;
+    const type = typeText(p.type, sf);
+    const fields = expandInterface(referencedInterface(p.type, sf) ?? "");
+    return fields ? { name, type, fields } : { name, type };
+  });
+}
+
 function methodsFromApi(api: string, prop: string): Method[] {
-  const found = findInterface(api);
+  const found = interfaceMap.get(api);
   if (!found) throw new Error(`interface ${api} not found in dist .d.ts`);
   const out: Method[] = [];
   for (const m of found.node.members) {
-    if (!ts.isMethodSignature(m) || !m.name) continue;
-    const name = m.name.getText(found.sf);
-    out.push({
-      name,
-      signature: signature(m, found.sf),
-      doc: jsDoc(m, found.sf),
-      sdkCall: `u.${prop}.${name}`,
-    });
+    if (ts.isMethodSignature(m) && m.name) {
+      const name = m.name.getText(found.sf);
+      out.push({
+        name,
+        signature: signature(m, found.sf),
+        doc: jsDoc(m, found.sf),
+        sdkCall: `u.${prop}.${name}`,
+        params: paramsOf(m, found.sf),
+      });
+    } else if (ts.isPropertySignature(m) && m.name && m.type && ts.isTypeReferenceNode(m.type)) {
+      // Nested sub-api (e.g. WorkApi.assets: WorkAssetsApi) → u.work.assets.*
+      const subApi = m.type.typeName.getText(found.sf);
+      if (/Api$/.test(subApi) && interfaceMap.has(subApi)) {
+        out.push(...methodsFromApi(subApi, `${prop}.${m.name.getText(found.sf)}`));
+      }
+    }
   }
   return out;
 }
@@ -158,6 +233,7 @@ function rootMethods(): Method[] {
       signature: signature(m, found.sf),
       doc: jsDoc(m, found.sf),
       sdkCall: `u.${name}`,
+      params: paramsOf(m, found.sf),
     });
   }
   return out;
@@ -211,6 +287,15 @@ for (const d of DOMAINS) {
     if (m.doc) {
       lines.push("");
       lines.push(m.doc);
+    }
+    for (const p of m.params) {
+      if (!p.fields) continue;
+      lines.push("");
+      lines.push(`\`${p.name}\` (\`${p.type}\`):`);
+      for (const f of p.fields) {
+        const d = f.doc ? ` — ${f.doc.replace(/\s+/g, " ").trim()}` : "";
+        lines.push(`- \`${f.name}${f.optional ? "?" : ""}: ${f.type}\`${d}`);
+      }
     }
     lines.push("");
   }

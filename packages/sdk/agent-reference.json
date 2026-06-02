@@ -1,5 +1,5 @@
 {
-  "version": "1.3.1",
+  "version": "1.3.2",
   "generatedFrom": "@unisonlabs/sdk type declarations",
   "domains": {
     "brain": {
@@ -9,85 +9,335 @@
           "name": "search",
           "signature": "search(query: string, opts?: SearchOptions): Promise<SearchResult[]>",
           "doc": "",
-          "sdkCall": "u.search"
+          "sdkCall": "u.search",
+          "params": [
+            {
+              "name": "query",
+              "type": "string"
+            },
+            {
+              "name": "opts?",
+              "type": "SearchOptions",
+              "fields": [
+                {
+                  "name": "limit",
+                  "type": "number",
+                  "optional": true,
+                  "doc": ""
+                },
+                {
+                  "name": "kinds",
+                  "type": "DocKind[]",
+                  "optional": true,
+                  "doc": ""
+                },
+                {
+                  "name": "tags",
+                  "type": "string[]",
+                  "optional": true,
+                  "doc": ""
+                },
+                {
+                  "name": "memoryType",
+                  "type": "MemoryType",
+                  "optional": true,
+                  "doc": ""
+                },
+                {
+                  "name": "asOf",
+                  "type": "string",
+                  "optional": true,
+                  "doc": ""
+                }
+              ]
+            }
+          ]
         },
         {
           "name": "grep",
           "signature": "grep(pattern: string, opts?: GrepOptions): Promise<BrainDocument[]>",
           "doc": "",
-          "sdkCall": "u.grep"
+          "sdkCall": "u.grep",
+          "params": [
+            {
+              "name": "pattern",
+              "type": "string"
+            },
+            {
+              "name": "opts?",
+              "type": "GrepOptions",
+              "fields": [
+                {
+                  "name": "caseSensitive",
+                  "type": "boolean",
+                  "optional": true,
+                  "doc": ""
+                },
+                {
+                  "name": "limit",
+                  "type": "number",
+                  "optional": true,
+                  "doc": ""
+                }
+              ]
+            }
+          ]
         },
         {
           "name": "get",
           "signature": "get(path: string): Promise<BrainDocument>",
           "doc": "",
-          "sdkCall": "u.get"
+          "sdkCall": "u.get",
+          "params": [
+            {
+              "name": "path",
+              "type": "string"
+            }
+          ]
         },
         {
           "name": "list",
           "signature": "list(opts?: ListOptions): Promise<BrainDocument[]>",
           "doc": "",
-          "sdkCall": "u.list"
+          "sdkCall": "u.list",
+          "params": [
+            {
+              "name": "opts?",
+              "type": "ListOptions",
+              "fields": [
+                {
+                  "name": "prefix",
+                  "type": "string",
+                  "optional": true,
+                  "doc": ""
+                },
+                {
+                  "name": "kinds",
+                  "type": "DocKind[]",
+                  "optional": true,
+                  "doc": ""
+                },
+                {
+                  "name": "tags",
+                  "type": "string[]",
+                  "optional": true,
+                  "doc": ""
+                },
+                {
+                  "name": "limit",
+                  "type": "number",
+                  "optional": true,
+                  "doc": ""
+                }
+              ]
+            }
+          ]
         },
         {
           "name": "listFs",
           "signature": "listFs(path?: string): Promise<FsEntry[]>",
           "doc": "",
-          "sdkCall": "u.listFs"
+          "sdkCall": "u.listFs",
+          "params": [
+            {
+              "name": "path?",
+              "type": "string"
+            }
+          ]
         },
         {
           "name": "getRaw",
           "signature": "getRaw(path: string): Promise<{ content: string | null; path: string; }>",
           "doc": "",
-          "sdkCall": "u.getRaw"
+          "sdkCall": "u.getRaw",
+          "params": [
+            {
+              "name": "path",
+              "type": "string"
+            }
+          ]
         },
         {
           "name": "write",
           "signature": "write(input: WriteInput): Promise<BrainDocument>",
           "doc": "",
-          "sdkCall": "u.write"
+          "sdkCall": "u.write",
+          "params": [
+            {
+              "name": "input",
+              "type": "WriteInput",
+              "fields": [
+                {
+                  "name": "path",
+                  "type": "string",
+                  "optional": false,
+                  "doc": ""
+                },
+                {
+                  "name": "bodyMd",
+                  "type": "string",
+                  "optional": false,
+                  "doc": ""
+                },
+                {
+                  "name": "kind",
+                  "type": "DocKind",
+                  "optional": true,
+                  "doc": ""
+                },
+                {
+                  "name": "title",
+                  "type": "string",
+                  "optional": true,
+                  "doc": ""
+                },
+                {
+                  "name": "tldr",
+                  "type": "string",
+                  "optional": true,
+                  "doc": ""
+                },
+                {
+                  "name": "tags",
+                  "type": "string[]",
+                  "optional": true,
+                  "doc": ""
+                },
+                {
+                  "name": "visibility",
+                  "type": "Visibility",
+                  "optional": true,
+                  "doc": ""
+                },
+                {
+                  "name": "expectedContentHash",
+                  "type": "string",
+                  "optional": true,
+                  "doc": ""
+                },
+                {
+                  "name": "source",
+                  "type": "{ kind: string; ref: string; }",
+                  "optional": true,
+                  "doc": ""
+                }
+              ]
+            }
+          ]
         },
         {
           "name": "editDoc",
           "signature": "editDoc(input: { path: string; oldStr: string; newStr: string; expectedContentHash?: string; }): Promise<BrainDocument>",
           "doc": "Surgical in-place edit, mirroring Claude Code's `Edit`: replace an exact\n`oldStr` with `newStr`. `oldStr` must match the document body exactly once,\nor the edit refuses (add surrounding context to disambiguate).\n\nRoutes to `PATCH /brain/doc`, which performs the match + replace\nserver-side inside the write transaction — atomic and uniqueness-checked,\nso there is no racy client read-modify-write and metadata is preserved.\nPass `expectedContentHash` for optimistic-concurrency on hot docs.",
-          "sdkCall": "u.editDoc"
+          "sdkCall": "u.editDoc",
+          "params": [
+            {
+              "name": "input",
+              "type": "{ path: string; oldStr: string; newStr: string; expectedContentHash?: string; }"
+            }
+          ]
         },
         {
           "name": "delete",
           "signature": "delete(path: string): Promise<{ deleted: boolean; }>",
           "doc": "",
-          "sdkCall": "u.delete"
+          "sdkCall": "u.delete",
+          "params": [
+            {
+              "name": "path",
+              "type": "string"
+            }
+          ]
         },
         {
           "name": "tag",
           "signature": "tag(path: string, input: TagInput): Promise<BrainDocument>",
           "doc": "",
-          "sdkCall": "u.tag"
+          "sdkCall": "u.tag",
+          "params": [
+            {
+              "name": "path",
+              "type": "string"
+            },
+            {
+              "name": "input",
+              "type": "TagInput",
+              "fields": [
+                {
+                  "name": "add",
+                  "type": "string[]",
+                  "optional": true,
+                  "doc": ""
+                },
+                {
+                  "name": "remove",
+                  "type": "string[]",
+                  "optional": true,
+                  "doc": ""
+                }
+              ]
+            }
+          ]
         },
         {
           "name": "share",
           "signature": "share(kind: ShareKind, id: string): Promise<{ shared: boolean; }>",
           "doc": "",
-          "sdkCall": "u.share"
+          "sdkCall": "u.share",
+          "params": [
+            {
+              "name": "kind",
+              "type": "ShareKind"
+            },
+            {
+              "name": "id",
+              "type": "string"
+            }
+          ]
         },
         {
           "name": "neighbors",
           "signature": "neighbors(idOrPath: string, opts?: NeighborsOptions): Promise<BrainDocument[]>",
           "doc": "",
-          "sdkCall": "u.neighbors"
+          "sdkCall": "u.neighbors",
+          "params": [
+            {
+              "name": "idOrPath",
+              "type": "string"
+            },
+            {
+              "name": "opts?",
+              "type": "NeighborsOptions",
+              "fields": [
+                {
+                  "name": "kinds",
+                  "type": "LinkKind[]",
+                  "optional": true,
+                  "doc": ""
+                },
+                {
+                  "name": "limit",
+                  "type": "number",
+                  "optional": true,
+                  "doc": ""
+                }
+              ]
+            }
+          ]
         },
         {
           "name": "status",
           "signature": "status(): Promise<BrainStatus>",
           "doc": "",
-          "sdkCall": "u.status"
+          "sdkCall": "u.status",
+          "params": []
         },
         {
           "name": "whoami",
           "signature": "whoami(): Promise<WhoAmI>",
           "doc": "",
-          "sdkCall": "u.whoami"
+          "sdkCall": "u.whoami",
+          "params": []
         }
       ]
     },
@@ -98,25 +348,111 @@
           "name": "list",
           "signature": "list(opts?: ListEntitiesOptions): Promise<BrainEntity[]>",
           "doc": "",
-          "sdkCall": "u.entities.list"
+          "sdkCall": "u.entities.list",
+          "params": [
+            {
+              "name": "opts?",
+              "type": "ListEntitiesOptions",
+              "fields": [
+                {
+                  "name": "kinds",
+                  "type": "string[]",
+                  "optional": true,
+                  "doc": ""
+                },
+                {
+                  "name": "status",
+                  "type": "EntityStatus",
+                  "optional": true,
+                  "doc": ""
+                },
+                {
+                  "name": "limit",
+                  "type": "number",
+                  "optional": true,
+                  "doc": ""
+                }
+              ]
+            }
+          ]
         },
         {
           "name": "resolve",
           "signature": "resolve(name: string, kindHint?: EntityKind): Promise<BrainEntity | null>",
           "doc": "",
-          "sdkCall": "u.entities.resolve"
+          "sdkCall": "u.entities.resolve",
+          "params": [
+            {
+              "name": "name",
+              "type": "string"
+            },
+            {
+              "name": "kindHint?",
+              "type": "EntityKind"
+            }
+          ]
         },
         {
           "name": "get",
           "signature": "get(id: string): Promise<BrainEntity>",
           "doc": "",
-          "sdkCall": "u.entities.get"
+          "sdkCall": "u.entities.get",
+          "params": [
+            {
+              "name": "id",
+              "type": "string"
+            }
+          ]
         },
         {
           "name": "upsert",
           "signature": "upsert(input: UpsertEntityInput): Promise<BrainEntity>",
           "doc": "",
-          "sdkCall": "u.entities.upsert"
+          "sdkCall": "u.entities.upsert",
+          "params": [
+            {
+              "name": "input",
+              "type": "UpsertEntityInput",
+              "fields": [
+                {
+                  "name": "kind",
+                  "type": "EntityKind",
+                  "optional": false,
+                  "doc": ""
+                },
+                {
+                  "name": "displayName",
+                  "type": "string",
+                  "optional": false,
+                  "doc": ""
+                },
+                {
+                  "name": "slug",
+                  "type": "string",
+                  "optional": true,
+                  "doc": ""
+                },
+                {
+                  "name": "aliases",
+                  "type": "string[]",
+                  "optional": true,
+                  "doc": ""
+                },
+                {
+                  "name": "props",
+                  "type": "Record<string, unknown>",
+                  "optional": true,
+                  "doc": ""
+                },
+                {
+                  "name": "status",
+                  "type": "EntityStatus",
+                  "optional": true,
+                  "doc": ""
+                }
+              ]
+            }
+          ]
         }
       ]
     },
@@ -127,37 +463,201 @@
           "name": "list",
           "signature": "list(opts?: { limit?: number; includeInvalidated?: boolean; }): Promise<BrainFact[]>",
           "doc": "",
-          "sdkCall": "u.facts.list"
+          "sdkCall": "u.facts.list",
+          "params": [
+            {
+              "name": "opts?",
+              "type": "{ limit?: number; includeInvalidated?: boolean; }"
+            }
+          ]
         },
         {
           "name": "about",
           "signature": "about(entityId: string, opts?: FactsAboutOptions): Promise<BrainFact[]>",
           "doc": "",
-          "sdkCall": "u.facts.about"
+          "sdkCall": "u.facts.about",
+          "params": [
+            {
+              "name": "entityId",
+              "type": "string"
+            },
+            {
+              "name": "opts?",
+              "type": "FactsAboutOptions",
+              "fields": [
+                {
+                  "name": "asOf",
+                  "type": "string",
+                  "optional": true,
+                  "doc": ""
+                },
+                {
+                  "name": "includeInvalidated",
+                  "type": "boolean",
+                  "optional": true,
+                  "doc": ""
+                }
+              ]
+            }
+          ]
         },
         {
           "name": "timeline",
           "signature": "timeline(entityId: string, opts?: TimelineOptions): Promise<BrainFact[]>",
           "doc": "",
-          "sdkCall": "u.facts.timeline"
+          "sdkCall": "u.facts.timeline",
+          "params": [
+            {
+              "name": "entityId",
+              "type": "string"
+            },
+            {
+              "name": "opts?",
+              "type": "TimelineOptions",
+              "fields": [
+                {
+                  "name": "from",
+                  "type": "string",
+                  "optional": true,
+                  "doc": ""
+                },
+                {
+                  "name": "to",
+                  "type": "string",
+                  "optional": true,
+                  "doc": ""
+                }
+              ]
+            }
+          ]
         },
         {
           "name": "record",
           "signature": "record(input: RecordFactInput): Promise<BrainFact>",
           "doc": "",
-          "sdkCall": "u.facts.record"
+          "sdkCall": "u.facts.record",
+          "params": [
+            {
+              "name": "input",
+              "type": "RecordFactInput",
+              "fields": [
+                {
+                  "name": "subjectId",
+                  "type": "string",
+                  "optional": false,
+                  "doc": ""
+                },
+                {
+                  "name": "predicate",
+                  "type": "string",
+                  "optional": false,
+                  "doc": ""
+                },
+                {
+                  "name": "factText",
+                  "type": "string",
+                  "optional": false,
+                  "doc": ""
+                },
+                {
+                  "name": "objectJson",
+                  "type": "unknown",
+                  "optional": true,
+                  "doc": ""
+                },
+                {
+                  "name": "objectEntityId",
+                  "type": "string",
+                  "optional": true,
+                  "doc": ""
+                },
+                {
+                  "name": "validFrom",
+                  "type": "string",
+                  "optional": true,
+                  "doc": ""
+                },
+                {
+                  "name": "validTo",
+                  "type": "string",
+                  "optional": true,
+                  "doc": ""
+                },
+                {
+                  "name": "confidence",
+                  "type": "number",
+                  "optional": true,
+                  "doc": ""
+                },
+                {
+                  "name": "supersedesId",
+                  "type": "string",
+                  "optional": true,
+                  "doc": ""
+                }
+              ]
+            }
+          ]
         },
         {
           "name": "correct",
           "signature": "correct(factId: string, input: CorrectFactInput): Promise<BrainFact>",
           "doc": "",
-          "sdkCall": "u.facts.correct"
+          "sdkCall": "u.facts.correct",
+          "params": [
+            {
+              "name": "factId",
+              "type": "string"
+            },
+            {
+              "name": "input",
+              "type": "CorrectFactInput",
+              "fields": [
+                {
+                  "name": "predicate",
+                  "type": "string",
+                  "optional": true,
+                  "doc": ""
+                },
+                {
+                  "name": "factText",
+                  "type": "string",
+                  "optional": true,
+                  "doc": ""
+                },
+                {
+                  "name": "objectJson",
+                  "type": "unknown",
+                  "optional": true,
+                  "doc": ""
+                },
+                {
+                  "name": "objectEntityId",
+                  "type": "string",
+                  "optional": true,
+                  "doc": ""
+                },
+                {
+                  "name": "confidence",
+                  "type": "number",
+                  "optional": true,
+                  "doc": ""
+                }
+              ]
+            }
+          ]
         },
         {
           "name": "invalidate",
           "signature": "invalidate(factId: string): Promise<{ invalidated: boolean; }>",
           "doc": "",
-          "sdkCall": "u.facts.invalidate"
+          "sdkCall": "u.facts.invalidate",
+          "params": [
+            {
+              "name": "factId",
+              "type": "string"
+            }
+          ]
         }
       ]
     },
@@ -168,13 +668,33 @@
           "name": "list",
           "signature": "list(limit?: number): Promise<BrainLink[]>",
           "doc": "",
-          "sdkCall": "u.links.list"
+          "sdkCall": "u.links.list",
+          "params": [
+            {
+              "name": "limit?",
+              "type": "number"
+            }
+          ]
         },
         {
           "name": "create",
           "signature": "create(fromId: string, toId: string, kind: string): Promise<void>",
           "doc": "",
-          "sdkCall": "u.links.create"
+          "sdkCall": "u.links.create",
+          "params": [
+            {
+              "name": "fromId",
+              "type": "string"
+            },
+            {
+              "name": "toId",
+              "type": "string"
+            },
+            {
+              "name": "kind",
+              "type": "string"
+            }
+          ]
         }
       ]
     },
@@ -185,25 +705,48 @@
           "name": "conflicts",
           "signature": "conflicts(): Promise<MatchConflict[]>",
           "doc": "",
-          "sdkCall": "u.review.conflicts"
+          "sdkCall": "u.review.conflicts",
+          "params": []
         },
         {
           "name": "resolve",
           "signature": "resolve(conflictId: string, verdict: MatchVerdict): Promise<{ ok: true; }>",
           "doc": "",
-          "sdkCall": "u.review.resolve"
+          "sdkCall": "u.review.resolve",
+          "params": [
+            {
+              "name": "conflictId",
+              "type": "string"
+            },
+            {
+              "name": "verdict",
+              "type": "MatchVerdict"
+            }
+          ]
         },
         {
           "name": "merges",
           "signature": "merges(limit?: number): Promise<MergeEvent[]>",
           "doc": "",
-          "sdkCall": "u.review.merges"
+          "sdkCall": "u.review.merges",
+          "params": [
+            {
+              "name": "limit?",
+              "type": "number"
+            }
+          ]
         },
         {
           "name": "undo",
           "signature": "undo(mergeEventId: string): Promise<{ ok: true; }>",
           "doc": "",
-          "sdkCall": "u.review.undo"
+          "sdkCall": "u.review.undo",
+          "params": [
+            {
+              "name": "mergeEventId",
+              "type": "string"
+            }
+          ]
         }
       ]
     },
@@ -214,19 +757,52 @@
           "name": "list",
           "signature": "list(opts?: ListJobsOptions): Promise<BrainJob[]>",
           "doc": "",
-          "sdkCall": "u.jobs.list"
+          "sdkCall": "u.jobs.list",
+          "params": [
+            {
+              "name": "opts?",
+              "type": "ListJobsOptions",
+              "fields": [
+                {
+                  "name": "status",
+                  "type": "JobStatus",
+                  "optional": true,
+                  "doc": ""
+                },
+                {
+                  "name": "kind",
+                  "type": "string",
+                  "optional": true,
+                  "doc": ""
+                },
+                {
+                  "name": "limit",
+                  "type": "number",
+                  "optional": true,
+                  "doc": ""
+                }
+              ]
+            }
+          ]
         },
         {
           "name": "stats",
           "signature": "stats(): Promise<JobStats>",
           "doc": "",
-          "sdkCall": "u.jobs.stats"
+          "sdkCall": "u.jobs.stats",
+          "params": []
         },
         {
           "name": "retry",
           "signature": "retry(jobId: string): Promise<{ retried: boolean; }>",
           "doc": "",
-          "sdkCall": "u.jobs.retry"
+          "sdkCall": "u.jobs.retry",
+          "params": [
+            {
+              "name": "jobId",
+              "type": "string"
+            }
+          ]
         }
       ]
     },
@@ -237,67 +813,351 @@
           "name": "apply",
           "signature": "apply(input: WorkApplyInput): Promise<JsonRecord>",
           "doc": "Atomically apply Work primitive operations. Set `dryRun` to validate\nwithout writing (routes to `/v1/work/apply:dry-run`).",
-          "sdkCall": "u.work.apply"
+          "sdkCall": "u.work.apply",
+          "params": [
+            {
+              "name": "input",
+              "type": "WorkApplyInput",
+              "fields": [
+                {
+                  "name": "operations",
+                  "type": "WorkOperation[]",
+                  "optional": false,
+                  "doc": ""
+                },
+                {
+                  "name": "dryRun",
+                  "type": "boolean",
+                  "optional": true,
+                  "doc": ""
+                },
+                {
+                  "name": "idempotencyKey",
+                  "type": "string",
+                  "optional": true,
+                  "doc": ""
+                }
+              ]
+            }
+          ]
         },
         {
           "name": "applyDryRun",
           "signature": "applyDryRun(input: Omit<WorkApplyInput, \"dryRun\">): Promise<JsonRecord>",
           "doc": "Validate operations WITHOUT writing — the dedicated, discoverable dry-run\nentry point. Same shape + result as `apply`; routes to\n`/v1/work/apply:dry-run`. Prefer this over `apply({ dryRun: true })`.",
-          "sdkCall": "u.work.applyDryRun"
+          "sdkCall": "u.work.applyDryRun",
+          "params": [
+            {
+              "name": "input",
+              "type": "Omit<WorkApplyInput, \"dryRun\">",
+              "fields": [
+                {
+                  "name": "operations",
+                  "type": "WorkOperation[]",
+                  "optional": false,
+                  "doc": ""
+                },
+                {
+                  "name": "dryRun",
+                  "type": "boolean",
+                  "optional": true,
+                  "doc": ""
+                },
+                {
+                  "name": "idempotencyKey",
+                  "type": "string",
+                  "optional": true,
+                  "doc": ""
+                }
+              ]
+            }
+          ]
         },
         {
           "name": "query",
           "signature": "query(input: WorkQueryInput): Promise<JsonRecord>",
           "doc": "Query a Work view by id (filters / sorts come from `query`).",
-          "sdkCall": "u.work.query"
+          "sdkCall": "u.work.query",
+          "params": [
+            {
+              "name": "input",
+              "type": "WorkQueryInput",
+              "fields": [
+                {
+                  "name": "viewId",
+                  "type": "string",
+                  "optional": false,
+                  "doc": ""
+                },
+                {
+                  "name": "query",
+                  "type": "WorkViewQuery",
+                  "optional": true,
+                  "doc": ""
+                }
+              ]
+            }
+          ]
         },
         {
           "name": "records",
           "signature": "records(input: WorkRecordsInput): Promise<JsonRecord>",
           "doc": "List the records of a table directly — no view needed. Pass `tableId` for any\ntable, or `semanticKind` (company/person/deal/task) to read the canonical\nCRM/Tasks table without first discovering its id. Use this to list/count/\nsummarize the CRM (it is tenant-scoped and never appears in `tree()`).",
-          "sdkCall": "u.work.records"
+          "sdkCall": "u.work.records",
+          "params": [
+            {
+              "name": "input",
+              "type": "WorkRecordsInput",
+              "fields": [
+                {
+                  "name": "tableId",
+                  "type": "string",
+                  "optional": true,
+                  "doc": "Read this exact table's records."
+                },
+                {
+                  "name": "semanticKind",
+                  "type": "string",
+                  "optional": true,
+                  "doc": "Or resolve the canonical CRM/Tasks table: company | person | deal | task."
+                },
+                {
+                  "name": "limit",
+                  "type": "number",
+                  "optional": true,
+                  "doc": ""
+                }
+              ]
+            }
+          ]
         },
         {
           "name": "search",
           "signature": "search(input: WorkSearchInput): Promise<JsonRecord>",
           "doc": "Search folders, artifacts, documents, tables, records, and assets.",
-          "sdkCall": "u.work.search"
+          "sdkCall": "u.work.search",
+          "params": [
+            {
+              "name": "input",
+              "type": "WorkSearchInput",
+              "fields": [
+                {
+                  "name": "query",
+                  "type": "string",
+                  "optional": false,
+                  "doc": ""
+                },
+                {
+                  "name": "limit",
+                  "type": "number",
+                  "optional": true,
+                  "doc": ""
+                }
+              ]
+            }
+          ]
         },
         {
           "name": "inspect",
           "signature": "inspect(input: WorkInspectInput): Promise<JsonRecord>",
           "doc": "Inspect a single primitive by kind + id.",
-          "sdkCall": "u.work.inspect"
+          "sdkCall": "u.work.inspect",
+          "params": [
+            {
+              "name": "input",
+              "type": "WorkInspectInput",
+              "fields": [
+                {
+                  "name": "kind",
+                  "type": "WorkInspectKind",
+                  "optional": false,
+                  "doc": ""
+                },
+                {
+                  "name": "id",
+                  "type": "string",
+                  "optional": false,
+                  "doc": ""
+                }
+              ]
+            }
+          ]
         },
         {
           "name": "tree",
           "signature": "tree(input?: WorkTreeInput): Promise<JsonRecord>",
           "doc": "Read the folder + artifact tree (optionally scoped to a team space).",
-          "sdkCall": "u.work.tree"
+          "sdkCall": "u.work.tree",
+          "params": [
+            {
+              "name": "input?",
+              "type": "WorkTreeInput",
+              "fields": [
+                {
+                  "name": "teamSpaceId",
+                  "type": "string",
+                  "optional": true,
+                  "doc": ""
+                }
+              ]
+            }
+          ]
         },
         {
           "name": "folder",
           "signature": "folder(id: string): Promise<JsonRecord>",
           "doc": "",
-          "sdkCall": "u.work.folder"
+          "sdkCall": "u.work.folder",
+          "params": [
+            {
+              "name": "id",
+              "type": "string"
+            }
+          ]
         },
         {
           "name": "artifact",
           "signature": "artifact(id: string): Promise<JsonRecord>",
           "doc": "",
-          "sdkCall": "u.work.artifact"
+          "sdkCall": "u.work.artifact",
+          "params": [
+            {
+              "name": "id",
+              "type": "string"
+            }
+          ]
         },
         {
           "name": "tableSchema",
           "signature": "tableSchema(id: string): Promise<JsonRecord>",
           "doc": "",
-          "sdkCall": "u.work.tableSchema"
+          "sdkCall": "u.work.tableSchema",
+          "params": [
+            {
+              "name": "id",
+              "type": "string"
+            }
+          ]
         },
         {
           "name": "viewQuery",
           "signature": "viewQuery(id: string, query?: WorkViewQuery): Promise<JsonRecord>",
           "doc": "",
-          "sdkCall": "u.work.viewQuery"
+          "sdkCall": "u.work.viewQuery",
+          "params": [
+            {
+              "name": "id",
+              "type": "string"
+            },
+            {
+              "name": "query?",
+              "type": "WorkViewQuery"
+            }
+          ]
+        },
+        {
+          "name": "uploadUrl",
+          "signature": "uploadUrl(input: WorkAssetUploadUrlInput): Promise<JsonRecord>",
+          "doc": "",
+          "sdkCall": "u.work.assets.uploadUrl",
+          "params": [
+            {
+              "name": "input",
+              "type": "WorkAssetUploadUrlInput"
+            }
+          ]
+        },
+        {
+          "name": "create",
+          "signature": "create(input: WorkAssetCompleteInput): Promise<JsonRecord>",
+          "doc": "",
+          "sdkCall": "u.work.assets.create",
+          "params": [
+            {
+              "name": "input",
+              "type": "WorkAssetCompleteInput"
+            }
+          ]
+        },
+        {
+          "name": "readUrl",
+          "signature": "readUrl(id: string, opts?: WorkAssetReadUrlOptions): Promise<JsonRecord>",
+          "doc": "",
+          "sdkCall": "u.work.assets.readUrl",
+          "params": [
+            {
+              "name": "id",
+              "type": "string"
+            },
+            {
+              "name": "opts?",
+              "type": "WorkAssetReadUrlOptions",
+              "fields": [
+                {
+                  "name": "expiresIn",
+                  "type": "number",
+                  "optional": true,
+                  "doc": "Signed-URL lifetime in seconds (server default ~600s)."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "upload",
+          "signature": "upload(input: WorkAssetUploadInput): Promise<JsonRecord>",
+          "doc": "",
+          "sdkCall": "u.work.assets.upload",
+          "params": [
+            {
+              "name": "input",
+              "type": "WorkAssetUploadInput",
+              "fields": [
+                {
+                  "name": "filename",
+                  "type": "string",
+                  "optional": false,
+                  "doc": ""
+                },
+                {
+                  "name": "mimeType",
+                  "type": "string",
+                  "optional": false,
+                  "doc": ""
+                },
+                {
+                  "name": "data",
+                  "type": "ArrayBuffer | Uint8Array | Blob",
+                  "optional": false,
+                  "doc": ""
+                },
+                {
+                  "name": "sizeBytes",
+                  "type": "number",
+                  "optional": true,
+                  "doc": "Defaults to the byte length of `data`."
+                },
+                {
+                  "name": "displayName",
+                  "type": "string",
+                  "optional": true,
+                  "doc": ""
+                },
+                {
+                  "name": "sha256",
+                  "type": "string | null",
+                  "optional": true,
+                  "doc": ""
+                },
+                {
+                  "name": "metadata",
+                  "type": "JsonRecord",
+                  "optional": true,
+                  "doc": ""
+                }
+              ]
+            }
+          ]
         }
       ]
     },
@@ -308,37 +1168,175 @@
           "name": "connection",
           "signature": "connection(): Promise<JsonRecord>",
           "doc": "",
-          "sdkCall": "u.mail.connection"
+          "sdkCall": "u.mail.connection",
+          "params": []
         },
         {
           "name": "folders",
           "signature": "folders(): Promise<JsonRecord>",
           "doc": "",
-          "sdkCall": "u.mail.folders"
+          "sdkCall": "u.mail.folders",
+          "params": []
         },
         {
           "name": "threads",
           "signature": "threads(opts?: MailThreadsOptions): Promise<JsonRecord>",
           "doc": "",
-          "sdkCall": "u.mail.threads"
+          "sdkCall": "u.mail.threads",
+          "params": [
+            {
+              "name": "opts?",
+              "type": "MailThreadsOptions",
+              "fields": [
+                {
+                  "name": "folder",
+                  "type": "\"inbox\" | \"sent\" | \"drafts\" | \"starred\" | \"trash\"",
+                  "optional": true,
+                  "doc": ""
+                },
+                {
+                  "name": "q",
+                  "type": "string",
+                  "optional": true,
+                  "doc": ""
+                },
+                {
+                  "name": "cursor",
+                  "type": "string",
+                  "optional": true,
+                  "doc": ""
+                },
+                {
+                  "name": "limit",
+                  "type": "number",
+                  "optional": true,
+                  "doc": ""
+                }
+              ]
+            }
+          ]
         },
         {
           "name": "thread",
           "signature": "thread(id: string, opts?: { allowImages?: boolean; }): Promise<JsonRecord>",
           "doc": "",
-          "sdkCall": "u.mail.thread"
+          "sdkCall": "u.mail.thread",
+          "params": [
+            {
+              "name": "id",
+              "type": "string"
+            },
+            {
+              "name": "opts?",
+              "type": "{ allowImages?: boolean; }"
+            }
+          ]
         },
         {
           "name": "send",
           "signature": "send(input: MailSendInput): Promise<JsonRecord>",
           "doc": "",
-          "sdkCall": "u.mail.send"
+          "sdkCall": "u.mail.send",
+          "params": [
+            {
+              "name": "input",
+              "type": "MailSendInput",
+              "fields": [
+                {
+                  "name": "to",
+                  "type": "string[]",
+                  "optional": false,
+                  "doc": ""
+                },
+                {
+                  "name": "cc",
+                  "type": "string[]",
+                  "optional": true,
+                  "doc": ""
+                },
+                {
+                  "name": "bcc",
+                  "type": "string[]",
+                  "optional": true,
+                  "doc": ""
+                },
+                {
+                  "name": "subject",
+                  "type": "string",
+                  "optional": true,
+                  "doc": ""
+                },
+                {
+                  "name": "body",
+                  "type": "string",
+                  "optional": true,
+                  "doc": ""
+                },
+                {
+                  "name": "threadId",
+                  "type": "string",
+                  "optional": true,
+                  "doc": ""
+                }
+              ]
+            }
+          ]
         },
         {
           "name": "draft",
           "signature": "draft(input: MailDraftInput): Promise<JsonRecord>",
           "doc": "Draft an email into the in-app review surface (`app:emails`) for the user to\nreview, edit, approve/send, or discard — the human-in-the-loop email flow.\nUse this for ALL drafting (new emails AND replies via `replyToThreadId`).\nDrafting needs no Gmail connection; sending (from the surface) does. This is\nthe only draft path — there is no \"save to Gmail Drafts\" tool.",
-          "sdkCall": "u.mail.draft"
+          "sdkCall": "u.mail.draft",
+          "params": [
+            {
+              "name": "input",
+              "type": "MailDraftInput",
+              "fields": [
+                {
+                  "name": "to",
+                  "type": "MailAddressInput[]",
+                  "optional": true,
+                  "doc": "Recipients for a NEW email. Omit for a reply — when `replyToThreadId` is\nset the recipients + subject are derived from the thread automatically."
+                },
+                {
+                  "name": "cc",
+                  "type": "MailAddressInput[]",
+                  "optional": true,
+                  "doc": ""
+                },
+                {
+                  "name": "subject",
+                  "type": "string",
+                  "optional": true,
+                  "doc": ""
+                },
+                {
+                  "name": "body",
+                  "type": "string",
+                  "optional": true,
+                  "doc": ""
+                },
+                {
+                  "name": "replyToThreadId",
+                  "type": "string",
+                  "optional": true,
+                  "doc": "Reply INTO an existing Gmail thread. The server builds the thread headers\n(In-Reply-To / References) + recipient sets from the thread, so the draft\nsends as a proper threaded reply when the user approves it."
+                },
+                {
+                  "name": "replyMode",
+                  "type": "\"reply\" | \"reply_all\"",
+                  "optional": true,
+                  "doc": "\"reply\" = sender only, \"reply_all\" = everyone on the thread (default for replies)."
+                },
+                {
+                  "name": "sessionId",
+                  "type": "string",
+                  "optional": true,
+                  "doc": "Session the draft attaches to (drives the canvas `app:emails` review\nsurface). In the agent's Deno sandbox it defaults to the injected\nUNISON_SESSION_ID, so the agent normally doesn't pass it."
+                }
+              ]
+            }
+          ]
         }
       ]
     },
@@ -349,49 +1347,150 @@
           "name": "channels",
           "signature": "channels(): Promise<JsonRecord[]>",
           "doc": "",
-          "sdkCall": "u.chat.channels"
+          "sdkCall": "u.chat.channels",
+          "params": []
         },
         {
           "name": "channel",
           "signature": "channel(id: string): Promise<JsonRecord>",
           "doc": "",
-          "sdkCall": "u.chat.channel"
+          "sdkCall": "u.chat.channel",
+          "params": [
+            {
+              "name": "id",
+              "type": "string"
+            }
+          ]
         },
         {
           "name": "messages",
           "signature": "messages(channelId: string, opts?: ChatMessagesOptions): Promise<JsonRecord>",
           "doc": "",
-          "sdkCall": "u.chat.messages"
+          "sdkCall": "u.chat.messages",
+          "params": [
+            {
+              "name": "channelId",
+              "type": "string"
+            },
+            {
+              "name": "opts?",
+              "type": "ChatMessagesOptions",
+              "fields": [
+                {
+                  "name": "limit",
+                  "type": "number",
+                  "optional": true,
+                  "doc": ""
+                },
+                {
+                  "name": "cursor",
+                  "type": "string",
+                  "optional": true,
+                  "doc": ""
+                }
+              ]
+            }
+          ]
         },
         {
           "name": "send",
           "signature": "send(input: ChatSendInput): Promise<JsonRecord>",
           "doc": "",
-          "sdkCall": "u.chat.send"
+          "sdkCall": "u.chat.send",
+          "params": [
+            {
+              "name": "input",
+              "type": "ChatSendInput",
+              "fields": [
+                {
+                  "name": "channelId",
+                  "type": "string",
+                  "optional": false,
+                  "doc": ""
+                },
+                {
+                  "name": "content",
+                  "type": "string",
+                  "optional": true,
+                  "doc": ""
+                },
+                {
+                  "name": "mentionUserIds",
+                  "type": "string[]",
+                  "optional": true,
+                  "doc": ""
+                },
+                {
+                  "name": "replyToMessageId",
+                  "type": "string",
+                  "optional": true,
+                  "doc": ""
+                },
+                {
+                  "name": "threadRootId",
+                  "type": "string",
+                  "optional": true,
+                  "doc": ""
+                }
+              ]
+            }
+          ]
         },
         {
           "name": "search",
           "signature": "search(query: string, opts?: { channelId?: string; limit?: number; }): Promise<JsonRecord>",
           "doc": "",
-          "sdkCall": "u.chat.search"
+          "sdkCall": "u.chat.search",
+          "params": [
+            {
+              "name": "query",
+              "type": "string"
+            },
+            {
+              "name": "opts?",
+              "type": "{ channelId?: string; limit?: number; }"
+            }
+          ]
         },
         {
           "name": "threadReplies",
           "signature": "threadReplies(threadRootId: string, opts?: { limit?: number; cursor?: string; }): Promise<JsonRecord>",
           "doc": "",
-          "sdkCall": "u.chat.threadReplies"
+          "sdkCall": "u.chat.threadReplies",
+          "params": [
+            {
+              "name": "threadRootId",
+              "type": "string"
+            },
+            {
+              "name": "opts?",
+              "type": "{ limit?: number; cursor?: string; }"
+            }
+          ]
         },
         {
           "name": "openDm",
           "signature": "openDm(otherUserId: string): Promise<JsonRecord>",
           "doc": "Open or create a 1:1 DM channel with another user; returns `{ channelId }`.",
-          "sdkCall": "u.chat.openDm"
+          "sdkCall": "u.chat.openDm",
+          "params": [
+            {
+              "name": "otherUserId",
+              "type": "string"
+            }
+          ]
         },
         {
           "name": "members",
           "signature": "members(q?: string): Promise<JsonRecord[]>",
           "doc": "List/search workspace members (resolve a teammate name to a user id).",
-          "sdkCall": "u.chat.members"
+          "sdkCall": "u.chat.members",
+          "params": [
+            {
+              "name": "q?",
+              "type": "string"
+            }
+          ]
         }
       ]
     },
@@ -402,31 +1501,125 @@
           "name": "connection",
           "signature": "connection(): Promise<JsonRecord>",
           "doc": "",
-          "sdkCall": "u.calendar.connection"
+          "sdkCall": "u.calendar.connection",
+          "params": []
         },
         {
           "name": "calendars",
           "signature": "calendars(): Promise<JsonRecord[]>",
           "doc": "",
-          "sdkCall": "u.calendar.calendars"
+          "sdkCall": "u.calendar.calendars",
+          "params": []
         },
         {
           "name": "events",
           "signature": "events(opts: { from: string; to: string; calendarIds?: string[]; }): Promise<JsonRecord>",
           "doc": "",
-          "sdkCall": "u.calendar.events"
+          "sdkCall": "u.calendar.events",
+          "params": [
+            {
+              "name": "opts",
+              "type": "{ from: string; to: string; calendarIds?: string[]; }"
+            }
+          ]
         },
         {
           "name": "event",
           "signature": "event(id: string): Promise<JsonRecord>",
           "doc": "",
-          "sdkCall": "u.calendar.event"
+          "sdkCall": "u.calendar.event",
+          "params": [
+            {
+              "name": "id",
+              "type": "string"
+            }
+          ]
         },
         {
           "name": "createEvent",
           "signature": "createEvent(input: CalendarEventCreateInput): Promise<JsonRecord>",
           "doc": "",
-          "sdkCall": "u.calendar.createEvent"
+          "sdkCall": "u.calendar.createEvent",
+          "params": [
+            {
+              "name": "input",
+              "type": "CalendarEventCreateInput",
+              "fields": [
+                {
+                  "name": "calendarId",
+                  "type": "string",
+                  "optional": false,
+                  "doc": ""
+                },
+                {
+                  "name": "summary",
+                  "type": "string",
+                  "optional": true,
+                  "doc": ""
+                },
+                {
+                  "name": "description",
+                  "type": "string",
+                  "optional": true,
+                  "doc": ""
+                },
+                {
+                  "name": "location",
+                  "type": "string",
+                  "optional": true,
+                  "doc": ""
+                },
+                {
+                  "name": "startAt",
+                  "type": "string",
+                  "optional": false,
+                  "doc": ""
+                },
+                {
+                  "name": "endAt",
+                  "type": "string",
+                  "optional": false,
+                  "doc": ""
+                },
+                {
+                  "name": "allDay",
+                  "type": "boolean",
+                  "optional": true,
+                  "doc": ""
+                },
+                {
+                  "name": "attendees",
+                  "type": "{ email: string; displayName?: string; }[]",
+                  "optional": true,
+                  "doc": ""
+                },
+                {
+                  "name": "addMeetLink",
+                  "type": "boolean",
+                  "optional": true,
+                  "doc": ""
+                },
+                {
+                  "name": "recurrencePreset",
+                  "type": "\"none\" | \"daily\" | \"weekly\" | \"monthly_nth_weekday\" | \"annually\"",
+                  "optional": true,
+                  "doc": ""
+                },
+                {
+                  "name": "requestId",
+                  "type": "string",
+                  "optional": false,
+                  "doc": "Idempotency key (uuid) — required by the API."
+                },
+                {
+                  "name": "sendUpdates",
+                  "type": "\"all\" | \"none\"",
+                  "optional": true,
+                  "doc": ""
+                }
+              ]
+            }
+          ]
         }
       ]
     },
@@ -437,13 +1630,57 @@
           "name": "search",
           "signature": "search(query: string, opts?: PeopleListOpts): Promise<JsonRecord>",
           "doc": "Search people (CRM records of the \"people\" object).",
-          "sdkCall": "u.people.search"
+          "sdkCall": "u.people.search",
+          "params": [
+            {
+              "name": "query",
+              "type": "string"
+            },
+            {
+              "name": "opts?",
+              "type": "PeopleListOpts",
+              "fields": [
+                {
+                  "name": "objectSlug",
+                  "type": "string",
+                  "optional": true,
+                  "doc": ""
+                },
+                {
+                  "name": "limit",
+                  "type": "number",
+                  "optional": true,
+                  "doc": ""
+                }
+              ]
+            }
+          ]
         },
         {
           "name": "list",
           "signature": "list(opts?: PeopleListOpts): Promise<JsonRecord>",
           "doc": "List people without a query — the CRUD-style entry point agents expect for\nsymmetry with `work.records`. Delegates to `search` with an empty query\n(the people domain is search-backed; there is no separate list endpoint).",
-          "sdkCall": "u.people.list"
+          "sdkCall": "u.people.list",
+          "params": [
+            {
+              "name": "opts?",
+              "type": "PeopleListOpts",
+              "fields": [
+                {
+                  "name": "objectSlug",
+                  "type": "string",
+                  "optional": true,
+                  "doc": ""
+                },
+                {
+                  "name": "limit",
+                  "type": "number",
+                  "optional": true,
+                  "doc": ""
+                }
+              ]
+            }
+          ]
         }
       ]
     },
@@ -454,7 +1691,13 @@
           "name": "search",
           "signature": "search(query: string): Promise<ResearchResult[]>",
           "doc": "Web search via the server's web-search proxy. This is the only route to the\nopen web — the search runs server-side. Use it to verify a claim or gather\nexternal facts before writing.",
-          "sdkCall": "u.research.search"
+          "sdkCall": "u.research.search",
+          "params": [
+            {
+              "name": "query",
+              "type": "string"
+            }
+          ]
         }
       ]
     }
