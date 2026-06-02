@@ -45,6 +45,20 @@ describe("domain clients build correct /v1 requests", () => {
     expect(url).toContain("/v1/work/apply:dry-run");
   });
 
+  test("work.applyDryRun POSTs to /v1/work/apply:dry-run with dryRun:true", async () => {
+    let url = "";
+    let body = "";
+    const c = client((u, init) => {
+      url = u;
+      body = String(init?.body ?? "");
+      return json({ results: [] });
+    });
+    await c.work.applyDryRun({ operations: [{ op: "folder.create", name: "X" }] });
+    expect(url).toContain("/v1/work/apply:dry-run");
+    expect(JSON.parse(body).dryRun).toBe(true);
+    expect(JSON.parse(body).operations[0].op).toBe("folder.create");
+  });
+
   test("work.search POSTs {query, limit} to /v1/work/search", async () => {
     let url = "";
     let body = "";
@@ -165,5 +179,16 @@ describe("domain clients build correct /v1 requests", () => {
     await c.people.search("daniel", { limit: 10 });
     expect(url).toContain("/v1/people/search?");
     expect(url).toContain("q=daniel");
+  });
+
+  test("people.list delegates to /v1/people/search with an empty query", async () => {
+    let url = "";
+    const c = client((u) => {
+      url = u;
+      return json({ results: [] });
+    });
+    await c.people.list({ limit: 20 });
+    expect(url).toContain("/v1/people/search?");
+    expect(url).toContain("limit=20");
   });
 });
