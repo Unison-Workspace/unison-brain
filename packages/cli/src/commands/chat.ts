@@ -106,6 +106,30 @@ export function registerChat(program: Command): void {
       );
     });
 
+  chat
+    .command("replies <threadRootId>")
+    .description("List replies under a thread root message")
+    .option("--limit <n>")
+    .option("--cursor <cursor>")
+    .action(async (threadRootId: string, o: { limit?: string; cursor?: string }) => {
+      const c = await requireClient();
+      printJson(
+        await c.chat.threadReplies(threadRootId, {
+          limit: o.limit ? Number(o.limit) : undefined,
+          cursor: o.cursor,
+        }),
+      );
+    });
+
+  chat
+    .command("members [query...]")
+    .description("List or search workspace members (resolve a teammate name to a user id)")
+    .action(async (q: string[] | undefined) => {
+      const c = await requireClient();
+      const query = (q ?? []).join(" ").trim();
+      printJson(await c.chat.members(query || undefined));
+    });
+
   // Agent-first: these commands always emit JSON. Accept the documented --json
   // flag for parity so `unison chat <cmd> --json` doesn't error.
   for (const cmd of chat.commands) cmd.option("--json", "Output JSON (default)");

@@ -1,3 +1,5 @@
+import { readFile } from "node:fs/promises";
+import { basename } from "node:path";
 import type { WorkApplyInput, WorkInspectKind, WorkOperation } from "@unisonlabs/sdk";
 import type { Command } from "commander";
 import { requireClient } from "../client-factory";
@@ -61,6 +63,25 @@ export function registerWork(program: Command): void {
       const input = toApplyInput(await readJsonArg(o.message), Boolean(o.dryRun));
       const c = await requireClient();
       printJson(await c.work.apply(input));
+    });
+
+  work
+    .command("records")
+    .description(
+      "List a table's records directly — no view. Pass --table-id, or --semantic-kind (company | person | deal | task) to read the canonical CRM/Tasks table without discovering its id.",
+    )
+    .option("--table-id <id>")
+    .option("--semantic-kind <kind>", "company | person | deal | task")
+    .option("--limit <n>")
+    .action(async (o: { tableId?: string; semanticKind?: string; limit?: string }) => {
+      const c = await requireClient();
+      printJson(
+        await c.work.records({
+          tableId: o.tableId,
+          semanticKind: o.semanticKind,
+          limit: o.limit ? Number(o.limit) : undefined,
+        }),
+      );
     });
 
   work
@@ -139,6 +160,38 @@ export function registerWork(program: Command): void {
       const query = o.query ? await readJsonArg(o.query) : undefined;
       const c = await requireClient();
       printJson(await c.work.viewQuery(id, query as Record<string, unknown> | undefined));
+    });
+
+  work
+    .command("asset-url <id>")
+    .description("Get a short-lived signed download URL for a Work asset")
+    .option("--expires-in <seconds>", "Signed-URL lifetime (server default ~600s)")
+    .action(async (id: string, o: { expiresIn?: string }) => {
+      const c = await requireClient();
+      printJson(
+        await c.work.assets.readUrl(id, {
+          expiresIn: o.expiresIn ? Number(o.expiresIn) : undefined,
+        }),
+      );
+    });
+
+  work
+    .command("asset-upload <file>")
+    .description("Upload a local file as a Work asset (orchestrates upload-url → PUT → complete)")
+    .option("--mime <type>", "Content type (default: application/octet-stream)")
+    .option("--name <displayName>", "Display name (default: the file's basename)")
+    .action(async (file: string, o: { mime?: string; name?: string }) => {
+      const data = await readFile(file);
+      const filename = basename(file);
+      const c = await requireClient();
+      printJson(
+        await c.work.assets.upload({
+          filename,
+          mimeType: o.mime ?? "application/octet-stream",
+          data,
+          displayName: o.name ?? filename,
+        }),
+      );
     });
 
   // Agent-first: these commands always emit JSON. Accept the documented --json

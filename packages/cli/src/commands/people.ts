@@ -4,14 +4,14 @@ import { printJson } from "../output";
 
 export function registerPeople(program: Command): void {
   program
-    .command("people <query...>")
-    .description("Search people (CRM 'people' records)")
+    .command("people [query...]")
+    .description("Search people, or list everyone when no query is given (CRM 'people' records)")
     .option("--limit <n>")
     .option("--json", "Output JSON (default)")
-    .action(async (q: string[], o: { limit?: string }) => {
+    .action(async (q: string[] | undefined, o: { limit?: string }) => {
       const c = await requireClient();
-      printJson(
-        await c.people.search(q.join(" "), { limit: o.limit ? Number(o.limit) : undefined }),
-      );
+      const limit = o.limit ? Number(o.limit) : undefined;
+      const query = (q ?? []).join(" ").trim();
+      printJson(query ? await c.people.search(query, { limit }) : await c.people.list({ limit }));
     });
 }
