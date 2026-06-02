@@ -6,6 +6,19 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [1.2.0]
+
+### Added
+
+- **Scoped device-code login.** `startDeviceAuth(baseUrl, { scopes }, fetchImpl?)`
+  (SDK) now forwards the requested scopes to `/v1/auth/device/code` as a
+  space-joined `scope` field, and the `unison auth login --device` flow requests
+  the same scope set as the browser loopback flow. Previously the device flow
+  sent no scopes, so headless logins were silently limited to the server's
+  brain-only default and couldn't reach `work` / `chat` / `agent`. The server
+  clamps every minted key to the approving user's role, so requesting the full
+  set is safe.
+
 ## [1.0.0]
 
 **Breaking change.** The server collapsed `/v1/tasks`, `/v1/workspace`, and

@@ -108,7 +108,7 @@ async function loopbackLogin(apiUrl: string, appUrl: string): Promise<string> {
 
 /** Fallback login: device flow for SSH / headless boxes. */
 async function deviceLogin(apiUrl: string): Promise<string> {
-  const device = await startDeviceAuth(apiUrl);
+  const device = await startDeviceAuth(apiUrl, { scopes: SCOPES });
   info("");
   info(`  Enter this code:   ${device.userCode}`);
   info(`  At:                ${device.verificationUriComplete}`);
