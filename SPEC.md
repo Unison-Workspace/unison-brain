@@ -14,9 +14,15 @@ Unison dashboard — the API is dashboard parity, headless.
 
 ## 1. Design principles
 
-- **Two abstractions, one brain.** The cortex is a **filesystem** — paths under
-  `/wiki/`, `/skills/`, `/actions/` are writable; `/sources/`, `/raw/`, `/system/`
-  are read-only synthesis/ingest tiers — **and** a **knowledge graph** (entities →
+- **Two abstractions, one brain.** The cortex is a **scope-only filesystem** —
+  the writable roots are `/private/` (the default — only the caller sees it),
+  `/teams/<slug>/` (visible to that team-space), and `/tenant/` (visible to the
+  whole company); `/system/` (synthesized views) and `/sources/` (connector
+  ingest, under `/private/sources/`) are **read-only**. *Where the agent writes is
+  who sees it* — sharing is an explicit upgrade by qualifying the path. (The
+  legacy roots `/wiki/` and `/skills/` are still accepted as a compatibility
+  shim; `/actions/` and `/raw/` no longer exist — act via the SDK domain methods,
+  not by writing files.) The cortex is also a **knowledge graph** (entities →
   bitemporal facts → links). The API exposes both.
 - **Three surfaces, deliberately different breadth:**
   - **SDK** — *complete*. Every operation, typed. The reference surface.
@@ -95,9 +101,10 @@ pre-checks scopes — it sends the call and surfaces the result.
 ### Write constraints
 
 Document paths must end in `.md`, and writes/deletes to the read-only tiers
-`/sources/`, `/raw/`, `/system/` return `403`; only `/wiki/`, `/skills/`,
-`/actions/` are writable. The client offers write/delete/tag for any path and lets
-the server reject — it never hides or blocks paths itself.
+`/system/` and `/sources/` return `403`; the writable scopes are `/private/`,
+`/teams/<slug>/`, and `/tenant/` (the legacy roots `/wiki/` and `/skills/` are
+also accepted for compatibility). The client offers write/delete/tag for any path
+and lets the server reject — it never hides or blocks paths itself.
 
 ### Auth endpoints
 
@@ -141,7 +148,7 @@ the server reject — it never hides or blocks paths itself.
 | `GET /v1/brain/list?prefix&kind*&tag*&limit` | enumerate by prefix / kind / tag |
 | `GET /v1/brain/fs?path` | directory listing (dir / file / mtime) |
 | `GET /v1/brain/fs/read?path` | raw content of any tier, including read-only ones |
-| `PUT /v1/brain/doc` | body: `path` (under `/wiki/` `/skills/` `/actions/`, ends in `.md`), `kind` (def note), `title?`, `tldr?`, `bodyMd` (≤200k), `tags[]`, `visibility` tenant\|private, `expectedContentHash?`, `source?{kind,ref}` |
+| `PUT /v1/brain/doc` | body: `path` (under a writable scope — `/private/` `/teams/<slug>/` `/tenant/`, or legacy `/wiki/` `/skills/`; ends in `.md`), `kind` (def note), `title?`, `tldr?`, `bodyMd` (≤200k), `tags[]`, `visibility` tenant\|private, `expectedContentHash?`, `source?{kind,ref}` |
 | `DELETE /v1/brain/doc?path` | delete a document |
 | `POST /v1/brain/doc/tag` | body `{ path, add[], remove[] }` |
 | `POST /v1/brain/share` | body `{ kind: doc\|fact\|entity, id }` → promote private → tenant |
