@@ -71,12 +71,19 @@ export async function exchangeCode(
 
 export async function startDeviceAuth(
   baseUrl: string,
+  opts: { scopes?: string[] } = {},
   fetchImpl: typeof fetch = fetch,
 ): Promise<DeviceCodeResponse> {
   const res = await fetchImpl(`${stripTrailingSlash(baseUrl)}/${API_VERSION}/auth/device/code`, {
     method: "POST",
     headers: { "content-type": "application/json", accept: "application/json" },
-    body: JSON.stringify({ clientId: CLIENT_ID }),
+    // Request the same scopes as the loopback flow; the server clamps the grant
+    // to what the approving user's role allows, so over-requesting is safe. Omit
+    // when none are named to keep the server's historical brain-only default.
+    body: JSON.stringify({
+      clientId: CLIENT_ID,
+      ...(opts.scopes?.length ? { scope: opts.scopes.join(" ") } : {}),
+    }),
   });
   return parseResponse<DeviceCodeResponse>(res);
 }
