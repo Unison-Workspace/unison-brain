@@ -3,8 +3,11 @@ import {
   buildAuthorizeUrl,
   generatePkce,
   pollDeviceToken,
+  provisionAccount,
   randomState,
+  requestKey,
   startDeviceAuth,
+  verifyEmail,
 } from "./auth";
 
 function stub(status: number, body: unknown): typeof fetch {
@@ -104,5 +107,50 @@ describe("PKCE loopback helpers", () => {
     expect(url).toContain("code_challenge_method=S256");
     expect(url).toContain("redirect_uri=http");
     expect(url).toContain("scope=brain");
+  });
+});
+
+describe("machine-auth provisioning", () => {
+  test("provisionAccount posts the email + clientId and returns the key", async () => {
+    const cap = { calls: [] as Array<Record<string, unknown>> };
+    const fetchImpl = ((url: string, init?: RequestInit) => {
+      cap.calls.push({ url, body: JSON.parse(String(init?.body ?? "{}")) });
+      return Promise.resolve(
+        new Response(JSON.stringify({ apiKey: "usk_abc", tenantId: "t1", status: "unverified" }), {
+          status: 200,
+        }),
+      );
+    }) as unknown as typeof fetch;
+    const res = await provisionAccount(
+      "https://api.test",
+      { email: "Agent@Example.com" },
+      fetchImpl,
+    );
+    expect(res).toEqual({ apiKey: "usk_abc", tenantId: "t1", status: "unverified" });
+    expect(String(cap.calls[0].url)).toContain("/v1/auth/provision");
+    expect(cap.calls[0].body).toEqual({ email: "Agent@Example.com", clientId: "unison-cli" });
+  });
+
+  test("verifyEmail posts email + code and returns an optional recovery key", async () => {
+    const fetchImpl = stub(200, { verified: true, apiKey: "usk_new", tenantId: "t1" });
+    const res = await verifyEmail(
+      "https://api.test",
+      { email: "a@b.co", code: "123456" },
+      fetchImpl,
+    );
+    expect(res).toEqual({ verified: true, apiKey: "usk_new", tenantId: "t1" });
+  });
+
+  test("requestKey posts the email and returns a uniform status", async () => {
+    const fetchImpl = stub(200, { status: "verification_sent" });
+    const res = await requestKey("https://api.test", { email: "a@b.co" }, fetchImpl);
+    expect(res).toEqual({ status: "verification_sent" });
+  });
+
+  test("provisionAccount throws on an error envelope (e.g. 409 email_registered)", async () => {
+    const fetchImpl = stub(409, { error: { code: "email_registered", message: "exists" } });
+    await expect(
+      provisionAccount("https://api.test", { email: "a@b.co" }, fetchImpl),
+    ).rejects.toThrow();
   });
 });

@@ -6,8 +6,11 @@ import {
   exchangeCode,
   generatePkce,
   pollDeviceToken,
+  provisionAccount,
   randomState,
+  requestKey,
   startDeviceAuth,
+  verifyEmail,
 } from "@unisonlabs/sdk";
 import type { Command } from "commander";
 import open from "open";
@@ -190,5 +193,62 @@ export function registerAuth(program: Command): void {
       info(`  user:   ${me.user.email ?? me.user.id}`);
       info(`  tenant: ${me.tenant.name ?? me.tenant.id}`);
       info(`  scopes: ${me.scopes.join(", ")}`);
+    });
+
+  // Headless account creation — no browser, no dashboard. Creates an account for
+  // the given email and stores the returned (unverified) key. Verify with
+  // `unison auth verify` to lift the free-tier caps and make it durable.
+  auth
+    .command("provision")
+    .description("Create an account headlessly (no browser) and store its key")
+    .requiredOption("--email <email>", "Email to anchor the account to")
+    .option("--api-url <url>", "API base URL", defaultApiUrl())
+    .option("--json", "Output JSON")
+    .action(async (opts: { email: string; apiUrl: string; json?: boolean }) => {
+      const res = await provisionAccount(opts.apiUrl, { email: opts.email });
+      await saveCredentials({ apiUrl: opts.apiUrl, token: res.apiKey });
+      if (opts.json) {
+        printJson({ apiUrl: opts.apiUrl, tenantId: res.tenantId, status: res.status });
+        return;
+      }
+      success("Account created and key stored.");
+      info(`  tenant: ${res.tenantId}`);
+      info(`  status: ${res.status}`);
+      info(
+        `  next:   verify the code emailed to ${opts.email} via \`unison auth verify --email ${opts.email} --code <code>\``,
+      );
+    });
+
+  // Verify the emailed code. For a provision code this makes the account durable;
+  // for a recovery code it stores the freshly minted key.
+  auth
+    .command("verify")
+    .description("Verify the code emailed during provision / key recovery")
+    .requiredOption("--email <email>", "The account email")
+    .requiredOption("--code <code>", "The verification code from the email")
+    .option("--api-url <url>", "API base URL", defaultApiUrl())
+    .option("--json", "Output JSON")
+    .action(async (opts: { email: string; code: string; apiUrl: string; json?: boolean }) => {
+      const res = await verifyEmail(opts.apiUrl, { email: opts.email, code: opts.code });
+      if (res.apiKey) await saveCredentials({ apiUrl: opts.apiUrl, token: res.apiKey });
+      if (opts.json) {
+        printJson(res);
+        return;
+      }
+      success(res.verified ? "Verified." : "Not verified.");
+      if (res.apiKey) info("  A new key was issued and stored.");
+    });
+
+  // Recover access on a new machine / after losing a key. Emails a recovery code
+  // for an existing verified account; complete it with `unison auth verify`.
+  auth
+    .command("request-key")
+    .description("Email a recovery code for an existing account (lost key)")
+    .requiredOption("--email <email>", "The account email")
+    .option("--api-url <url>", "API base URL", defaultApiUrl())
+    .action(async (opts: { email: string; apiUrl: string }) => {
+      await requestKey(opts.apiUrl, { email: opts.email });
+      success("If that account exists, a recovery code was emailed.");
+      info(`  Complete it with \`unison auth verify --email ${opts.email} --code <code>\``);
     });
 }

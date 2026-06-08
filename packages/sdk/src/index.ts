@@ -30,10 +30,13 @@ export {
   exchangeCode,
   generatePkce,
   pollDeviceToken,
+  provisionAccount,
   randomState,
+  requestKey,
   startDeviceAuth,
+  verifyEmail,
 } from "./auth";
-export type { PollResult, PollStatus } from "./auth";
+export type { PollResult, PollStatus, ProvisionResponse, VerifyResponse } from "./auth";
 export { AuthError, BrainError } from "./errors";
 export { BrainContractError, routeBrainWritePath, WRITABLE_BRAIN_ROOTS } from "./fs-contract";
 export { API_VERSION, parseResponse, qs, stripTrailingSlash } from "./http";
