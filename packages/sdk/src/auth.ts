@@ -126,3 +126,63 @@ export async function pollDeviceToken(
       throw new BrainError(code ?? "auth_error", "Device authorization failed", res.status);
   }
 }
+
+// ── Machine-auth: headless account provisioning ─────────────────────────────
+// Lets a coding agent create + verify its own account with no browser. The agent
+// supplies an email, gets a working key immediately (unverified, capped), then
+// verifies a code emailed to it to make the account durable.
+
+export interface ProvisionResponse {
+  apiKey: string;
+  tenantId: string;
+  status: string;
+  message?: string;
+}
+
+export interface VerifyResponse {
+  verified: boolean;
+  apiKey?: string;
+  tenantId?: string;
+}
+
+/** Create a new account for `email` and return a working (unverified) key. */
+export async function provisionAccount(
+  baseUrl: string,
+  params: { email: string },
+  fetchImpl: typeof fetch = fetch,
+): Promise<ProvisionResponse> {
+  const res = await fetchImpl(`${stripTrailingSlash(baseUrl)}/${API_VERSION}/auth/provision`, {
+    method: "POST",
+    headers: { "content-type": "application/json", accept: "application/json" },
+    body: JSON.stringify({ email: params.email, clientId: CLIENT_ID }),
+  });
+  return parseResponse<ProvisionResponse>(res);
+}
+
+/** Verify an emailed code. Recovery codes also return a fresh key. */
+export async function verifyEmail(
+  baseUrl: string,
+  params: { email: string; code: string },
+  fetchImpl: typeof fetch = fetch,
+): Promise<VerifyResponse> {
+  const res = await fetchImpl(`${stripTrailingSlash(baseUrl)}/${API_VERSION}/auth/verify`, {
+    method: "POST",
+    headers: { "content-type": "application/json", accept: "application/json" },
+    body: JSON.stringify({ email: params.email, code: params.code }),
+  });
+  return parseResponse<VerifyResponse>(res);
+}
+
+/** Request a recovery code for an existing verified account (lost key). */
+export async function requestKey(
+  baseUrl: string,
+  params: { email: string },
+  fetchImpl: typeof fetch = fetch,
+): Promise<{ status: string }> {
+  const res = await fetchImpl(`${stripTrailingSlash(baseUrl)}/${API_VERSION}/auth/request-key`, {
+    method: "POST",
+    headers: { "content-type": "application/json", accept: "application/json" },
+    body: JSON.stringify({ email: params.email }),
+  });
+  return parseResponse<{ status: string }>(res);
+}

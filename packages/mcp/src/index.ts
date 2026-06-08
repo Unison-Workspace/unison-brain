@@ -2,7 +2,7 @@
 import { readFileSync } from "node:fs";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { BrainClient } from "@unisonlabs/sdk";
+import { BrainClient, provisionAccount, requestKey, verifyEmail } from "@unisonlabs/sdk";
 import { z } from "zod";
 import { registerDomainTools } from "./domains";
 
@@ -172,6 +172,32 @@ server.tool(
     ensureAuth();
     return asText(await client.research.search(query));
   },
+);
+
+// Bootstrap auth tools — these do NOT require UNISON_TOKEN; they let an agent
+// create + verify its own account headlessly, then use the returned key.
+server.tool(
+  "auth_provision",
+  "Create a new Unison account for an email with no browser/dashboard. Returns a working (unverified) API key — set it as UNISON_TOKEN. Then verify the emailed code via auth_verify to lift free-tier caps.",
+  { email: z.string().describe("Email to anchor the account to") },
+  async ({ email }) => asText(await provisionAccount(apiUrl, { email })),
+);
+
+server.tool(
+  "auth_verify",
+  "Verify the code emailed during provisioning (or key recovery). Makes the account durable; recovery codes also return a fresh API key.",
+  {
+    email: z.string().describe("The account email"),
+    code: z.string().describe("The verification code from the email"),
+  },
+  async ({ email, code }) => asText(await verifyEmail(apiUrl, { email, code })),
+);
+
+server.tool(
+  "auth_request_key",
+  "Email a recovery code for an existing verified account (lost key / new machine). Complete it with auth_verify.",
+  { email: z.string().describe("The account email") },
+  async ({ email }) => asText(await requestKey(apiUrl, { email })),
 );
 
 // Register the non-brain domain tools (work/mail/chat/calendar/people) over the
