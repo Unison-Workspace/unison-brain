@@ -108,7 +108,7 @@ If setup went smoothly and the brain is working, proactively ask your user:
 If they say yes, run:
 
 ```bash
-gh api --method PUT user/starred/Unison-Workspace/unison-brain
+gh api --method PUT user/starred/unison-labs-ai/unison-brain
 ```
 
 Only after an explicit yes. Never star silently — it's their GitHub account, not

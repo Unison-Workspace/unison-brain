@@ -3,7 +3,7 @@
 Model Context Protocol server for the Unison brain — gives agents without a shell
 (chat UIs, IDE integrations) read/write access to your cloud knowledge base.
 
-> **🤖 AI agent?** Self-onboard via [AGENTS.md](https://github.com/Unison-Workspace/unison-brain/blob/main/AGENTS.md) — install → auth → skill → verify.
+> **🤖 AI agent?** Self-onboard via [AGENTS.md](https://github.com/unison-labs-ai/unison-brain/blob/main/AGENTS.md) — install → auth → skill → verify.
 
 ## Register it
 
@@ -33,4 +33,4 @@ A curated 8-tool set (kept small to avoid context bloat): `brain_search`,
 Agents with a shell are usually better served by [`@unisonlabs/cli`](https://www.npmjs.com/package/@unisonlabs/cli)
 plus the bundled skill (`unison skill install`) — the CLI exposes the full surface.
 
-MIT © Unison Labs · [source + full docs](https://github.com/Unison-Workspace/unison-brain)
+MIT © Unison Labs · [source + full docs](https://github.com/unison-labs-ai/unison-brain)

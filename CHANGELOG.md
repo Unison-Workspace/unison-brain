@@ -116,6 +116,6 @@ Skill) for the hosted Unison brain at `https://api.unisonlabs.ai`.
 - JSON auto-compacts when piped (pretty on a TTY) to save agent tokens.
 - `--help` documents `--json`, env vars, exit codes, and usage examples.
 
-[Unreleased]: https://github.com/Unison-Workspace/unison-brain/compare/v1.0.0...HEAD
-[1.0.0]: https://github.com/Unison-Workspace/unison-brain/compare/v0.1.0...v1.0.0
-[0.1.0]: https://github.com/Unison-Workspace/unison-brain/releases/tag/v0.1.0
+[Unreleased]: https://github.com/unison-labs-ai/unison-brain/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/unison-labs-ai/unison-brain/compare/v0.1.0...v1.0.0
+[0.1.0]: https://github.com/unison-labs-ai/unison-brain/releases/tag/v0.1.0
