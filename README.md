@@ -11,7 +11,7 @@ research, ops, and personal agents — read from _and write back to_, on any mac
 for every teammate. Not another per-tool memory silo; the one source of truth they
 all share.
 
-[![CI](https://github.com/Unison-Workspace/unison-brain/actions/workflows/ci.yml/badge.svg)](https://github.com/Unison-Workspace/unison-brain/actions/workflows/ci.yml)
+[![CI](https://github.com/unison-labs-ai/unison-brain/actions/workflows/ci.yml/badge.svg)](https://github.com/unison-labs-ai/unison-brain/actions/workflows/ci.yml)
 [![npm](https://img.shields.io/npm/v/@unisonlabs/cli?logo=npm&color=cb3837&label=cli)](https://www.npmjs.com/package/@unisonlabs/cli)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
 
