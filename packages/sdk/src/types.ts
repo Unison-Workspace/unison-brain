@@ -54,6 +54,140 @@ export interface SearchOptions {
   tags?: string[];
   memoryType?: MemoryType;
   asOf?: string;
+  /** Restrict results to documents under this path prefix (e.g. "/private/notes"). */
+  pathPrefix?: string;
+}
+
+// ── Context recall ─────────────────────────────────────────────────────────
+
+export type ContextMode = "auto" | "deep" | "standard";
+
+export interface ContextOptions {
+  /** Natural-language question to recall context for. */
+  query: string;
+  /** Retrieval depth: auto (default) = the server decides; deep = multi-hop graph expansion; standard = single-pass vector. */
+  mode?: ContextMode;
+  /** Max semantic hits to return (1–50, default 10). */
+  k?: number;
+  /** Max entity summaries to include (0–10, default 3). */
+  maxEntities?: number;
+}
+
+/** A single ranked semantic hit from /v1/brain/context. */
+export interface SemanticHit {
+  doc: BrainDocumentSummary;
+  score: number;
+  highlight?: string;
+  sources: ("bm25" | "vector")[];
+}
+
+/** An entity summary bundle inside a ContextResult. */
+export interface ContextEntity {
+  entity: { id: string; kind: string; slug: string; displayName: string };
+  facts: BrainFact[];
+  timeline: BrainFact[];
+}
+
+/**
+ * The response from GET /v1/brain/context.
+ * `contextMd` is a prompt-ready markdown block containing the most relevant
+ * memory for `query`. Pass it verbatim into your system prompt or user turn;
+ * the brain does NO answer generation — the caller's LLM composes the answer.
+ */
+export interface ContextResult {
+  query: string;
+  mode: ContextMode;
+  generatedAt: string;
+  topScore: number | null;
+  weakEvidence: boolean;
+  hits: SemanticHit[];
+  entities: ContextEntity[];
+  contextMd: string;
+}
+
+// ── Ingest ─────────────────────────────────────────────────────────────────
+
+export interface ConversationTurn {
+  role: "user" | "assistant" | "system";
+  content: string;
+  name?: string;
+}
+
+export interface IngestConversationItem {
+  type: "conversation";
+  turns: ConversationTurn[];
+  /**
+   * Stable caller-side identifier for this conversation (e.g. a session id or
+   * thread id). Used for idempotency and dedup.
+   */
+  sourceRef: string;
+  /** Default "private". Pass "tenant" to make signals visible workspace-wide. */
+  visibility?: Visibility;
+  /** Client-side idempotency key — re-submitting the same key is a no-op. */
+  idempotencyKey?: string;
+}
+
+export interface IngestDocumentItem {
+  type: "document";
+  content: string;
+  title?: string;
+  /** Brain path to write the document to (e.g. "/private/notes/foo.md"). */
+  path?: string;
+  tags?: string[];
+  visibility?: Visibility;
+  /** Stable source reference for idempotency. */
+  sourceRef?: string;
+}
+
+export type IngestItem = IngestConversationItem | IngestDocumentItem;
+
+export interface IngestInput {
+  /** 1–100 items per call. */
+  items: IngestItem[];
+}
+
+export interface IngestConversationResult {
+  type: "conversation";
+  jobId: string;
+}
+
+export interface IngestDocumentResult {
+  type: "document";
+  docId: string;
+  path: string;
+  jobIds: string[];
+}
+
+export type IngestItemResult = IngestConversationResult | IngestDocumentResult;
+
+export interface IngestResult {
+  items: IngestItemResult[];
+}
+
+// ── Batch doc write ────────────────────────────────────────────────────────
+
+export interface WriteDocInput {
+  path: string;
+  bodyMd: string;
+  kind?: DocKind;
+  title?: string;
+  tldr?: string;
+  tags?: string[];
+  visibility?: Visibility;
+  expectedContentHash?: string;
+}
+
+export interface WriteDocsResult {
+  documents: BrainDocument[];
+}
+
+// ── Metadata-only patch ────────────────────────────────────────────────────
+
+export interface EditDocMetaInput {
+  path: string;
+  title?: string;
+  tldr?: string;
+  tags?: string[];
 }
 
 export interface GrepOptions {

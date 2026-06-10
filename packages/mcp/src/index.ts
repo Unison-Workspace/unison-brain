@@ -33,6 +33,86 @@ function asText(data: unknown) {
 const server = new McpServer({ name: "unison-brain", version: VERSION });
 
 server.tool(
+  "brain_context",
+  "One-call recall: retrieve the most relevant memory for a natural-language query and get back a prompt-ready `contextMd` block. Use this BEFORE answering any question that may depend on the user's or team's history, decisions, conventions, or relationships. The brain does NO answer generation — pass `contextMd` verbatim into your system prompt or user turn and let your LLM compose the answer from it.",
+  {
+    query: z.string().describe("Natural-language question to recall context for"),
+    mode: z
+      .enum(["auto", "deep", "standard"])
+      .optional()
+      .describe(
+        "Retrieval depth: auto (default) = server decides; deep = multi-hop graph expansion; standard = single-pass vector",
+      ),
+    k: z
+      .number()
+      .int()
+      .min(1)
+      .max(50)
+      .optional()
+      .describe("Max semantic hits to return (default 10)"),
+    maxEntities: z
+      .number()
+      .int()
+      .min(0)
+      .max(10)
+      .optional()
+      .describe("Max entity summaries to include (default 3)"),
+  },
+  async ({ query, mode, k, maxEntities }) => {
+    ensureAuth();
+    return asText(await client.context({ query, mode, k, maxEntities }));
+  },
+);
+
+server.tool(
+  "brain_ingest",
+  "Stream conversations or documents into brain memory. Conversations are routed through the signal-extraction pipeline and produce entities + facts. Documents land as extractable notes. Use this to persist important context from the current session so it survives future sessions.",
+  {
+    items: z
+      .array(
+        z.discriminatedUnion("type", [
+          z.object({
+            type: z.literal("conversation"),
+            turns: z
+              .array(
+                z.object({
+                  role: z.enum(["user", "assistant", "system"]),
+                  content: z.string(),
+                  name: z.string().optional(),
+                }),
+              )
+              .describe("The conversation turns to ingest"),
+            sourceRef: z
+              .string()
+              .describe("Stable caller-side identifier for this conversation (session/thread id)"),
+            visibility: z.enum(["tenant", "private"]).optional(),
+            idempotencyKey: z.string().optional(),
+          }),
+          z.object({
+            type: z.literal("document"),
+            content: z.string().describe("Markdown content of the document"),
+            title: z.string().optional(),
+            path: z
+              .string()
+              .optional()
+              .describe("Brain path to write the document to (e.g. /private/notes/foo.md)"),
+            tags: z.array(z.string()).optional(),
+            visibility: z.enum(["tenant", "private"]).optional(),
+            sourceRef: z.string().optional(),
+          }),
+        ]),
+      )
+      .min(1)
+      .max(100)
+      .describe("1–100 items: conversations or documents"),
+  },
+  async ({ items }) => {
+    ensureAuth();
+    return asText(await client.ingest({ items }));
+  },
+);
+
+server.tool(
   "brain_search",
   "Search the Unison brain (hybrid keyword + semantic). Use before answering questions that may rely on the user's prior decisions, conventions, or notes.",
   {
@@ -42,10 +122,14 @@ server.tool(
       .enum(["episodic", "semantic", "procedural", "auto"])
       .optional()
       .describe("Memory tier filter"),
+    pathPrefix: z
+      .string()
+      .optional()
+      .describe("Restrict results to documents under this path prefix (e.g. /private/notes)"),
   },
-  async ({ query, limit, memoryType }) => {
+  async ({ query, limit, memoryType, pathPrefix }) => {
     ensureAuth();
-    return asText(await client.search(query, { limit, memoryType }));
+    return asText(await client.search(query, { limit, memoryType, pathPrefix }));
   },
 );
 

@@ -6,6 +6,48 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+
+- **`brain.context()`** (SDK): one-call recall — `GET /v1/brain/context?q&mode&k&maxEntities`.
+  Returns `ContextResult` with `hits`, `entities`, and a prompt-ready `contextMd` block.
+  The brain does NO answer generation; pass `contextMd` verbatim into your LLM's prompt.
+  Scope: `brain:read`.
+
+- **`brain.ingest()`** (SDK): batch memory ingestion — `POST /v1/brain/ingest`.
+  Accepts up to 100 conversation or document items per call. Conversations are routed
+  through the signal-extraction pipeline (entity resolution + fact extraction). Documents
+  land as extractable notes. Scope: `brain:write`.
+
+- **`brain.writeDocs(docs[])`** (SDK): batch document write — `PUT /v1/brain/docs`.
+  Single round-trip equivalent of calling `write()` on each document. Scope: `brain:write`.
+
+- **`brain.patchDocMeta()`** (SDK): metadata-only `PATCH /v1/brain/doc` — update `title`,
+  `tldr`, or `tags` without touching the body. Complement to `editDoc()` (body edits).
+  Scope: `brain:write`.
+
+- **`unison context "<query>" [--deep] [-k N] [--max-entities N] [--json]`** (CLI):
+  prints `contextMd` by default; `--json` for the full structured response; `--deep`
+  activates multi-hop graph expansion.
+
+- **`unison ingest [--file <path>] [--conversation <json>] [--source-ref <ref>] [--visibility tenant|private]`**
+  (CLI): ingest a markdown file as a document (`--file`) or a conversation JSON array of
+  `{role,content}` turns (`--conversation` or stdin). Scope: `brain:write`.
+
+- **`brain_context`** (MCP): wraps `brain.context()`. Description emphasises: use this
+  BEFORE answering any question that may depend on the user's/team's history — pass
+  `contextMd` verbatim into your prompt.
+
+- **`brain_ingest`** (MCP): wraps `brain.ingest()`. Accepts `conversation` and `document`
+  items via a discriminated-union `items[]` array.
+
+- **`brain_search` `pathPrefix` param** (MCP + SDK): `GET /v1/brain/search` now accepts a
+  `pathPrefix` query param to restrict results to documents under a given path.
+
+- New types exported from `@unisonlabs/sdk`: `ContextOptions`, `ContextResult`,
+  `ContextMode`, `SemanticHit`, `ContextEntity`, `IngestInput`, `IngestItem`,
+  `IngestConversationItem`, `IngestDocumentItem`, `IngestResult`, `IngestItemResult`,
+  `ConversationTurn`, `WriteDocInput`, `WriteDocsResult`, `EditDocMetaInput`.
+
 ## [1.2.0]
 
 ### Added

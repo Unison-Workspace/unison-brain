@@ -1,0 +1,41 @@
+import type { ContextMode } from "@unisonlabs/sdk";
+import type { Command } from "commander";
+import pc from "picocolors";
+import { requireClient } from "../client-factory";
+import { out, printJson } from "../output";
+
+export function registerContext(program: Command): void {
+  program
+    .command("context <query...>")
+    .description("One-call recall: retrieve the most relevant memory as a prompt-ready block")
+    .option("--deep", "Use deep multi-hop retrieval (mode=deep)")
+    .option("-k, --k <n>", "Max semantic hits (1–50)", "10")
+    .option("--max-entities <n>", "Max entity summaries included (0–10)", "3")
+    .option("--json", "Output full JSON instead of the contextMd block")
+    .action(
+      async (
+        queryParts: string[],
+        opts: { deep?: boolean; k: string; maxEntities: string; json?: boolean },
+      ) => {
+        const client = await requireClient();
+        const result = await client.context({
+          query: queryParts.join(" "),
+          mode: opts.deep ? ("deep" as ContextMode) : undefined,
+          k: Number(opts.k),
+          maxEntities: Number(opts.maxEntities),
+        });
+
+        if (opts.json) {
+          printJson(result);
+          return;
+        }
+
+        // Default: print the prompt-ready contextMd block.
+        if (result.weakEvidence) {
+          out(pc.dim("(weak evidence — low confidence in recall)"));
+          out("");
+        }
+        out(result.contextMd);
+      },
+    );
+}

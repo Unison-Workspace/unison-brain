@@ -7,11 +7,13 @@ import { registerAuth } from "./commands/auth";
 import { registerCalendar } from "./commands/calendar";
 import { registerChat } from "./commands/chat";
 import { registerCompletion } from "./commands/completion";
+import { registerContext } from "./commands/context";
 import { registerDocs } from "./commands/docs";
 import { registerEdit } from "./commands/edit";
 import { registerEntity } from "./commands/entity";
 import { registerFact } from "./commands/fact";
 import { registerGet } from "./commands/get";
+import { registerIngest } from "./commands/ingest";
 import { registerJobs } from "./commands/jobs";
 import { registerList } from "./commands/list";
 import { registerMail } from "./commands/mail";
@@ -60,6 +62,8 @@ Examples:
   unison get /tenant/projects/architecture.md
   echo "We chose X because Y." | unison write /private/notes/x.md
   unison edit /private/notes/x.md --old "We chose X" --new "We chose Z"
+  unison context "what did we decide about auth?" --deep
+  unison ingest --file notes.md --title "Auth decision"
   unison work search "vendors" --json
   unison entity resolve "Daniel" --json
   unison rm /private/notes/old.md --yes   # destructive cmds need --yes when non-interactive
@@ -75,6 +79,9 @@ registerWrite(program);
 registerEdit(program);
 registerList(program);
 registerDocs(program);
+// Recall + ingest
+registerContext(program);
+registerIngest(program);
 // Graph
 registerEntity(program);
 registerFact(program);
