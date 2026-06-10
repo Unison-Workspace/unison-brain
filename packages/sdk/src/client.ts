@@ -17,11 +17,16 @@ import type {
   BrainJob,
   BrainLink,
   BrainStatus,
+  ContextOptions,
+  ContextResult,
   CorrectFactInput,
+  EditDocMetaInput,
   EntityKind,
   FactsAboutOptions,
   FsEntry,
   GrepOptions,
+  IngestInput,
+  IngestResult,
   JobStats,
   ListEntitiesOptions,
   ListJobsOptions,
@@ -38,6 +43,8 @@ import type {
   TimelineOptions,
   UpsertEntityInput,
   WhoAmI,
+  WriteDocInput,
+  WriteDocsResult,
   WriteInput,
 } from "./types";
 
@@ -202,7 +209,7 @@ export class BrainClient {
   async search(query: string, opts: SearchOptions = {}): Promise<SearchResult[]> {
     const data = await this.req<{ results: SearchResult[] }>(
       "GET",
-      `/brain/search?${qs({ q: query, k: opts.limit, kind: opts.kinds, tag: opts.tags, memoryType: opts.memoryType, asOf: opts.asOf })}`,
+      `/brain/search?${qs({ q: query, k: opts.limit, kind: opts.kinds, tag: opts.tags, memoryType: opts.memoryType, asOf: opts.asOf, pathPrefix: opts.pathPrefix })}`,
     );
     return data.results;
   }
@@ -276,6 +283,60 @@ export class BrainClient {
         422,
       );
     }
+    return this.req<BrainDocument>("PATCH", "/brain/doc", input);
+  }
+
+  /**
+   * One-call recall — fetch the most relevant memory for a natural-language
+   * query and get back a prompt-ready `contextMd` block.
+   *
+   * The brain does NO answer generation. Pass `contextMd` verbatim into your
+   * system prompt or user turn; the caller's LLM composes the answer.
+   *
+   * Scope: `brain:read`.
+   */
+  context(opts: ContextOptions): Promise<ContextResult> {
+    return this.req<ContextResult>(
+      "GET",
+      `/brain/context?${qs({ q: opts.query, mode: opts.mode, k: opts.k, maxEntities: opts.maxEntities })}`,
+    );
+  }
+
+  /**
+   * Stream conversations or documents into the brain's memory pipeline.
+   *
+   * Conversations are routed through the signal-extraction pipeline and produce
+   * entities + facts. Documents are written as extractable notes.
+   *
+   * Scope: `brain:write`.
+   */
+  ingest(input: IngestInput): Promise<IngestResult> {
+    return this.req<IngestResult>("POST", "/brain/ingest", input);
+  }
+
+  /**
+   * Batch write multiple documents in a single call.
+   * Equivalent to calling `write()` on each document but with one round-trip.
+   *
+   * Scope: `brain:write`.
+   */
+  async writeDocs(docs: WriteDocInput[]): Promise<BrainDocument[]> {
+    const data = await this.req<WriteDocsResult>("PUT", "/brain/docs", { docs });
+    return data.documents;
+  }
+
+  /**
+   * Patch metadata (title, tldr, tags) on an existing document without
+   * touching its body. Accepts both the full edit-doc form (oldStr/newStr)
+   * and a metadata-only form — pass `title`, `tldr`, or `tags` to update
+   * metadata only.
+   *
+   * The oldStr/newStr form is unchanged: use `editDoc()` for body edits.
+   * Use this overload when you only need to rename, re-summarize, or re-tag.
+   *
+   * Scope: `brain:write`.
+   */
+  patchDocMeta(input: EditDocMetaInput): Promise<BrainDocument> {
     return this.req<BrainDocument>("PATCH", "/brain/doc", input);
   }
 

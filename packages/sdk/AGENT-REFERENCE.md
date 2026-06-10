@@ -24,6 +24,7 @@ search(query: string, opts?: SearchOptions): Promise<SearchResult[]>
 - `tags?: string[]`
 - `memoryType?: MemoryType`
 - `asOf?: string`
+- `pathPrefix?: string` — Restrict results to documents under this path prefix (e.g. "/private/notes").
 
 ### `u.grep`
 
@@ -96,6 +97,85 @@ Routes to `PATCH /brain/doc`, which performs the match + replace
 server-side inside the write transaction — atomic and uniqueness-checked,
 so there is no racy client read-modify-write and metadata is preserved.
 Pass `expectedContentHash` for optimistic-concurrency on hot docs.
+
+### `u.context`
+
+```ts
+context(opts: ContextOptions): Promise<ContextResult>
+```
+
+One-call recall — fetch the most relevant memory for a natural-language
+query and get back a prompt-ready `contextMd` block.
+
+The brain does NO answer generation. Pass `contextMd` verbatim into your
+system prompt or user turn; the caller's LLM composes the answer.
+
+Scope: `brain:read`.
+
+`opts` (`ContextOptions`):
+- `query: string` — Natural-language question to recall context for.
+- `mode?: ContextMode` — Retrieval depth: auto (default) = the server decides; deep = multi-hop graph expansion; standard = single-pass vector.
+- `k?: number` — Max semantic hits to return (1–50, default 10).
+- `maxEntities?: number` — Max entity summaries to include (0–10, default 3).
+
+### `u.ingest`
+
+```ts
+ingest(input: IngestInput): Promise<IngestResult>
+```
+
+Stream conversations or documents into the brain's memory pipeline.
+
+Conversations are routed through the signal-extraction pipeline and produce
+entities + facts. Documents are written as extractable notes.
+
+Scope: `brain:write`.
+
+`input` (`IngestInput`):
+- `items: IngestItem[]` — 1–100 items per call.
+
+### `u.writeDocs`
+
+```ts
+writeDocs(docs: WriteDocInput[]): Promise<BrainDocument[]>
+```
+
+Batch write multiple documents in a single call.
+Equivalent to calling `write()` on each document but with one round-trip.
+
+Scope: `brain:write`.
+
+`docs` (`WriteDocInput[]`):
+- `path: string`
+- `bodyMd: string`
+- `kind?: DocKind`
+- `title?: string`
+- `tldr?: string`
+- `tags?: string[]`
+- `visibility?: Visibility`
+- `expectedContentHash?: string`
+
+### `u.patchDocMeta`
+
+```ts
+patchDocMeta(input: EditDocMetaInput): Promise<BrainDocument>
+```
+
+Patch metadata (title, tldr, tags) on an existing document without
+touching its body. Accepts both the full edit-doc form (oldStr/newStr)
+and a metadata-only form — pass `title`, `tldr`, or `tags` to update
+metadata only.
+
+The oldStr/newStr form is unchanged: use `editDoc()` for body edits.
+Use this overload when you only need to rename, re-summarize, or re-tag.
+
+Scope: `brain:write`.
+
+`input` (`EditDocMetaInput`):
+- `path: string`
+- `title?: string`
+- `tldr?: string`
+- `tags?: string[]`
 
 ### `u.delete`
 

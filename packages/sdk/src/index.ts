@@ -1,5 +1,6 @@
 export { BrainClient } from "./client";
 export type { EntitiesApi, FactsApi, JobsApi, LinksApi, ReviewApi } from "./client";
+
 // Domain APIs + their input types.
 export type { JsonRecord } from "./domains/_request";
 export type {

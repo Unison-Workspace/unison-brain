@@ -142,17 +142,92 @@ and lets the server reject — it never hides or blocks paths itself.
 
 | Endpoint | Notes |
 |---|---|
-| `GET /v1/brain/search?q&k&kind*&tag*&memoryType&asOf` | `k` 1–50 (def 10); `kind` ∈ wiki_page\|raw\|note\|log\|index; `memoryType` ∈ episodic\|semantic\|procedural\|auto. Returns `{ results: RankedHit[] }`, each `{ doc, score, highlight?, sources[] }` — `doc` is a summary (no body) |
+| `GET /v1/brain/search?q&k&kind*&tag*&memoryType&asOf&pathPrefix` | `k` 1–50 (def 10); `kind` ∈ wiki_page\|raw\|note\|log\|index; `memoryType` ∈ episodic\|semantic\|procedural\|auto; `pathPrefix` restricts results to documents under that path. Returns `{ results: RankedHit[] }`, each `{ doc, score, highlight?, sources[] }` — `doc` is a summary (no body) |
 | `GET /v1/brain/grep?pattern&caseSensitive&limit` | regex over document bodies; `limit` 1–200 (def 50) |
 | `GET /v1/brain/doc?path&asOf` | single document; `404 not_found` when missing |
 | `GET /v1/brain/list?prefix&kind*&tag*&limit` | enumerate by prefix / kind / tag |
 | `GET /v1/brain/fs?path` | directory listing (dir / file / mtime) |
 | `GET /v1/brain/fs/read?path` | raw content of any tier, including read-only ones |
 | `PUT /v1/brain/doc` | body: `path` (under a writable scope — `/private/` `/teams/<slug>/` `/tenant/`, or legacy `/wiki/` `/skills/`; ends in `.md`), `kind` (def note), `title?`, `tldr?`, `bodyMd` (≤200k), `tags[]`, `visibility` tenant\|private, `expectedContentHash?`, `source?{kind,ref}` |
+| `PUT /v1/brain/docs` | batch write: body `{ docs: WriteDocInput[] }` → `{ documents: BrainDocument[] }`. Each item has the same fields as `PUT /v1/brain/doc`. |
+| `PATCH /v1/brain/doc` | body `{ path, oldStr, newStr, expectedContentHash? }` for a body edit (server-side str_replace, atomic + uniqueness-checked). Also accepts a metadata-only variant `{ path, title?, tldr?, tags? }` to rename/re-summarize/re-tag without touching the body. |
 | `DELETE /v1/brain/doc?path` | delete a document |
 | `POST /v1/brain/doc/tag` | body `{ path, add[], remove[] }` |
 | `POST /v1/brain/share` | body `{ kind: doc\|fact\|entity, id }` → promote private → tenant |
 | `GET /v1/brain/neighbors?idOrPath&kind*&limit` | `kind` ∈ mentions\|derived_from\|supersedes\|see_also; `limit` 1–100 (def 20) |
+
+### 5.8 Context recall (`brain:read`)
+
+One-call endpoint that fuses search hits, entity facts, and timeline events into
+a single **prompt-ready `contextMd` block** — the fastest way to prime a caller's
+LLM with the most relevant memory. The brain does **no** answer generation; the
+caller's LLM composes the answer from `contextMd`.
+
+| Endpoint | Notes |
+|---|---|
+| `GET /v1/brain/context?q&mode&k&maxEntities` | `q` required; `mode` ∈ auto\|deep\|standard (def auto); `k` 1–50 (def 10); `maxEntities` 0–10 (def 3). |
+
+Response shape:
+
+```json
+{
+  "query": "string",
+  "mode": "auto | deep | standard",
+  "generatedAt": "ISO datetime",
+  "topScore": 0.92,
+  "weakEvidence": false,
+  "hits": [{ "doc": BrainDocumentSummary, "score": 0.9, "highlight?": "…", "sources": ["bm25"|"vector"] }],
+  "entities": [{ "entity": { "id", "kind", "slug", "displayName" }, "facts": BrainFact[], "timeline": BrainFact[] }],
+  "contextMd": "## Memory\n\n…"
+}
+```
+
+`weakEvidence` is `true` when `topScore < 0.5`, signalling that the brain has
+little relevant content for the query — the caller should caveat or proceed with
+less confidence.
+
+### 5.9 Ingest (`brain:write`)
+
+Batch endpoint to stream conversations or documents into the brain's memory
+pipeline. Conversations are routed through the signal-extraction pipeline (entity
+resolution + fact extraction). Documents are written as extractable notes.
+
+| Endpoint | Notes |
+|---|---|
+| `POST /v1/brain/ingest` | body `{ items: IngestItem[] }`, 1–100 items per call |
+
+`IngestItem` is a discriminated union:
+
+```ts
+// Conversation item
+{
+  type: "conversation";
+  turns: { role: "user" | "assistant" | "system"; content: string; name?: string; }[];
+  sourceRef: string;          // stable caller-side id (session / thread id)
+  visibility?: "tenant" | "private";  // default "private"
+  idempotencyKey?: string;
+}
+
+// Document item
+{
+  type: "document";
+  content: string;
+  title?: string;
+  path?: string;              // brain path; auto-routed if omitted
+  tags?: string[];
+  visibility?: "tenant" | "private";
+  sourceRef?: string;
+}
+```
+
+Response:
+
+```ts
+{ items: (
+  | { type: "conversation"; jobId: string }
+  | { type: "document"; docId: string; path: string; jobIds: string[] }
+)[] }
+```
 
 ### 5.2 Entities (graph)
 
@@ -212,7 +287,11 @@ MCP column: ✓ = exposed as an agent tool; — = SDK/CLI only.
 
 | Operation | CLI | SDK method | MCP |
 |---|---|---|---|
-| search | `unison search <q> [-k --kind --tag --memory-type --as-of]` | `brain.search()` | ✓ `brain_search` |
+| context recall | `unison context "<q>" [--deep --k --max-entities --json]` | `brain.context()` | ✓ `brain_context` |
+| ingest | `unison ingest [--file --conversation --source-ref --visibility]` | `brain.ingest()` | ✓ `brain_ingest` |
+| batch write docs | — | `brain.writeDocs()` | — |
+| patch doc metadata | — | `brain.patchDocMeta()` | — |
+| search | `unison search <q> [-k --kind --tag --memory-type --as-of --path-prefix]` | `brain.search()` | ✓ `brain_search` |
 | grep | `unison grep <pattern> [--case-sensitive]` | `brain.grep()` | — |
 | read doc | `unison get <path> [--json --as-of]` (alias `cat`) | `brain.get()` | ✓ `brain_get` |
 | list docs | `unison ls [path] [--docs --kind --tag]` | `brain.list()` | ✓ `brain_list` |
@@ -258,9 +337,10 @@ domain's contract — this maps the CLI → SDK → MCP shape, not the full endp
 | calendar | `unison cal <connection\|calendars\|events\|event\|create-event>` | `client.calendar.*` | ✓ `calendar_events` |
 | people | `unison people <query>` | `client.people.search()` | ✓ `people_search` |
 
-MCP tool set (20): the 8 brain tools — `brain_search`, `brain_get`, `brain_list`,
-`brain_write`, `brain_resolve_entity`, `brain_facts_about`, `brain_record_fact`,
-`brain_status` — plus 12 Phase G domain tools: `tasks_list`, `tasks_create`,
+MCP tool set (22): the 10 brain tools — `brain_context`, `brain_ingest`,
+`brain_search`, `brain_get`, `brain_list`, `brain_write`, `brain_edit`,
+`brain_resolve_entity`, `brain_facts_about`, `brain_record_fact`, `brain_status` —
+plus 12 Phase G domain tools: `tasks_list`, `tasks_create`,
 `workspace_team_spaces`, `workspace_tree`, `mail_threads`, `mail_send`,
 `chat_channels`, `chat_send`, `crm_search_records`, `crm_create_note`,
 `calendar_events`, `people_search`.

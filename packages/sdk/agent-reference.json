@@ -48,6 +48,12 @@
                   "type": "string",
                   "optional": true,
                   "doc": ""
+                },
+                {
+                  "name": "pathPrefix",
+                  "type": "string",
+                  "optional": true,
+                  "doc": "Restrict results to documents under this path prefix (e.g. \"/private/notes\")."
                 }
               ]
             }
@@ -234,6 +240,164 @@
             {
               "name": "input",
               "type": "{ path: string; oldStr: string; newStr: string; expectedContentHash?: string; }"
+            }
+          ]
+        },
+        {
+          "name": "context",
+          "signature": "context(opts: ContextOptions): Promise<ContextResult>",
+          "doc": "One-call recall — fetch the most relevant memory for a natural-language\nquery and get back a prompt-ready `contextMd` block.\n\nThe brain does NO answer generation. Pass `contextMd` verbatim into your\nsystem prompt or user turn; the caller's LLM composes the answer.\n\nScope: `brain:read`.",
+          "sdkCall": "u.context",
+          "params": [
+            {
+              "name": "opts",
+              "type": "ContextOptions",
+              "fields": [
+                {
+                  "name": "query",
+                  "type": "string",
+                  "optional": false,
+                  "doc": "Natural-language question to recall context for."
+                },
+                {
+                  "name": "mode",
+                  "type": "ContextMode",
+                  "optional": true,
+                  "doc": "Retrieval depth: auto (default) = the server decides; deep = multi-hop graph expansion; standard = single-pass vector."
+                },
+                {
+                  "name": "k",
+                  "type": "number",
+                  "optional": true,
+                  "doc": "Max semantic hits to return (1–50, default 10)."
+                },
+                {
+                  "name": "maxEntities",
+                  "type": "number",
+                  "optional": true,
+                  "doc": "Max entity summaries to include (0–10, default 3)."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "ingest",
+          "signature": "ingest(input: IngestInput): Promise<IngestResult>",
+          "doc": "Stream conversations or documents into the brain's memory pipeline.\n\nConversations are routed through the signal-extraction pipeline and produce\nentities + facts. Documents are written as extractable notes.\n\nScope: `brain:write`.",
+          "sdkCall": "u.ingest",
+          "params": [
+            {
+              "name": "input",
+              "type": "IngestInput",
+              "fields": [
+                {
+                  "name": "items",
+                  "type": "IngestItem[]",
+                  "optional": false,
+                  "doc": "1–100 items per call."
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "writeDocs",
+          "signature": "writeDocs(docs: WriteDocInput[]): Promise<BrainDocument[]>",
+          "doc": "Batch write multiple documents in a single call.\nEquivalent to calling `write()` on each document but with one round-trip.\n\nScope: `brain:write`.",
+          "sdkCall": "u.writeDocs",
+          "params": [
+            {
+              "name": "docs",
+              "type": "WriteDocInput[]",
+              "fields": [
+                {
+                  "name": "path",
+                  "type": "string",
+                  "optional": false,
+                  "doc": ""
+                },
+                {
+                  "name": "bodyMd",
+                  "type": "string",
+                  "optional": false,
+                  "doc": ""
+                },
+                {
+                  "name": "kind",
+                  "type": "DocKind",
+                  "optional": true,
+                  "doc": ""
+                },
+                {
+                  "name": "title",
+                  "type": "string",
+                  "optional": true,
+                  "doc": ""
+                },
+                {
+                  "name": "tldr",
+                  "type": "string",
+                  "optional": true,
+                  "doc": ""
+                },
+                {
+                  "name": "tags",
+                  "type": "string[]",
+                  "optional": true,
+                  "doc": ""
+                },
+                {
+                  "name": "visibility",
+                  "type": "Visibility",
+                  "optional": true,
+                  "doc": ""
+                },
+                {
+                  "name": "expectedContentHash",
+                  "type": "string",
+                  "optional": true,
+                  "doc": ""
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "patchDocMeta",
+          "signature": "patchDocMeta(input: EditDocMetaInput): Promise<BrainDocument>",
+          "doc": "Patch metadata (title, tldr, tags) on an existing document without\ntouching its body. Accepts both the full edit-doc form (oldStr/newStr)\nand a metadata-only form — pass `title`, `tldr`, or `tags` to update\nmetadata only.\n\nThe oldStr/newStr form is unchanged: use `editDoc()` for body edits.\nUse this overload when you only need to rename, re-summarize, or re-tag.\n\nScope: `brain:write`.",
+          "sdkCall": "u.patchDocMeta",
+          "params": [
+            {
+              "name": "input",
+              "type": "EditDocMetaInput",
+              "fields": [
+                {
+                  "name": "path",
+                  "type": "string",
+                  "optional": false,
+                  "doc": ""
+                },
+                {
+                  "name": "title",
+                  "type": "string",
+                  "optional": true,
+                  "doc": ""
+                },
+                {
+                  "name": "tldr",
+                  "type": "string",
+                  "optional": true,
+                  "doc": ""
+                },
+                {
+                  "name": "tags",
+                  "type": "string[]",
+                  "optional": true,
+                  "doc": ""
+                }
+              ]
             }
           ]
         },

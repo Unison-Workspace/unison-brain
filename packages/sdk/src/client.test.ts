@@ -217,3 +217,170 @@ describe("parseResponse", () => {
     ).rejects.toThrow(BrainError);
   });
 });
+
+describe("BrainClient context", () => {
+  test("context builds the correct GET params", async () => {
+    let url = "";
+    const client = new BrainClient({
+      baseUrl: "https://api.test",
+      token: "tok",
+      fetch: stubFetch((u) => {
+        url = u;
+        return json({
+          query: "auth decision",
+          mode: "deep",
+          generatedAt: "2026-06-10T00:00:00Z",
+          topScore: 0.92,
+          weakEvidence: false,
+          hits: [],
+          entities: [],
+          contextMd: "## Memory\n\nWe chose device-flow.",
+        });
+      }),
+    });
+
+    const result = await client.context({ query: "auth decision", mode: "deep", k: 5 });
+    expect(url).toContain("/v1/brain/context?");
+    expect(url).toContain("q=auth+decision");
+    expect(url).toContain("mode=deep");
+    expect(url).toContain("k=5");
+    expect(result.contextMd).toBe("## Memory\n\nWe chose device-flow.");
+    expect(result.weakEvidence).toBe(false);
+  });
+
+  test("context uses GET and returns contextMd", async () => {
+    let method = "";
+    const client = new BrainClient({
+      baseUrl: "https://api.test",
+      token: "tok",
+      fetch: stubFetch((_u, init) => {
+        method = init?.method ?? "";
+        return json({
+          query: "q",
+          mode: "auto",
+          generatedAt: "2026-06-10T00:00:00Z",
+          topScore: null,
+          weakEvidence: true,
+          hits: [],
+          entities: [],
+          contextMd: "",
+        });
+      }),
+    });
+
+    await client.context({ query: "q" });
+    expect(method).toBe("GET");
+  });
+});
+
+describe("BrainClient ingest", () => {
+  test("ingest POSTs items and returns result", async () => {
+    let method = "";
+    let captured = "";
+    const client = new BrainClient({
+      baseUrl: "https://api.test",
+      token: "tok",
+      fetch: stubFetch((_u, init) => {
+        method = init?.method ?? "";
+        captured = String(init?.body ?? "");
+        return json({
+          items: [{ type: "conversation", jobId: "job-1" }],
+        });
+      }),
+    });
+
+    const result = await client.ingest({
+      items: [
+        {
+          type: "conversation",
+          turns: [{ role: "user", content: "hello" }],
+          sourceRef: "session-1",
+        },
+      ],
+    });
+
+    expect(method).toBe("POST");
+    const body = JSON.parse(captured);
+    expect(body.items).toHaveLength(1);
+    expect(body.items[0].type).toBe("conversation");
+    expect(body.items[0].sourceRef).toBe("session-1");
+    expect(result.items[0]).toMatchObject({ type: "conversation", jobId: "job-1" });
+  });
+
+  test("ingest document item is sent correctly", async () => {
+    let captured = "";
+    const client = new BrainClient({
+      baseUrl: "https://api.test",
+      token: "tok",
+      fetch: stubFetch((_u, init) => {
+        captured = String(init?.body ?? "");
+        return json({
+          items: [
+            { type: "document", docId: "doc-1", path: "/private/notes/foo.md", jobIds: ["j1"] },
+          ],
+        });
+      }),
+    });
+
+    const result = await client.ingest({
+      items: [{ type: "document", content: "# Foo\n\nBar.", title: "Foo", visibility: "private" }],
+    });
+
+    const body = JSON.parse(captured);
+    expect(body.items[0].type).toBe("document");
+    expect(body.items[0].content).toBe("# Foo\n\nBar.");
+    expect(result.items[0]).toMatchObject({ type: "document", path: "/private/notes/foo.md" });
+  });
+});
+
+describe("BrainClient writeDocs", () => {
+  test("writeDocs PUTs to /brain/docs and returns documents array", async () => {
+    let method = "";
+    let url = "";
+    let captured = "";
+    const client = new BrainClient({
+      baseUrl: "https://api.test",
+      token: "tok",
+      fetch: stubFetch((u, init) => {
+        method = init?.method ?? "";
+        url = u;
+        captured = String(init?.body ?? "");
+        return json({
+          documents: [
+            { id: "1", path: "/private/notes/a.md", kind: "note", bodyMd: "A" },
+            { id: "2", path: "/private/notes/b.md", kind: "note", bodyMd: "B" },
+          ],
+        });
+      }),
+    });
+
+    const docs = await client.writeDocs([
+      { path: "/private/notes/a.md", bodyMd: "A" },
+      { path: "/private/notes/b.md", bodyMd: "B" },
+    ]);
+
+    expect(method).toBe("PUT");
+    expect(url).toContain("/v1/brain/docs");
+    const body = JSON.parse(captured);
+    expect(body.docs).toHaveLength(2);
+    expect(docs).toHaveLength(2);
+    expect(docs[0]?.path).toBe("/private/notes/a.md");
+  });
+});
+
+describe("BrainClient search pathPrefix", () => {
+  test("search forwards pathPrefix as a query param", async () => {
+    let url = "";
+    const client = new BrainClient({
+      baseUrl: "https://api.test",
+      token: "tok",
+      fetch: stubFetch((u) => {
+        url = u;
+        return json({ results: [] });
+      }),
+    });
+
+    await client.search("auth", { pathPrefix: "/private/notes" });
+    expect(url).toContain("pathPrefix=%2Fprivate%2Fnotes");
+  });
+});
