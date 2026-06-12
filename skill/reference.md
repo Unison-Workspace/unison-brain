@@ -80,5 +80,5 @@ prints the resolved path); `get`, `edit`, `rm`, and `tag` need the full path.
 
 Result data → **stdout** (JSON with `--json`, auto-compacted when piped).
 Status and errors → **stderr** as a JSON envelope. Exit codes: `0` ok, `4` auth,
-`3` not found, `5` conflict, `1` other. Destructive commands require `--yes`
+`3` not found, `5` conflict, `6` free-tier quota (verify email to lift), `1` other. Destructive commands require `--yes`
 when non-interactive.

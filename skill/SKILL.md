@@ -111,7 +111,7 @@ round-trips everything back to plain markdown.
 ## Working agreement
 
 - Prefer `--json`: data on **stdout**, errors as a JSON envelope on **stderr** with
-  exit codes `4` auth, `3` not found, `5` conflict, `1` other.
+  exit codes `4` auth, `3` not found, `5` conflict, `6` quota (verify email), `1` other.
 - Destructive commands (`rm`, `fact rm`, `review merge`, `review undo`) need
   `--yes` non-interactively.
 - Auth failures (exit 4): re-run setup above; headless agents check `UNISON_TOKEN`.

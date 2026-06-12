@@ -114,14 +114,17 @@ registerSkill(program);
 registerCompletion(program);
 
 // Distinct exit codes so an agent can branch without parsing text.
-function exitCodeFor(status: number): number {
+function exitCodeFor(status: number, code?: string): number {
+  if (code === "quota_exceeded") return 6; // free-tier cap: verify email to lift
   if (status === 401 || status === 403) return 4; // auth: sign in / missing scope
   if (status === 404) return 3; // not found
   if (status === 409) return 5; // conflict (e.g. stale content hash)
   return 1; // general / retryable
 }
 
-function suggestedFix(status: number): string | undefined {
+function suggestedFix(status: number, code?: string): string | undefined {
+  if (code === "quota_exceeded")
+    return "Free-tier cap reached. Verify your email (`unison auth verify <code>`) to lift it, or delete docs you no longer need.";
   if (status === 401) return "Run `unison auth login` to sign in.";
   if (status === 403) return "Your key lacks the required scope (read / write / admin).";
   if (status === 404) return "Nothing found at that path or id.";
@@ -147,7 +150,7 @@ function jsonError(envelope: Record<string, unknown>): void {
 
 function reportError(err: unknown): number {
   if (err instanceof BrainError) {
-    const fix = suggestedFix(err.status);
+    const fix = suggestedFix(err.status, err.code);
     if (wantsJson()) {
       jsonError({
         code: err.code,
@@ -159,7 +162,7 @@ function reportError(err: unknown): number {
       fail(err.message);
       if (fix) info(`→ ${fix}`);
     }
-    return exitCodeFor(err.status);
+    return exitCodeFor(err.status, err.code);
   }
   const message = err instanceof Error ? err.message : String(err);
   if (wantsJson()) jsonError({ code: "error", message });

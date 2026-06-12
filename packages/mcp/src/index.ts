@@ -211,6 +211,18 @@ server.tool(
 );
 
 server.tool(
+  "brain_delete",
+  "Delete a document from the Unison brain by path. Use to clean up docs you created that are no longer needed (e.g. scratch or superseded notes). Irreversible.",
+  {
+    path: z.string().describe("Document path, e.g. /private/notes/obsolete-note.md"),
+  },
+  async ({ path }) => {
+    ensureAuth();
+    return asText(await client.delete(path));
+  },
+);
+
+server.tool(
   "brain_resolve_entity",
   "Find a knowledge-graph entity (person, company, project, etc.) by name. Use when a name is mentioned and you need its id or context.",
   {
