@@ -64,6 +64,9 @@ import type {
   WriteInput,
 } from "./types";
 
+/** Hosted Unison brain — used when neither `apiUrl` nor `baseUrl` is given. */
+export const DEFAULT_API_URL = "https://brain.unisonlabs.ai";
+
 /** Pattern for a valid actor external id — same regex enforced server-side. */
 export const ACTOR_ID_RE = /^[A-Za-z0-9._:@-]{1,200}$/;
 
@@ -151,10 +154,7 @@ export class BrainClient {
   private readonly fetchImpl: typeof fetch;
 
   constructor(opts: BrainClientOptions) {
-    const resolvedUrl = opts.apiUrl ?? opts.baseUrl;
-    if (!resolvedUrl) {
-      throw new Error("BrainClient: provide `apiUrl` (or legacy `baseUrl`).");
-    }
+    const resolvedUrl = opts.apiUrl ?? opts.baseUrl ?? DEFAULT_API_URL;
     if (opts.apiUrl && opts.baseUrl && opts.apiUrl !== opts.baseUrl) {
       throw new Error(
         `BrainClient: \`apiUrl\` (${opts.apiUrl}) and \`baseUrl\` (${opts.baseUrl}) are both set and differ — use one.`,

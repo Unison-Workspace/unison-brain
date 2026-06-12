@@ -442,14 +442,10 @@ describe("BrainClient constructor apiUrl alias", () => {
     await client.search("hello");
     expect(url).toContain("https://api.same/");
   });
-
-  test("throws when neither apiUrl nor baseUrl is provided", () => {
-    expect(
-      () =>
-        new BrainClient({
-          token: "tok",
-        } as Parameters<typeof BrainClient>[0]),
-    ).toThrow(/apiUrl/);
+  test("defaults to the hosted brain when neither apiUrl nor baseUrl is provided", () => {
+    const client = new BrainClient({ token: "usk_test" });
+    // @ts-expect-error private access for assertion
+    expect(client.baseUrl).toBe("https://brain.unisonlabs.ai");
   });
 });
 
@@ -615,5 +611,13 @@ describe("BrainClient keys multi-tenant", () => {
 
     await client.keys.create({ name: "cli", tenantId: "t2" });
     expect(JSON.parse(body).tenantId).toBe("t2");
+  });
+});
+
+describe("BrainClient default apiUrl", () => {
+  test("falls back to the hosted brain when no url is given", () => {
+    const client = new BrainClient({ token: "usk_test" });
+    // @ts-expect-error private access for assertion
+    expect(client.baseUrl).toBe("https://brain.unisonlabs.ai");
   });
 });

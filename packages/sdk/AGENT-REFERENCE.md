@@ -221,6 +221,21 @@ status(): Promise<BrainStatus>
 whoami(): Promise<WhoAmI>
 ```
 
+### `u.withActor`
+
+```ts
+withActor(externalId: string | null | undefined): BrainClient
+```
+
+Return a derived client that sends `X-Unison-Actor: <externalId>` on every
+request. The key must carry the `brain:act-as` scope. Shadow users are
+auto-created server-side; `/private` scoping isolates actors automatically.
+
+Pass `null` or `undefined` to clear the actor (return a client without
+the header).
+
+Throws synchronously if `externalId` is non-null and fails the format check.
+
 ## entities
 
 Knowledge-graph entities (people, companies, projects, …).

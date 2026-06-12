@@ -502,6 +502,18 @@
           "doc": "",
           "sdkCall": "u.whoami",
           "params": []
+        },
+        {
+          "name": "withActor",
+          "signature": "withActor(externalId: string | null | undefined): BrainClient",
+          "doc": "Return a derived client that sends `X-Unison-Actor: <externalId>` on every\nrequest. The key must carry the `brain:act-as` scope. Shadow users are\nauto-created server-side; `/private` scoping isolates actors automatically.\n\nPass `null` or `undefined` to clear the actor (return a client without\nthe header).\n\nThrows synchronously if `externalId` is non-null and fails the format check.",
+          "sdkCall": "u.withActor",
+          "params": [
+            {
+              "name": "externalId",
+              "type": "string | null | undefined"
+            }
+          ]
         }
       ]
     },
