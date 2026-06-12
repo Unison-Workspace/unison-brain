@@ -27,7 +27,9 @@ scope). Run `unison <cmd> --help` for the authoritative flag list.
 
 Writable path roots: `/private/…` (personal; free-form subtrees allowed except
 `/private/sources/*`), `/tenant/…` (workspace-shared), `/teams/<slug>/…`.
-Paths are lowercase kebab-case ending in `.md`.
+Paths are lowercase kebab-case ending in `.md`. **Bare names are accepted by
+`write` only** (the server routes them to `/private/notes/` and the command
+prints the resolved path); `get`, `edit`, `rm`, and `tag` need the full path.
 
 ## Knowledge graph
 
@@ -39,7 +41,8 @@ Paths are lowercase kebab-case ending in `.md`.
 | `unison fact add <entityId> <predicate> "<text>"` | Record a fact. |
 | `unison fact correct <factId>` | Supersede a fact with a corrected one. |
 | `unison fact rm <factId> --yes` | Retract a fact. |
-| `unison fact timeline <entityId>` | Facts over time (bitemporal). |
+
+| `unison timeline <entityId> [--from <ts>] [--to <ts>]` | Chronological facts for an entity (bitemporal). |
 | `unison review ls\|merge\|distinct\|merges\|undo` | Entity-dedup review queue (admin; `merge`/`undo` need `--yes`). |
 
 ## Auth, tenants, account
@@ -50,7 +53,7 @@ Paths are lowercase kebab-case ending in `.md`.
 | `unison auth verify <code>` | Complete login; stores the API key locally. |
 | `unison auth status` / `unison auth logout` | Inspect / clear stored credentials. |
 | `unison auth keys [ls]` / `unison auth keys create --name <n> [--scopes <s>...]` / `unison auth keys revoke <id>` | Manage API keys (`usk_…`). Default scopes: `brain:read brain:write`. |
-| `unison auth invite <email> [--role admin\|member\|viewer]` | Invite someone to the tenant. |
+| `unison invite <email> [--role admin\|member\|viewer]` | Invite someone to the tenant (top-level, not under `auth`). |
 | `unison invites [ls]` / `unison invites revoke <id>` | List / revoke pending invitations. |
 | `unison tenants` / `unison switch <tenantIdOrName>` | List memberships / switch active tenant. |
 | `unison status` | Brain health + document/entity/fact counts. |

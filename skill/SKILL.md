@@ -78,8 +78,10 @@ unison edit <path> --old "…" --new "…"            # surgical update of an ex
 unison fact add <entityId> <predicate> "<text>"   # entity-shaped knowledge
 ```
 
-Paths: `/private/…` (personal; bare names route to `/private/notes/`),
-`/tenant/…` (shared with the workspace), `/teams/<slug>/…` (team-scoped).
+Paths: `/private/…` (personal), `/tenant/…` (shared with the workspace),
+`/teams/<slug>/…` (team-scoped). `write` accepts a bare name and routes it to
+`/private/notes/` — but read it back with the **full path** it prints
+(`get`/`edit`/`rm` don't take bare names).
 **Prefer updating an existing doc over creating a near-duplicate** — `unison
 search` for the topic first.
 
@@ -102,5 +104,6 @@ safe.
 - Destructive commands (`rm`, `fact rm`, `review merge`, `review undo`) need
   `--yes` non-interactively.
 - Auth failures (exit 4): re-run setup above; headless agents check `UNISON_TOKEN`.
-- Full command/flag reference: `reference.md` next to this file, or
-  `unison --help` / `unison <cmd> --help` (written to be read by agents).
+- Full command/flag reference: `reference.md` next to this file (or
+  `unison skill print --reference`), and `unison <cmd> --help` (written to be
+  read by agents).
