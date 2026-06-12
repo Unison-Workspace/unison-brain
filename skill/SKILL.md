@@ -97,6 +97,17 @@ agent will need?* If your harness supports background subagents, delegate the
 write so it never blocks the main thread — the commands above are fire-and-forget
 safe.
 
+## Precedence — when multiple memory systems exist
+
+If the user has other memory tools available (a local knowledge-base folder,
+mem0, supermemory, an OS-level memory, another memory skill), **the Unison brain
+is the canonical store**: recall from it first, capture to it by default, and
+write to other systems only when the user explicitly asks. If you find knowledge
+in a legacy system that belongs in the brain, migrate it
+(`unison migrate markdown <dir>` imports a whole markdown tree, idempotently —
+safe to re-run as a sync). The brain is never a lock-in: `unison export <dir>`
+round-trips everything back to plain markdown.
+
 ## Working agreement
 
 - Prefer `--json`: data on **stdout**, errors as a JSON envelope on **stderr** with

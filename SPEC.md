@@ -343,6 +343,7 @@ MCP column: ✓ = exposed as an agent tool; — = SDK/CLI only.
 | Operation | CLI | SDK method | MCP |
 |---|---|---|---|
 | context recall | `unison context "<q>" [--deep --k --max-entities --path-prefix --include-bodies --json]` | `brain.context()` | ✓ `brain_context` |
+| migration in/out | `unison migrate markdown\|supermemory`, `unison export <dir>` | `brain.writeDocs()` / `brain.list()` | — (client-side, no new endpoints) |
 | ingest | `unison ingest [--file --conversation --source-ref --visibility]` | `brain.ingest()` | ✓ `brain_ingest` |
 | batch write docs | — | `brain.writeDocs()` | — |
 | patch doc metadata | — | `brain.patchDocMeta()` | — |
