@@ -3,7 +3,7 @@
 The `unison` command — your cloud knowledge base (the Unison brain) in the
 terminal and in any agent.
 
-> **🤖 AI agent?** Self-onboard via [AGENTS.md](https://github.com/Unison-Workspace/unison-brain/blob/main/AGENTS.md) — install → auth → skill → verify, then the search-first / write-back loop.
+> **🤖 AI agent?** Self-onboard via [AGENTS.md](https://github.com/unison-labs-ai/unison-brain/blob/main/AGENTS.md) — install → auth → skill → verify, then the search-first / write-back loop.
 
 ```bash
 npm i -g @unisonlabs/cli      # or: pnpm add -g / bun add -g / npx @unisonlabs/cli
@@ -41,4 +41,4 @@ JSON envelope on stderr with a nonzero exit code (`4` auth, `3` not found,
 - `UNISON_API_URL` — API base (default `https://api.unisonlabs.ai`).
 - `UNISON_APP_URL` — dashboard URL for `auth login`.
 
-MIT © Unison Labs · [source + full docs](https://github.com/Unison-Workspace/unison-brain)
+MIT © Unison Labs · [source + full docs](https://github.com/unison-labs-ai/unison-brain)

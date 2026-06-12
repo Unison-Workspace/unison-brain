@@ -3,7 +3,7 @@
 Typed TypeScript client for the Unison brain API. Zero runtime dependencies; runs
 on Node ≥18 and Bun.
 
-> **🤖 AI agent?** Self-onboard via [AGENTS.md](https://github.com/Unison-Workspace/unison-brain/blob/main/AGENTS.md) — the four-step path to a working brain.
+> **🤖 AI agent?** Self-onboard via [AGENTS.md](https://github.com/unison-labs-ai/unison-brain/blob/main/AGENTS.md) — the four-step path to a working brain.
 
 ```bash
 npm i @unisonlabs/sdk
@@ -50,4 +50,4 @@ Namespaces: top-level document methods (`search`, `grep`, `get`, `list`, `listFs
 Auth helpers for building your own login flow are also exported (`generatePkce`,
 `buildAuthorizeUrl`, `exchangeCode`, `startDeviceAuth`, `pollDeviceToken`).
 
-MIT © Unison Labs · [source + full docs](https://github.com/Unison-Workspace/unison-brain)
+MIT © Unison Labs · [source + full docs](https://github.com/unison-labs-ai/unison-brain)
