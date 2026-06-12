@@ -1,5 +1,5 @@
 {
-  "version": "1.4.0",
+  "version": "1.4.1",
   "generatedFrom": "@unisonlabs/sdk type declarations",
   "domains": {
     "brain": {
@@ -276,6 +276,18 @@
                   "type": "number",
                   "optional": true,
                   "doc": "Max entity summaries to include (0–10, default 3)."
+                },
+                {
+                  "name": "pathPrefix",
+                  "type": "string",
+                  "optional": true,
+                  "doc": "Scope retrieval to a path subtree, e.g. \"/private/notes/\"."
+                },
+                {
+                  "name": "includeBodies",
+                  "type": "boolean",
+                  "optional": true,
+                  "doc": "Inline full (clipped) document bodies into contextMd — for single-shot readers that won't follow up with reads."
                 }
               ]
             }

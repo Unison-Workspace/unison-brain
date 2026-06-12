@@ -220,7 +220,7 @@ caller's LLM composes the answer from `contextMd`.
 
 | Endpoint | Notes |
 |---|---|
-| `GET /v1/brain/context?q&mode&k&maxEntities` | `q` required; `mode` ∈ auto\|deep\|standard (def auto); `k` 1–50 (def 10); `maxEntities` 0–10 (def 3). |
+| `GET /v1/brain/context?q&mode&k&maxEntities&pathPrefix&includeBodies` | `q` required; `mode` ∈ auto\|deep\|standard (def auto); `k` 1–50 (def 10); `maxEntities` 0–10 (def 3); `pathPrefix` scopes to a subtree; `includeBodies` inlines clipped doc bodies. |
 
 Response shape:
 
@@ -342,7 +342,7 @@ MCP column: ✓ = exposed as an agent tool; — = SDK/CLI only.
 
 | Operation | CLI | SDK method | MCP |
 |---|---|---|---|
-| context recall | `unison context "<q>" [--deep --k --max-entities --json]` | `brain.context()` | ✓ `brain_context` |
+| context recall | `unison context "<q>" [--deep --k --max-entities --path-prefix --include-bodies --json]` | `brain.context()` | ✓ `brain_context` |
 | ingest | `unison ingest [--file --conversation --source-ref --visibility]` | `brain.ingest()` | ✓ `brain_ingest` |
 | batch write docs | — | `brain.writeDocs()` | — |
 | patch doc metadata | — | `brain.patchDocMeta()` | — |

@@ -1,4 +1,4 @@
-# Unison SDK — agent method reference (v1.4.0)
+# Unison SDK — agent method reference (v1.4.1)
 
 Generated from the `@unisonlabs/sdk` type declarations. Call the brain
 through the SDK, never by hand-rolling `fetch()` to `/v1/…` paths:
@@ -117,6 +117,8 @@ Scope: `brain:read`.
 - `mode?: ContextMode` — Retrieval depth: auto (default) = the server decides; deep = multi-hop graph expansion; standard = single-pass vector.
 - `k?: number` — Max semantic hits to return (1–50, default 10).
 - `maxEntities?: number` — Max entity summaries to include (0–10, default 3).
+- `pathPrefix?: string` — Scope retrieval to a path subtree, e.g. "/private/notes/".
+- `includeBodies?: boolean` — Inline full (clipped) document bodies into contextMd — for single-shot readers that won't follow up with reads.
 
 ### `u.ingest`
 
