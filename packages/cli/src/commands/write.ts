@@ -15,6 +15,7 @@ export function registerWrite(program: Command): void {
     .option("--tag <tag...>", "Tags (repeatable)")
     .option("--visibility <v>", "tenant | private", "tenant")
     .option("--if-match <hash>", "Optimistic concurrency: expected content hash")
+    .option("--actor <id>", "Act as an external user id (requires brain:act-as scope)")
     .option("--json", "Output JSON")
     .action(
       async (
@@ -27,10 +28,11 @@ export function registerWrite(program: Command): void {
           tag?: string[];
           visibility: string;
           ifMatch?: string;
+          actor?: string;
           json?: boolean;
         },
       ) => {
-        const client = await requireClient();
+        const client = await requireClient(opts.actor);
         const bodyMd = opts.message ?? (await readStdin());
         if (!bodyMd.trim()) {
           fail('No content provided. Use -m "..." or pipe content via stdin.');

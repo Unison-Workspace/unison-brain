@@ -18,6 +18,7 @@ export function registerIngest(program: Command): void {
     )
     .option("--source-ref <ref>", "Stable source reference / idempotency identifier")
     .option("--visibility <v>", "tenant | private (default private)", "private")
+    .option("--actor <id>", "Act as an external user id (requires brain:act-as scope)")
     .option("--json", "Output JSON")
     .action(
       async (opts: {
@@ -27,6 +28,7 @@ export function registerIngest(program: Command): void {
         conversation?: string;
         sourceRef?: string;
         visibility: string;
+        actor?: string;
         json?: boolean;
       }) => {
         if (!opts.file && !opts.conversation) {
@@ -87,7 +89,7 @@ export function registerIngest(program: Command): void {
           }
         }
 
-        const client = await requireClient();
+        const client = await requireClient(opts.actor);
         const result = await client.ingest({ items: [item] });
 
         if (opts.json) {

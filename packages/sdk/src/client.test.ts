@@ -452,3 +452,168 @@ describe("BrainClient constructor apiUrl alias", () => {
     ).toThrow(/apiUrl/);
   });
 });
+
+// ── Actor delegation ──────────────────────────────────────────────────────────
+
+describe("BrainClient actor delegation", () => {
+  test("sends X-Unison-Actor header when actor is set via options", async () => {
+    let capturedActor = "";
+    const client = new BrainClient({
+      apiUrl: "https://api.test",
+      token: "tok",
+      actor: "user-123",
+      fetch: stubFetch((_u, init) => {
+        capturedActor = (init?.headers as Record<string, string>)["x-unison-actor"] ?? "";
+        return json({ results: [] });
+      }),
+    });
+
+    await client.search("hello");
+    expect(capturedActor).toBe("user-123");
+  });
+
+  test("withActor returns a derived client that sends the actor header", async () => {
+    const captured: string[] = [];
+    const base = new BrainClient({
+      apiUrl: "https://api.test",
+      token: "tok",
+      fetch: stubFetch((_u, init) => {
+        captured.push((init?.headers as Record<string, string>)["x-unison-actor"] ?? "");
+        return json({ results: [] });
+      }),
+    });
+
+    const actor = base.withActor("u1");
+    await actor.search("hello");
+    expect(captured[0]).toBe("u1");
+  });
+
+  test("withActor(null) clears the actor header", async () => {
+    const captured: string[] = [];
+    const base = new BrainClient({
+      apiUrl: "https://api.test",
+      token: "tok",
+      actor: "u1",
+      fetch: stubFetch((_u, init) => {
+        const h = (init?.headers as Record<string, string>)["x-unison-actor"] ?? "";
+        captured.push(h);
+        return json({ results: [] });
+      }),
+    });
+
+    const noActor = base.withActor(null);
+    await noActor.search("hello");
+    expect(captured[0]).toBe("");
+  });
+
+  test("withActor from derived client stacks correctly — last call wins", async () => {
+    let capturedActor = "";
+    const base = new BrainClient({
+      apiUrl: "https://api.test",
+      token: "tok",
+      fetch: stubFetch((_u, init) => {
+        capturedActor = (init?.headers as Record<string, string>)["x-unison-actor"] ?? "";
+        return json({ results: [] });
+      }),
+    });
+
+    const c1 = base.withActor("u1");
+    const c2 = c1.withActor("u2");
+    await c2.search("hello");
+    expect(capturedActor).toBe("u2");
+  });
+
+  test("BrainClient constructor throws on invalid actor id", () => {
+    expect(
+      () => new BrainClient({ apiUrl: "https://api.test", token: "tok", actor: "bad id!" }),
+    ).toThrow(/invalid actor id/);
+  });
+
+  test("actor id of 200 chars is valid", () => {
+    expect(
+      () =>
+        new BrainClient({
+          apiUrl: "https://api.test",
+          token: "tok",
+          actor: "a".repeat(200),
+        }),
+    ).not.toThrow();
+  });
+
+  test("actor id of 201 chars is invalid", () => {
+    expect(
+      () =>
+        new BrainClient({
+          apiUrl: "https://api.test",
+          token: "tok",
+          actor: "a".repeat(201),
+        }),
+    ).toThrow(/invalid actor id/);
+  });
+});
+
+// ── Multi-tenant ──────────────────────────────────────────────────────────────
+
+describe("BrainClient tenants", () => {
+  test("tenants.list() GETs /v1/auth/tenants and returns the array", async () => {
+    let url = "";
+    const client = new BrainClient({
+      apiUrl: "https://api.test",
+      token: "tok",
+      fetch: stubFetch((u) => {
+        url = u;
+        return json({
+          tenants: [
+            { id: "t1", name: "Main", role: "owner", active: true },
+            { id: "t2", name: "Shared", role: "member", active: false },
+          ],
+        });
+      }),
+    });
+
+    const tenants = await client.tenants.list();
+    expect(url).toContain("/v1/auth/tenants");
+    expect(tenants).toHaveLength(2);
+    expect(tenants[0]?.id).toBe("t1");
+    expect(tenants[0]?.active).toBe(true);
+    expect(tenants[1]?.role).toBe("member");
+  });
+});
+
+describe("BrainClient keys multi-tenant", () => {
+  test("keys.list passes tenantId as query param", async () => {
+    let url = "";
+    const client = new BrainClient({
+      apiUrl: "https://api.test",
+      token: "tok",
+      fetch: stubFetch((u) => {
+        url = u;
+        return json({ keys: [] });
+      }),
+    });
+
+    await client.keys.list({ tenantId: "t2" });
+    expect(url).toContain("tenantId=t2");
+  });
+
+  test("keys.create passes tenantId in body", async () => {
+    let body = "";
+    const client = new BrainClient({
+      apiUrl: "https://api.test",
+      token: "tok",
+      fetch: stubFetch((_u, init) => {
+        body = String(init?.body ?? "");
+        return json({
+          id: "k1",
+          token: "usk_x",
+          scopes: ["brain:read"],
+          name: "cli",
+          tenantId: "t2",
+        });
+      }),
+    });
+
+    await client.keys.create({ name: "cli", tenantId: "t2" });
+    expect(JSON.parse(body).tenantId).toBe("t2");
+  });
+});

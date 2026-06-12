@@ -88,24 +88,28 @@ export interface CreateKeyResponse {
   name: string;
 }
 
-/** List the caller's API keys. Never returns key hashes. Scope: brain:read. */
+/** List the caller's API keys. Never returns key hashes. Scope: brain:read.
+ * Pass `tenantId` to list keys minted for a specific member tenant. */
 export async function listKeys(
   baseUrl: string,
   token: string,
+  opts: { tenantId?: string } = {},
   fetchImpl: typeof fetch = fetch,
 ): Promise<ApiKeyRecord[]> {
-  const res = await fetchImpl(`${stripTrailingSlash(baseUrl)}/${API_VERSION}/auth/keys`, {
+  const qs = opts.tenantId ? `?tenantId=${encodeURIComponent(opts.tenantId)}` : "";
+  const res = await fetchImpl(`${stripTrailingSlash(baseUrl)}/${API_VERSION}/auth/keys${qs}`, {
     headers: { authorization: `Bearer ${token}`, accept: "application/json" },
   });
   const data = await parseResponse<{ keys: ApiKeyRecord[] }>(res);
   return data.keys;
 }
 
-/** Mint an additional key. Scope: brain:read. The token is returned ONCE — store it. */
+/** Mint an additional key. Scope: brain:read. The token is returned ONCE — store it.
+ * Pass `tenantId` to mint the key into a different tenant the caller is a member of. */
 export async function createKey(
   baseUrl: string,
   token: string,
-  params: { name?: string; scopes?: string[] },
+  params: { name?: string; scopes?: string[]; tenantId?: string },
   fetchImpl: typeof fetch = fetch,
 ): Promise<CreateKeyResponse> {
   const res = await fetchImpl(`${stripTrailingSlash(baseUrl)}/${API_VERSION}/auth/keys`, {
@@ -118,6 +122,28 @@ export async function createKey(
     body: JSON.stringify(params),
   });
   return parseResponse<CreateKeyResponse>(res);
+}
+
+// ── Tenant membership ─────────────────────────────────────────────────────────
+
+export interface TenantMembershipRecord {
+  id: string;
+  name: string | null;
+  role: string;
+  active: boolean;
+}
+
+/** List all tenants the caller is a member of. Scope: brain:read. */
+export async function listTenants(
+  baseUrl: string,
+  token: string,
+  fetchImpl: typeof fetch = fetch,
+): Promise<TenantMembershipRecord[]> {
+  const res = await fetchImpl(`${stripTrailingSlash(baseUrl)}/${API_VERSION}/auth/tenants`, {
+    headers: { authorization: `Bearer ${token}`, accept: "application/json" },
+  });
+  const data = await parseResponse<{ tenants: TenantMembershipRecord[] }>(res);
+  return data.tenants;
 }
 
 /** Revoke one of the caller's keys by id. Scope: brain:read. */

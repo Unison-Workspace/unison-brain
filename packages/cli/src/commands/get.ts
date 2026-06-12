@@ -8,9 +8,10 @@ export function registerGet(program: Command): void {
     .alias("cat")
     .description("Read a document from the brain by path (alias: cat)")
     .option("--raw", "Read raw FS content (any tier, incl. /sources/ /raw/ /system/)")
+    .option("--actor <id>", "Act as an external user id (requires brain:act-as scope)")
     .option("--json", "Output JSON (default prints raw content)")
-    .action(async (path: string, opts: { raw?: boolean; json?: boolean }) => {
-      const client = await requireClient();
+    .action(async (path: string, opts: { raw?: boolean; actor?: string; json?: boolean }) => {
+      const client = await requireClient(opts.actor);
       if (opts.raw) {
         const res = await client.getRaw(path);
         if (opts.json) printJson(res);

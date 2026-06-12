@@ -4,6 +4,7 @@ import {
   createKey,
   listInvitations,
   listKeys,
+  listTenants,
   provisionAccount,
   requestKey,
   revokeInvitation,
@@ -157,7 +158,7 @@ describe("listKeys", () => {
       },
     ];
     const fetchImpl = stub(200, { keys });
-    const res = await listKeys("https://api.test", "usk_tok", fetchImpl);
+    const res = await listKeys("https://api.test", "usk_tok", {}, fetchImpl);
     expect(res).toEqual(keys);
   });
 });
@@ -236,5 +237,136 @@ describe("revokeInvitation", () => {
     const res = await revokeInvitation("https://api.test", "usk_tok", "i1", fetchImpl);
     expect(res.revoked).toBe(true);
     expect(res.id).toBe("i1");
+  });
+});
+
+// ── listTenants ───────────────────────────────────────────────────────────────
+
+describe("listTenants", () => {
+  test("GETs /v1/auth/tenants and returns the tenant array", async () => {
+    const cap = captureRequest();
+    const capFetch = ((url: string, init?: RequestInit) => {
+      const headers: Record<string, string> = {};
+      if (init?.headers) {
+        const h = init.headers as Record<string, string>;
+        for (const [k, v] of Object.entries(h)) headers[k] = v;
+      }
+      cap.calls.push({
+        url: String(url),
+        method: String(init?.method ?? "GET"),
+        body: {},
+        headers,
+      });
+      return Promise.resolve(
+        new Response(
+          JSON.stringify({
+            tenants: [
+              { id: "t1", name: "Main", role: "owner", active: true },
+              { id: "t2", name: "Shared", role: "member", active: false },
+            ],
+          }),
+          { status: 200 },
+        ),
+      );
+    }) as unknown as typeof fetch;
+
+    const res = await listTenants("https://api.test", "usk_tok", capFetch);
+    expect(cap.calls).toHaveLength(1);
+    expect(cap.calls[0]?.url).toContain("/v1/auth/tenants");
+    expect(cap.calls[0]?.method).toBe("GET");
+    expect(cap.calls[0]?.headers.authorization).toBe("Bearer usk_tok");
+    expect(res).toHaveLength(2);
+    expect(res[0]?.id).toBe("t1");
+    expect(res[0]?.active).toBe(true);
+    expect(res[1]?.role).toBe("member");
+  });
+});
+
+// ── listKeys tenantId ─────────────────────────────────────────────────────────
+
+describe("listKeys with tenantId", () => {
+  test("appends ?tenantId= query param when provided", async () => {
+    const cap = captureRequest();
+    const capFetch = ((url: string, init?: RequestInit) => {
+      const headers: Record<string, string> = {};
+      if (init?.headers) {
+        const h = init.headers as Record<string, string>;
+        for (const [k, v] of Object.entries(h)) headers[k] = v;
+      }
+      cap.calls.push({
+        url: String(url),
+        method: String(init?.method ?? "GET"),
+        body: {},
+        headers,
+      });
+      return Promise.resolve(new Response(JSON.stringify({ keys: [] }), { status: 200 }));
+    }) as unknown as typeof fetch;
+
+    await listKeys("https://api.test", "usk_tok", { tenantId: "t2" }, capFetch);
+    expect(cap.calls[0]?.url).toContain("tenantId=t2");
+  });
+
+  test("omits tenantId param when not provided", async () => {
+    const cap = captureRequest();
+    const capFetch = ((url: string, init?: RequestInit) => {
+      const headers: Record<string, string> = {};
+      if (init?.headers) {
+        const h = init.headers as Record<string, string>;
+        for (const [k, v] of Object.entries(h)) headers[k] = v;
+      }
+      cap.calls.push({
+        url: String(url),
+        method: String(init?.method ?? "GET"),
+        body: {},
+        headers,
+      });
+      return Promise.resolve(new Response(JSON.stringify({ keys: [] }), { status: 200 }));
+    }) as unknown as typeof fetch;
+
+    await listKeys("https://api.test", "usk_tok", {}, capFetch);
+    expect(cap.calls[0]?.url).not.toContain("tenantId");
+  });
+});
+
+// ── createKey tenantId ────────────────────────────────────────────────────────
+
+describe("createKey with tenantId", () => {
+  test("sends tenantId in body when provided", async () => {
+    const cap = captureRequest();
+    const capFetch = ((url: string, init?: RequestInit) => {
+      const headers: Record<string, string> = {};
+      if (init?.headers) {
+        const h = init.headers as Record<string, string>;
+        for (const [k, v] of Object.entries(h)) headers[k] = v;
+      }
+      cap.calls.push({
+        url: String(url),
+        method: String(init?.method ?? "GET"),
+        body: JSON.parse(String(init?.body ?? "{}")),
+        headers,
+      });
+      return Promise.resolve(
+        new Response(
+          JSON.stringify({
+            id: "k1",
+            token: "usk_new",
+            scopes: ["brain:read"],
+            name: "service key",
+            tenantId: "t2",
+          }),
+          { status: 201 },
+        ),
+      );
+    }) as unknown as typeof fetch;
+
+    const res = await createKey(
+      "https://api.test",
+      "usk_tok",
+      { name: "service key", tenantId: "t2", scopes: ["brain:read", "brain:act-as"] },
+      capFetch,
+    );
+    expect(cap.calls[0]?.body.tenantId).toBe("t2");
+    expect(cap.calls[0]?.body.scopes).toContain("brain:act-as");
+    expect(res.token).toBe("usk_new");
   });
 });

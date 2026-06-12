@@ -1,4 +1,4 @@
-export { BrainClient } from "./client";
+export { ACTOR_ID_RE, BrainClient } from "./client";
 export type {
   EntitiesApi,
   FactsApi,
@@ -7,6 +7,7 @@ export type {
   KeysApi,
   LinksApi,
   ReviewApi,
+  TenantsApi,
 } from "./client";
 
 // Domain APIs + their input types.
@@ -39,6 +40,7 @@ export {
   createKey,
   listInvitations,
   listKeys,
+  listTenants,
   provisionAccount,
   requestKey,
   revokeInvitation,
@@ -51,6 +53,7 @@ export type {
   CreateKeyResponse,
   InvitationRecord,
   ProvisionResponse,
+  TenantMembershipRecord,
   VerifyResponse,
 } from "./auth";
 export { AuthError, BrainError } from "./errors";

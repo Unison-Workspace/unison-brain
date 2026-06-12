@@ -3,12 +3,14 @@ import type {
   CreateInvitationResponse,
   CreateKeyResponse,
   InvitationRecord,
+  TenantMembershipRecord,
 } from "./auth";
 import {
   createInvitation,
   createKey,
   listInvitations,
   listKeys,
+  listTenants,
   revokeInvitation,
   revokeKey,
 } from "./auth";
@@ -62,10 +64,21 @@ import type {
   WriteInput,
 } from "./types";
 
+/** Pattern for a valid actor external id — same regex enforced server-side. */
+export const ACTOR_ID_RE = /^[A-Za-z0-9._:@-]{1,200}$/;
+
 export interface KeysApi {
-  list(): Promise<ApiKeyRecord[]>;
-  create(params: { name?: string; scopes?: string[] }): Promise<CreateKeyResponse>;
+  list(opts?: { tenantId?: string }): Promise<ApiKeyRecord[]>;
+  create(params: {
+    name?: string;
+    scopes?: string[];
+    tenantId?: string;
+  }): Promise<CreateKeyResponse>;
   revoke(id: string): Promise<{ revoked: boolean; id: string; note?: string }>;
+}
+
+export interface TenantsApi {
+  list(): Promise<TenantMembershipRecord[]>;
 }
 
 export interface InvitationsApi {
@@ -117,6 +130,8 @@ export class BrainClient {
 
   /** API-key management (list, create, revoke). Scope: brain:read. */
   readonly keys: KeysApi;
+  /** Tenant membership listing. Scope: brain:read. */
+  readonly tenants: TenantsApi;
   /** Tenant invitation management (create, list, revoke). Owner/admin only. */
   readonly invitations: InvitationsApi;
 
@@ -132,6 +147,7 @@ export class BrainClient {
 
   private readonly baseUrl: string;
   private readonly token?: string;
+  private readonly actorId?: string;
   private readonly fetchImpl: typeof fetch;
 
   constructor(opts: BrainClientOptions) {
@@ -144,8 +160,16 @@ export class BrainClient {
         `BrainClient: \`apiUrl\` (${opts.apiUrl}) and \`baseUrl\` (${opts.baseUrl}) are both set and differ — use one.`,
       );
     }
+    if (opts.actor !== undefined && opts.actor !== null) {
+      if (!ACTOR_ID_RE.test(opts.actor)) {
+        throw new Error(
+          `BrainClient: invalid actor id "${opts.actor}" — must match /^[A-Za-z0-9._:@-]{1,200}$/`,
+        );
+      }
+    }
     this.baseUrl = stripTrailingSlash(resolvedUrl);
     this.token = opts.token;
+    this.actorId = opts.actor;
     this.fetchImpl = opts.fetch ?? fetch;
 
     this.entities = {
@@ -229,9 +253,13 @@ export class BrainClient {
     };
 
     this.keys = {
-      list: () => listKeys(this.baseUrl, this.token ?? "", this.fetchImpl),
+      list: (opts = {}) => listKeys(this.baseUrl, this.token ?? "", opts, this.fetchImpl),
       create: (params) => createKey(this.baseUrl, this.token ?? "", params, this.fetchImpl),
       revoke: (id) => revokeKey(this.baseUrl, this.token ?? "", id, this.fetchImpl),
+    };
+
+    this.tenants = {
+      list: () => listTenants(this.baseUrl, this.token ?? "", this.fetchImpl),
     };
 
     this.invitations = {
@@ -420,11 +448,31 @@ export class BrainClient {
     return this.req<WhoAmI>("GET", "/auth/whoami");
   }
 
+  /**
+   * Return a derived client that sends `X-Unison-Actor: <externalId>` on every
+   * request. The key must carry the `brain:act-as` scope. Shadow users are
+   * auto-created server-side; `/private` scoping isolates actors automatically.
+   *
+   * Pass `null` or `undefined` to clear the actor (return a client without
+   * the header).
+   *
+   * Throws synchronously if `externalId` is non-null and fails the format check.
+   */
+  withActor(externalId: string | null | undefined): BrainClient {
+    return new BrainClient({
+      apiUrl: this.baseUrl,
+      token: this.token,
+      actor: externalId ?? undefined,
+      fetch: this.fetchImpl,
+    });
+  }
+
   // ── transport ──────────────────────────────────────────────────────────
 
   private async req<T>(method: string, path: string, body?: unknown): Promise<T> {
     const headers: Record<string, string> = { accept: "application/json" };
     if (this.token) headers.authorization = `Bearer ${this.token}`;
+    if (this.actorId) headers["x-unison-actor"] = this.actorId;
     if (body !== undefined) headers["content-type"] = "application/json";
 
     const res = await this.fetchImpl(`${this.baseUrl}/${API_VERSION}${path}`, {

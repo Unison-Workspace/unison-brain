@@ -13,6 +13,7 @@ export function registerSearch(program: Command): void {
     .option("--tag <tag...>", "Filter by tag (repeatable)")
     .option("--memory-type <type>", "episodic | semantic | procedural | auto")
     .option("--as-of <datetime>", "Time-travel: what the brain knew as of then")
+    .option("--actor <id>", "Act as an external user id (requires brain:act-as scope)")
     .option("--json", "Output JSON")
     .action(
       async (
@@ -23,10 +24,11 @@ export function registerSearch(program: Command): void {
           tag?: string[];
           memoryType?: MemoryType;
           asOf?: string;
+          actor?: string;
           json?: boolean;
         },
       ) => {
-        const client = await requireClient();
+        const client = await requireClient(opts.actor);
         const results = await client.search(queryParts.join(" "), {
           limit: Number(opts.limit),
           kinds: opts.kind as DocKind[] | undefined,
