@@ -4,6 +4,50 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres
 to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- **Actor delegation** — `BrainClientOptions.actor` + `client.withActor(externalId)` (SDK):
+  sets `X-Unison-Actor: <id>` on every request. Shadow users are auto-created server-side;
+  `/private` scoping isolates each actor. Requires the key to carry `brain:act-as` scope.
+  Validate the id format (`/^[A-Za-z0-9._:@-]{1,200}$/`) client-side before the request.
+  `withActor(null)` returns a derived client with the header cleared.
+
+- **`client.tenants`** (SDK): `{ list() }` — `GET /v1/auth/tenants` → list of all tenant
+  memberships with `{ id, name, role, active }`.
+
+- **`client.keys.list({ tenantId? })`** (SDK): optional `tenantId` scopes the listing to
+  keys minted for a specific member tenant.
+
+- **`client.keys.create({ ..., tenantId? })`** (SDK): optional `tenantId` mints the key
+  into a different tenant the caller is a member of (must be owner/admin to add `brain:act-as`).
+
+- **`WhoAmI.actedAs`** (SDK type): `{ externalId, userId }` — present when actor delegation
+  is active on the request.
+
+- **`TenantMembershipRecord`** (SDK type): exported from `@unisonlabs/sdk`.
+
+- **`unison tenants ls [--json]`** (CLI): table of all tenant memberships, marks active.
+
+- **`unison switch <tenantIdOrName>`** (CLI): resolves tenant by id prefix or unique name match,
+  mints (or recalls from cache) a key for that tenant, stores it as the new active credential.
+  Keeps a per-apiUrl/per-tenantId key cache in `~/.config/unison/config.json` so switching back
+  is instant without re-minting.
+
+- **`--actor <id>`** on brain commands (write, search, context, ingest, get, ls) (CLI):
+  per-command actor delegation. `UNISON_ACTOR` env var sets a global default.
+
+- **`UNISON_ACTOR`** env var (CLI + MCP): service-key users set this once to act as all
+  requests under a fixed end-user id. MCP: applies to all tools in the server instance.
+
+- **`auth_tenants_list`** (MCP): new tool — lists tenant memberships. Requires `UNISON_TOKEN`.
+
+- **`listTenants(baseUrl, token, fetchImpl?)`** (SDK standalone helper): exported from
+  `@unisonlabs/sdk`.
+
+- **`ACTOR_ID_RE`** (SDK): exported regex constant for the actor id format validation.
+
 ## [1.4.0] - 2026-06-12
 
 ### Changed — Breaking: auth surface replaced

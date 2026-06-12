@@ -154,6 +154,29 @@ unison invite colleague@company.com      # invite someone to your tenant
 unison invites                           # list pending invitations
 ```
 
+**Multi-tenant** — if you belong to more than one tenant:
+
+```bash
+unison tenants ls                        # list all tenant memberships
+unison switch <tenantId>                 # switch active tenant (mints or recalls key)
+unison switch "Team Brain"               # also accepts a unique name
+```
+
+**Actor delegation** (service keys acting on behalf of end users):
+
+```bash
+# Mint a service key with brain:act-as scope (owner/admin only)
+unison auth keys create --name service --scopes brain:read brain:write brain:act-as
+
+# Per-command delegation
+unison write /private/notes/x.md --actor user-001 -m "hello"
+unison search "query" --actor user-001
+
+# Global delegation via env var (all brain commands)
+export UNISON_ACTOR=user-001
+unison search "query"
+```
+
 For **CI and headless agents**, skip interaction — set an API key:
 
 ```bash
@@ -223,6 +246,18 @@ await u.work.apply({
   operations: [{ op: "record.upsert", tableId: { ref: "tasks" }, primaryText: "Ship SDK v1" }],
 });
 const tasks = await u.work.search({ query: "ship", limit: 5 });
+
+// Multi-tenant: list memberships and list keys for another tenant.
+const tenants = await u.tenants.list();           // [{ id, name, role, active }]
+const otherKeys = await u.keys.list({ tenantId: tenants[1]?.id });
+
+// Actor delegation: service key acting on behalf of end users (requires brain:act-as scope).
+const svc = new BrainClient({ apiUrl: "https://api.unisonlabs.ai", token: serviceKey });
+const user1 = svc.withActor("user-001");
+const user2 = svc.withActor("user-002");
+await user1.write({ path: "/private/notes/x.md", bodyMd: "user 1 note" });
+const r = await user2.search("query");           // isolated from user-001
+const me = await user1.whoami();                 // .actedAs = { externalId: "user-001", userId }
 ```
 
 See [`examples/`](./examples) for more.

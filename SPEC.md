@@ -107,20 +107,72 @@ and lets the server reject — it never hides or blocks paths itself.
 - `POST /v1/auth/request-key` — body `{ email }` → `{ status: "verification_sent" }`. Sends a recovery OTP to a verified account. Responds uniformly (does not leak whether the email is registered).
 
 **Identity:**
-- `GET /v1/auth/whoami` → `{ user: { id, email }, tenant: { id, name, verified }, scopes[] }`.
+- `GET /v1/auth/whoami` → `{ user: { id, email }, tenant: { id, name, verified }, scopes[], actedAs?: { externalId, userId } }`. `actedAs` is present when actor delegation is active.
 
 **Key management (scope: `brain:read`):**
-- `GET /v1/auth/keys` → `{ keys: ApiKeyRecord[] }`. Never returns key hashes.
-- `POST /v1/auth/keys` — body `{ name?, scopes? }` → `{ id, token, scopes, name }` `201`. Token returned once — store it. Requested scopes must be a subset of caller's scopes.
+- `GET /v1/auth/keys` → `{ keys: ApiKeyRecord[] }`. Pass `?tenantId=` to scope to a member tenant. Never returns key hashes.
+- `POST /v1/auth/keys` — body `{ name?, scopes?, tenantId? }` → `{ id, token, scopes, name, tenantId }` `201`. Token returned once — store it. Requested scopes must be a subset of caller's scopes. `tenantId` mints into a different member tenant.
 - `DELETE /v1/auth/keys/:id` → `{ revoked: true, id, note? }`.
+
+**Multi-tenant membership (scope: `brain:read`):**
+- `GET /v1/auth/tenants` → `{ tenants: [{ id, name, role, active }] }`. Lists all tenants the caller is a member of; `active` marks the tenant the current key belongs to.
 
 **Invitations (scope: `brain:read`; owner/admin only for write):**
 - `POST /v1/auth/invitations` — body `{ email, role? }` → `{ invitation: InvitationRecord, emailSent }` `201`. Roles: `admin|member|viewer` (default: `member`).
 - `GET /v1/auth/invitations` → `{ invitations: InvitationRecord[] }`. Lists pending invitations for the caller's tenant.
 - `DELETE /v1/auth/invitations/:id` → `{ revoked: true, id }`.
 
+**Actor delegation (scope: `brain:act-as`):**
+- Add `X-Unison-Actor: <externalId>` header to any `/v1` request. The id must match `/^[A-Za-z0-9._:@-]{1,200}$/`.
+- Requires the key to carry the `brain:act-as` scope (only grantable by tenant owner/admin via `POST /v1/auth/keys`).
+- Shadow users are auto-created server-side on first use; `/private` scoping isolates each actor automatically.
+- `GET /v1/auth/whoami` returns `actedAs: { externalId, userId }` when this header is present.
+
 `ApiKeyRecord`: `{ id, name, keyPrefix, scopes[], createdAt, expiresAt|null, revokedAt|null }`.
 `InvitationRecord`: `{ id, email, role, status, expiresAt, createdAt }`.
+`TenantMembershipRecord`: `{ id, name|null, role, active }`.
+
+---
+
+## 3b. Acting on behalf of end users (service keys)
+
+This pattern mirrors mem0, Zep, and similar memory-layer SDKs: a single service key
+manages memory for many end users without each needing their own Unison account.
+
+**Setup:**
+
+1. Tenant owner/admin mints a service key with `brain:act-as` scope:
+
+```ts
+const { token } = await client.keys.create({
+  name: "my-service",
+  scopes: ["brain:read", "brain:write", "brain:act-as"],
+});
+```
+
+2. Use `withActor(userId)` to scope every call to a shadow user:
+
+```ts
+const serviceClient = new BrainClient({ apiUrl, token: serviceKey });
+
+// Each end-user gets their own isolated /private namespace.
+const u1 = serviceClient.withActor("user-001");
+await u1.write({ path: "/private/notes/chat.md", bodyMd: "user said …" });
+
+const u2 = serviceClient.withActor("user-002");
+const results = await u2.search("what did I say?"); // isolated from user-001
+```
+
+3. CLI users can pass `--actor <id>` on brain commands, or set `UNISON_ACTOR` globally:
+
+```bash
+UNISON_ACTOR=user-001 unison search "what did I say?"
+unison write /private/notes/x.md --actor user-001 -m "hello"
+```
+
+**Security note:** `brain:act-as` is a privileged scope. Only owner/admin accounts can
+mint keys carrying it — regular members cannot grant it to themselves. Service keys
+must be treated as secrets and rotated via `keys.revoke` + `keys.create` if compromised.
 
 ---
 

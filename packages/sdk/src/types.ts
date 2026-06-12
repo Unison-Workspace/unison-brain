@@ -9,6 +9,12 @@ export interface BrainClientOptions {
   baseUrl?: string;
   /** Bearer token: an API key (`usk_...`) or a browser-login access token. */
   token?: string;
+  /**
+   * Actor external id for delegation (`X-Unison-Actor` header).
+   * Requires the key to carry the `brain:act-as` scope.
+   * Must match `/^[A-Za-z0-9._:@-]{1,200}$/`.
+   */
+  actor?: string;
   /** Override the fetch implementation (used in tests). */
   fetch?: typeof fetch;
 }
@@ -400,6 +406,18 @@ export interface WhoAmI {
   user: { id: string; email: string | null };
   tenant: { id: string; name: string | null };
   scopes: string[];
+  /** Present when actor delegation is active (`X-Unison-Actor` + `brain:act-as` scope). */
+  actedAs?: { externalId: string; userId: string };
+}
+
+// ── Multi-tenant ───────────────────────────────────────────────────────────
+
+export interface TenantMembership {
+  id: string;
+  name: string | null;
+  role: string;
+  /** Whether this is the tenant currently associated with the bearer key. */
+  active: boolean;
 }
 
 // ── Auth ───────────────────────────────────────────────────────────────────

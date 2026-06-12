@@ -7,6 +7,25 @@ export interface StoredCredentials {
   token: string;
 }
 
+/**
+ * The on-disk config shape. Versioned to allow future migrations.
+ *
+ * `tenantKeys` holds previously-used keys per (apiUrl, tenantId) pair so
+ * `unison switch` can swap back to a tenant without re-minting a key:
+ *
+ *   tenantKeys: {
+ *     "<apiUrl>": {
+ *       "<tenantId>": "<usk_...>"
+ *     }
+ *   }
+ */
+export interface ConfigFile {
+  apiUrl?: string;
+  token?: string;
+  /** Per-apiUrl → per-tenantId key cache. Used by `unison switch` for instant re-switch. */
+  tenantKeys?: Record<string, Record<string, string>>;
+}
+
 // TODO: point at production once the brain endpoints ship. Override anytime with
 // the UNISON_API_URL / UNISON_APP_URL env vars or `unison auth login --api-url`.
 const DEFAULT_API_URL = "https://api.unisonlabs.ai";
@@ -26,38 +45,62 @@ export function defaultAppUrl(): string {
   return process.env.UNISON_APP_URL ?? DEFAULT_APP_URL;
 }
 
+async function readConfigFile(): Promise<ConfigFile> {
+  try {
+    const raw = await readFile(configPath(), "utf8");
+    return JSON.parse(raw) as ConfigFile;
+  } catch {
+    return {};
+  }
+}
+
+async function writeConfigFile(cfg: ConfigFile): Promise<string> {
+  const path = configPath();
+  await mkdir(dirname(path), { recursive: true });
+  await writeFile(path, `${JSON.stringify(cfg, null, 2)}\n`, { mode: 0o600 });
+  await chmod(path, 0o600);
+  return path;
+}
+
 export async function loadCredentials(): Promise<StoredCredentials | null> {
   // Resolution order for apiUrl: UNISON_API_URL env > saved config apiUrl > default.
   // UNISON_TOKEN env overrides the stored token but still respects the saved apiUrl.
   const envToken = process.env.UNISON_TOKEN;
   const envApiUrl = process.env.UNISON_API_URL;
 
-  let savedApiUrl: string | undefined;
-  try {
-    const raw = await readFile(configPath(), "utf8");
-    const parsed = JSON.parse(raw) as Partial<StoredCredentials>;
-    savedApiUrl = parsed.apiUrl;
-    if (envToken) {
-      return { apiUrl: envApiUrl ?? savedApiUrl ?? DEFAULT_API_URL, token: envToken };
-    }
-    if (!parsed.token) return null;
-    return { apiUrl: envApiUrl ?? savedApiUrl ?? DEFAULT_API_URL, token: parsed.token };
-  } catch {
-    if (envToken) {
-      return { apiUrl: envApiUrl ?? DEFAULT_API_URL, token: envToken };
-    }
-    return null;
+  const parsed = await readConfigFile();
+  const savedApiUrl = parsed.apiUrl;
+
+  if (envToken) {
+    return { apiUrl: envApiUrl ?? savedApiUrl ?? DEFAULT_API_URL, token: envToken };
   }
+  if (!parsed.token) return null;
+  return { apiUrl: envApiUrl ?? savedApiUrl ?? DEFAULT_API_URL, token: parsed.token };
 }
 
 export async function saveCredentials(creds: StoredCredentials): Promise<string> {
-  const path = configPath();
-  await mkdir(dirname(path), { recursive: true });
-  await writeFile(path, `${JSON.stringify(creds, null, 2)}\n`, { mode: 0o600 });
-  await chmod(path, 0o600);
-  return path;
+  const existing = await readConfigFile();
+  return writeConfigFile({ ...existing, apiUrl: creds.apiUrl, token: creds.token });
 }
 
 export async function clearCredentials(): Promise<void> {
   await rm(configPath(), { force: true });
+}
+
+/** Cache a key for a specific (apiUrl, tenantId) pair so `switch` is instant later. */
+export async function saveTenantKey(
+  apiUrl: string,
+  tenantId: string,
+  token: string,
+): Promise<void> {
+  const cfg = await readConfigFile();
+  const tenantKeys = cfg.tenantKeys ?? {};
+  tenantKeys[apiUrl] = { ...(tenantKeys[apiUrl] ?? {}), [tenantId]: token };
+  await writeConfigFile({ ...cfg, tenantKeys });
+}
+
+/** Retrieve a cached key for a (apiUrl, tenantId) pair, or null if not cached. */
+export async function loadTenantKey(apiUrl: string, tenantId: string): Promise<string | null> {
+  const cfg = await readConfigFile();
+  return cfg.tenantKeys?.[apiUrl]?.[tenantId] ?? null;
 }

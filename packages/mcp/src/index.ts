@@ -7,6 +7,7 @@ import {
   createInvitation,
   createKey,
   listKeys,
+  listTenants,
   provisionAccount,
   requestKey,
   revokeKey,
@@ -25,7 +26,12 @@ const { version: VERSION } = JSON.parse(
 const apiUrl = process.env.UNISON_API_URL ?? "https://api.unisonlabs.ai";
 const token = process.env.UNISON_TOKEN;
 
-const client = new BrainClient({ baseUrl: apiUrl, token });
+// UNISON_ACTOR sets actor delegation for all tools in this MCP instance.
+// Service-key users (e.g. mem0/Zep-style integrations) set this to the
+// end-user id so every brain operation is scoped to that actor.
+const actorFromEnv = process.env.UNISON_ACTOR?.trim() || undefined;
+
+const client = new BrainClient({ baseUrl: apiUrl, token, actor: actorFromEnv });
 
 function ensureAuth(): void {
   if (!token) {
@@ -348,6 +354,18 @@ server.tool(
   async ({ email, role }) => {
     ensureAuth();
     return asText(await createInvitation(apiUrl, token ?? "", { email, role }));
+  },
+);
+
+// ── Tenant membership ─────────────────────────────────────────────────────────
+
+server.tool(
+  "auth_tenants_list",
+  "List all tenants the authenticated account is a member of. Returns id, name, role, and whether each is the currently-active tenant. Requires UNISON_TOKEN.",
+  {},
+  async () => {
+    ensureAuth();
+    return asText(await listTenants(apiUrl, token ?? ""));
   },
 );
 

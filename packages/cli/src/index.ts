@@ -23,6 +23,7 @@ import { registerReview } from "./commands/review";
 import { registerSearch } from "./commands/search";
 import { registerSkill } from "./commands/skill";
 import { registerStatus } from "./commands/status";
+import { registerSwitch, registerTenants } from "./commands/tenants";
 import { registerWork } from "./commands/work";
 import { registerWrite } from "./commands/write";
 import { fail, info } from "./output";
@@ -50,6 +51,7 @@ Output:
 Auth & env:
   UNISON_TOKEN     API key (usk_...) — overrides the stored login (use in CI/agents)
   UNISON_API_URL   API base URL (default https://api.unisonlabs.ai)
+  UNISON_ACTOR     Actor external id for delegation (requires brain:act-as scope on the key)
   NO_COLOR         Disable color. Color is auto-off when output is piped.
 
 Exit codes:
@@ -66,12 +68,18 @@ Examples:
   unison work search "vendors" --json
   unison entity resolve "Daniel" --json
   unison rm /private/notes/old.md --yes   # destructive cmds need --yes when non-interactive
+  unison tenants ls --json
+  unison switch <tenantId>
+  unison search "query" --actor user-123   # delegate to actor (service-key users)
 `,
   );
 
 // Auth
 registerAuth(program);
 registerInvite(program);
+// Multi-tenant
+registerTenants(program);
+registerSwitch(program);
 // Documents
 registerSearch(program);
 registerGet(program);

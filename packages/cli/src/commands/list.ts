@@ -71,13 +71,21 @@ export function registerList(program: Command): void {
     .option("--kind <kind...>", "Filter by document kind (with --docs)")
     .option("--tag <tag...>", "Filter by tag (with --docs)")
     .option("-k, --limit <n>", "Max items", "200")
+    .option("--actor <id>", "Act as an external user id (requires brain:act-as scope)")
     .option("--json", "Output JSON")
     .action(
       async (
         path: string | undefined,
-        opts: { docs?: boolean; kind?: string[]; tag?: string[]; limit: string; json?: boolean },
+        opts: {
+          docs?: boolean;
+          kind?: string[];
+          tag?: string[];
+          limit: string;
+          actor?: string;
+          json?: boolean;
+        },
       ) => {
-        const client = await requireClient();
+        const client = await requireClient(opts.actor);
 
         if (opts.docs) {
           const docs = await client.list({
