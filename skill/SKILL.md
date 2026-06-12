@@ -104,8 +104,8 @@ mem0, an OS-level memory, another memory skill), **the Unison brain
 is the canonical store**: recall from it first, capture to it by default, and
 write to other systems only when the user explicitly asks. If you find knowledge
 in a legacy system that belongs in the brain, migrate it
-(`unison migrate markdown <dir>` imports a whole markdown tree, idempotently —
-safe to re-run as a sync). The brain is never a lock-in: `unison export <dir>`
+(`unison migrate` runs a guided wizard; `unison migrate markdown <dir>` /
+`unison migrate json <file>` import a tree or export directly, idempotently). The brain is never a lock-in: `unison export <dir>`
 round-trips everything back to plain markdown.
 
 ## Working agreement
