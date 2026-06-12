@@ -72,10 +72,20 @@ server.tool(
       .max(10)
       .optional()
       .describe("Max entity summaries to include (default 3)"),
+    pathPrefix: z
+      .string()
+      .optional()
+      .describe("Scope retrieval to a path subtree, e.g. /private/notes/"),
+    includeBodies: z
+      .boolean()
+      .optional()
+      .describe(
+        "Inline full (clipped) document bodies into contextMd — set true when you will not follow up with doc reads",
+      ),
   },
-  async ({ query, mode, k, maxEntities }) => {
+  async ({ query, mode, k, maxEntities, pathPrefix, includeBodies }) => {
     ensureAuth();
-    return asText(await client.context({ query, mode, k, maxEntities }));
+    return asText(await client.context({ query, mode, k, maxEntities, pathPrefix, includeBodies }));
   },
 );
 

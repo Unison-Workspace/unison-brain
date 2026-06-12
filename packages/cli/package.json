@@ -1,7 +1,7 @@
 {
   "name": "@unisonlabs/cli",
-  "version": "1.4.0",
-  "description": "The `unison` CLI — search and write your Unison brain from the terminal or any agent.",
+  "version": "1.4.1",
+  "description": "The `unison` CLI \u2014 search and write your Unison brain from the terminal or any agent.",
   "keywords": ["unison", "brain", "knowledge-base", "cli", "ai", "agent", "memory"],
   "homepage": "https://github.com/Unison-Workspace/unison-brain#readme",
   "bugs": "https://github.com/Unison-Workspace/unison-brain/issues",

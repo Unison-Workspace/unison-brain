@@ -621,3 +621,20 @@ describe("BrainClient default apiUrl", () => {
     expect(client.baseUrl).toBe("https://brain.unisonlabs.ai");
   });
 });
+
+describe("context() forwards pathPrefix + includeBodies", () => {
+  test("query string carries both params", async () => {
+    let captured = "";
+    globalThis.fetch = (async (url: unknown) => {
+      captured = String(url);
+      return new Response(JSON.stringify({ query: "q", hits: [], entities: [], contextMd: "" }), {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      });
+    }) as typeof fetch;
+    const client = new BrainClient({ token: "usk_test", apiUrl: "https://x.test" });
+    await client.context({ query: "q", pathPrefix: "/private/notes/", includeBodies: true });
+    expect(captured).toContain("pathPrefix=%2Fprivate%2Fnotes%2F");
+    expect(captured).toContain("includeBodies=true");
+  });
+});

@@ -83,6 +83,10 @@ export interface ContextOptions {
   k?: number;
   /** Max entity summaries to include (0–10, default 3). */
   maxEntities?: number;
+  /** Scope retrieval to a path subtree, e.g. "/private/notes/". */
+  pathPrefix?: string;
+  /** Inline full (clipped) document bodies into contextMd — for single-shot readers that won't follow up with reads. */
+  includeBodies?: boolean;
 }
 
 /** A single ranked semantic hit from /v1/brain/context. */

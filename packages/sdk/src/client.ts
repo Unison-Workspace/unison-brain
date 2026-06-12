@@ -378,7 +378,14 @@ export class BrainClient {
   context(opts: ContextOptions): Promise<ContextResult> {
     return this.req<ContextResult>(
       "GET",
-      `/brain/context?${qs({ q: opts.query, mode: opts.mode, k: opts.k, maxEntities: opts.maxEntities })}`,
+      `/brain/context?${qs({
+        q: opts.query,
+        mode: opts.mode,
+        k: opts.k,
+        maxEntities: opts.maxEntities,
+        pathPrefix: opts.pathPrefix,
+        includeBodies: opts.includeBodies,
+      })}`,
     );
   }
 

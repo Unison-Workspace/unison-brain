@@ -54,6 +54,12 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 - **`ACTOR_ID_RE`** (SDK): exported regex constant for the actor id format validation.
 
+## [1.4.1] - 2026-06-12
+
+### Added
+- SDK `context()` accepts `pathPrefix` (subtree scoping) and `includeBodies` (inline clipped doc bodies for single-shot readers); CLI `unison context --path-prefix/--include-bodies`; MCP `brain_context` exposes both params.
+- SDK `BrainClient` defaults `apiUrl` to `https://brain.unisonlabs.ai` when omitted (parity with the CLI/MCP defaults).
+
 ## [1.4.0] - 2026-06-12
 
 ### Changed — Breaking: auth surface replaced
@@ -264,7 +270,8 @@ Skill) for the hosted Unison brain at `https://brain.unisonlabs.ai`.
 - JSON auto-compacts when piped (pretty on a TTY) to save agent tokens.
 - `--help` documents `--json`, env vars, exit codes, and usage examples.
 
-[Unreleased]: https://github.com/unison-labs-ai/unison-brain/compare/v1.4.0...HEAD
+[Unreleased]: https://github.com/unison-labs-ai/unison-brain/compare/v1.4.1...HEAD
+[1.4.1]: https://github.com/unison-labs-ai/unison-brain/compare/v1.4.0...v1.4.1
 [1.4.0]: https://github.com/unison-labs-ai/unison-brain/compare/v1.2.0...v1.4.0
 [1.2.0]: https://github.com/unison-labs-ai/unison-brain/compare/v1.0.0...v1.2.0
 [1.0.0]: https://github.com/unison-labs-ai/unison-brain/compare/v0.1.0...v1.0.0
