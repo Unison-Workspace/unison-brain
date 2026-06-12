@@ -376,10 +376,11 @@ export function registerInvite(program: Command): void {
         printJson(res);
         return;
       }
-      success(`Invitation sent to ${email}.`);
+      success(
+        `Invited ${email} — they'll join your brain when they sign in: unison auth login --email ${email}`,
+      );
       info(`  id:   ${res.invitation.id}`);
       info(`  role: ${res.invitation.role}`);
-      info(`  email sent: ${res.emailSent}`);
     });
 
   // unison invites

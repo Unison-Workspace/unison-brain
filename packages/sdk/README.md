@@ -15,8 +15,8 @@ npm i @unisonlabs/sdk
 import { BrainClient } from "@unisonlabs/sdk";
 
 const brain = new BrainClient({
-  baseUrl: "https://api.unisonlabs.ai",
-  token: process.env.UNISON_TOKEN, // an API key minted in the dashboard
+  apiUrl: process.env.UNISON_API_URL ?? "https://api.unisonlabs.ai",
+  token: process.env.UNISON_TOKEN, // an API key — run `unison auth login` to get one
 });
 
 // Documents — paths follow the FS contract; bare names route to /private/notes/.

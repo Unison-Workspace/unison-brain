@@ -27,18 +27,25 @@ export function defaultAppUrl(): string {
 }
 
 export async function loadCredentials(): Promise<StoredCredentials | null> {
-  // Env override always wins — this is the path CI and headless agents use.
+  // Resolution order for apiUrl: UNISON_API_URL env > saved config apiUrl > default.
+  // UNISON_TOKEN env overrides the stored token but still respects the saved apiUrl.
   const envToken = process.env.UNISON_TOKEN;
-  if (envToken) {
-    return { apiUrl: defaultApiUrl(), token: envToken };
-  }
+  const envApiUrl = process.env.UNISON_API_URL;
 
+  let savedApiUrl: string | undefined;
   try {
     const raw = await readFile(configPath(), "utf8");
     const parsed = JSON.parse(raw) as Partial<StoredCredentials>;
+    savedApiUrl = parsed.apiUrl;
+    if (envToken) {
+      return { apiUrl: envApiUrl ?? savedApiUrl ?? DEFAULT_API_URL, token: envToken };
+    }
     if (!parsed.token) return null;
-    return { apiUrl: parsed.apiUrl ?? defaultApiUrl(), token: parsed.token };
+    return { apiUrl: envApiUrl ?? savedApiUrl ?? DEFAULT_API_URL, token: parsed.token };
   } catch {
+    if (envToken) {
+      return { apiUrl: envApiUrl ?? DEFAULT_API_URL, token: envToken };
+    }
     return null;
   }
 }

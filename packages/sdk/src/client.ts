@@ -135,7 +135,16 @@ export class BrainClient {
   private readonly fetchImpl: typeof fetch;
 
   constructor(opts: BrainClientOptions) {
-    this.baseUrl = stripTrailingSlash(opts.baseUrl);
+    const resolvedUrl = opts.apiUrl ?? opts.baseUrl;
+    if (!resolvedUrl) {
+      throw new Error("BrainClient: provide `apiUrl` (or legacy `baseUrl`).");
+    }
+    if (opts.apiUrl && opts.baseUrl && opts.apiUrl !== opts.baseUrl) {
+      throw new Error(
+        `BrainClient: \`apiUrl\` (${opts.apiUrl}) and \`baseUrl\` (${opts.baseUrl}) are both set and differ — use one.`,
+      );
+    }
+    this.baseUrl = stripTrailingSlash(resolvedUrl);
     this.token = opts.token;
     this.fetchImpl = opts.fetch ?? fetch;
 

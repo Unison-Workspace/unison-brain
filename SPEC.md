@@ -4,8 +4,8 @@ The HTTP contract the **Unison backend** implements and this open-source client
 (SDK / CLI / MCP) speaks. It lives in the public client repo so integrators can
 build against it directly.
 
-Every operation here is something you can already do with the brain from the
-Unison dashboard — the API is dashboard parity, headless.
+Every operation here is something you can do with the brain — the API is the
+product's primary surface; the dashboard and CLI are clients of it.
 
 > **🤖 AI agent?** This spec is the full API contract. To *start using* the brain,
 > see [`AGENTS.md`](./AGENTS.md) — the four-step path to a working setup.
@@ -126,7 +126,7 @@ and lets the server reject — it never hides or blocks paths itself.
 
 ## 4. Conventions
 
-- **Base URL:** `https://api.unisonlabs.ai` (override with `UNISON_API_URL`).
+- **Base URL:** `https://api.unisonlabs.ai` (override with `UNISON_API_URL`; SDK constructor accepts `apiUrl` or legacy `baseUrl`).
 - **Versioning:** all paths are prefixed `/v1`.
 - **JSON, `camelCase`.** Document paths are passed as query params (they contain slashes).
 - **Errors:** `{ "error": { "code": "snake_case", "message": "…" } }`. Codes:

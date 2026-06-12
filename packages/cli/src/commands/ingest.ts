@@ -60,7 +60,9 @@ export function registerIngest(program: Command): void {
           try {
             parsed = JSON.parse(opts.conversation ?? "null");
           } catch {
-            fail("Could not parse conversation JSON.");
+            fail(
+              'Could not parse conversation JSON. For a document/markdown file use --file <path>; for conversations pipe JSON: {"turns":[...]}.',
+            );
             process.exit(1);
           }
 

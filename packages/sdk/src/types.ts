@@ -1,6 +1,12 @@
 export interface BrainClientOptions {
-  /** Base URL of the Unison API, e.g. https://api.unisonlabs.ai */
-  baseUrl: string;
+  /**
+   * Base URL of the Unison API, e.g. https://api.unisonlabs.ai
+   * Accepts `apiUrl` as an alias (preferred) or `baseUrl` (legacy). Provide one
+   * — if both are set they must be identical, otherwise the constructor throws.
+   */
+  apiUrl?: string;
+  /** @deprecated Use `apiUrl` instead. */
+  baseUrl?: string;
   /** Bearer token: an API key (`usk_...`) or a browser-login access token. */
   token?: string;
   /** Override the fetch implementation (used in tests). */
