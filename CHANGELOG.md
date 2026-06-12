@@ -6,6 +6,12 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Changed
+
+- **Default API URL** updated from `https://api.unisonlabs.ai` to `https://brain.unisonlabs.ai`
+  across SDK, CLI, and MCP packages. The old hostname remains a working server-side alias; no
+  action required for existing `UNISON_API_URL` overrides or configs that already specify a URL.
+
 ### Added
 
 - **Actor delegation** — `BrainClientOptions.actor` + `client.withActor(externalId)` (SDK):
@@ -229,7 +235,7 @@ pre-`/v1/work` server.
 ## [0.1.0] - 2026-05-23
 
 First public release: the open-source client (SDK, CLI, MCP server, and Agent
-Skill) for the hosted Unison brain at `https://api.unisonlabs.ai`.
+Skill) for the hosted Unison brain at `https://brain.unisonlabs.ai`.
 
 ### Added
 

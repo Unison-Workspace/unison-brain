@@ -56,7 +56,7 @@ describe("credentials", () => {
     process.env.UNISON_TOKEN = "envtoken";
     const creds = await loadCredentials();
     expect(creds?.token).toBe("envtoken");
-    expect(creds?.apiUrl).toBe("https://api.unisonlabs.ai");
+    expect(creds?.apiUrl).toBe("https://brain.unisonlabs.ai");
   });
 
   test("UNISON_API_URL wins over saved config apiUrl (resolution order)", async () => {

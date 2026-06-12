@@ -1,6 +1,6 @@
 export interface BrainClientOptions {
   /**
-   * Base URL of the Unison API, e.g. https://api.unisonlabs.ai
+   * Base URL of the Unison API, e.g. https://brain.unisonlabs.ai
    * Accepts `apiUrl` as an alias (preferred) or `baseUrl` (legacy). Provide one
    * — if both are set they must be identical, otherwise the constructor throws.
    */
