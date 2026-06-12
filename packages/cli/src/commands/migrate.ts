@@ -61,41 +61,6 @@ export function registerMigrate(program: Command): void {
       }
       await runImport(docs, opts);
     });
-
-  migrate
-    .command("supermemory")
-    .description(
-      "Import memories from supermemory.ai (experimental — export API coverage varies by plan)",
-    )
-    .option("--api-key <key>", "supermemory API key (or SUPERMEMORY_API_KEY env)")
-    .option("--base-url <url>", "supermemory API base", "https://api.supermemory.ai")
-    .option("--prefix <path>", "Brain path the memories are mounted under", "/private/supermemory")
-    .option("--visibility <v>", "tenant | private", "private")
-    .option("--tag <tag...>", "Extra tag(s) applied to every imported doc")
-    .option("--dry-run", "Plan only — print what would change, write nothing")
-    .option("--actor <id>", "Act as an external user id (requires brain:act-as scope)")
-    .option("--json", "Output JSON")
-    .action(async (opts: MigrateOpts & { apiKey?: string; baseUrl: string }) => {
-      const apiKey = opts.apiKey ?? process.env.SUPERMEMORY_API_KEY;
-      if (!apiKey) {
-        fail("supermemory API key required: --api-key or SUPERMEMORY_API_KEY");
-        process.exit(1);
-      }
-      const memories = await fetchSupermemory(opts.baseUrl, apiKey);
-      if (memories.length === 0) {
-        fail("No memories returned by the supermemory API.");
-        process.exit(1);
-      }
-      const docs: WriteDocInput[] = memories.map((m) => ({
-        path: toBrainPath(opts.prefix, `${m.id}.md`),
-        bodyMd: m.content,
-        kind: "note",
-        title: m.title ?? undefined,
-        tags: [...new Set([...m.tags, ...(opts.tag ?? [])])],
-        visibility: opts.visibility as Visibility,
-      }));
-      await runImport(docs, opts);
-    });
 }
 
 async function collectMarkdownFiles(dir: string): Promise<string[]> {
@@ -175,46 +140,4 @@ async function runImport(docs: WriteDocInput[], opts: MigrateOpts): Promise<void
     for (const f of failures) fail(`  ${f.path}: ${f.error}`);
   }
   if (failures.length > 0) process.exit(1);
-}
-
-interface SupermemoryItem {
-  id: string;
-  title: string | null;
-  content: string;
-  tags: string[];
-}
-
-async function fetchSupermemory(baseUrl: string, apiKey: string): Promise<SupermemoryItem[]> {
-  const out: SupermemoryItem[] = [];
-  let page = 1;
-  for (;;) {
-    const res = await fetch(`${baseUrl}/v3/documents/list`, {
-      method: "POST",
-      headers: { authorization: `Bearer ${apiKey}`, "content-type": "application/json" },
-      body: JSON.stringify({ page, limit: 100 }),
-    });
-    if (!res.ok) {
-      fail(`supermemory API ${res.status}: ${(await res.text()).slice(0, 200)}`);
-      process.exit(1);
-    }
-    const data = (await res.json()) as Record<string, unknown>;
-    const items = (data.memories ?? data.documents ?? data.results ?? []) as Record<
-      string,
-      unknown
-    >[];
-    if (items.length === 0) break;
-    for (const m of items) {
-      const content = (m.content ?? m.summary ?? m.text ?? "") as string;
-      if (!content.trim()) continue;
-      out.push({
-        id: String(m.customId ?? m.id),
-        title: (m.title as string | null) ?? null,
-        tags: Array.isArray(m.containerTags) ? (m.containerTags as string[]) : [],
-        content,
-      });
-    }
-    if (items.length < 100) break;
-    page++;
-  }
-  return out;
 }

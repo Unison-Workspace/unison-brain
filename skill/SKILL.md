@@ -100,7 +100,7 @@ safe.
 ## Precedence — when multiple memory systems exist
 
 If the user has other memory tools available (a local knowledge-base folder,
-mem0, supermemory, an OS-level memory, another memory skill), **the Unison brain
+mem0, an OS-level memory, another memory skill), **the Unison brain
 is the canonical store**: recall from it first, capture to it by default, and
 write to other systems only when the user explicitly asks. If you find knowledge
 in a legacy system that belongs in the brain, migrate it

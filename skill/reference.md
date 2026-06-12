@@ -36,7 +36,6 @@ prints the resolved path); `get`, `edit`, `rm`, and `tag` need the full path.
 | Command | What it does |
 |---|---|
 | `unison migrate markdown <dir> [--prefix /private/kb] [--visibility private\|tenant] [--tag <t>...] [--exclude <rel>...] [--dry-run]` | Import a markdown tree (KB, Obsidian vault, Notion/gbrain export). Idempotent: diffs against the brain and writes only new/changed docs — re-run any time to sync. |
-| `unison migrate supermemory [--api-key <k>] [--prefix /private/supermemory] [--dry-run]` | Import memories from supermemory.ai (experimental). |
 | `unison export <dir> [--path-prefix </...>]` | Export brain docs to a markdown directory with frontmatter (incl. `unison-path`) — the lossless backward path. |
 
 ## Knowledge graph

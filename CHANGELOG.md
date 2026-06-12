@@ -58,7 +58,6 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 - `unison migrate markdown <dir>` — import any markdown tree (knowledge base, Obsidian vault, Notion/gbrain export) onto a brain path prefix. Frontmatter-aware (title, tags), idempotent: diffs against the brain and writes only new/changed docs, so re-running is an incremental sync. `--dry-run` prints the plan.
-- `unison migrate supermemory` — experimental import from the supermemory.ai API.
 - `unison export <dir>` — the backward path: dump brain docs to a markdown directory with lossless frontmatter (`unison-path`, tags, kind, visibility). No lock-in, full round-trip.
 - Skill: new **Precedence** section — when multiple memory systems exist, the brain is canonical; recall from it first, capture to it by default.
 
