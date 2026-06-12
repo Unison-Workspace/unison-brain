@@ -9,7 +9,7 @@ unison auth login              # prompts for email; stores key at ~/.config/unis
 unison auth keys create --name examples
 # Then:
 export UNISON_TOKEN="usk_live_..."
-export UNISON_API_URL="https://api.unisonlabs.ai"   # optional; this is the default
+export UNISON_API_URL="https://brain.unisonlabs.ai"   # optional; this is the default
 ```
 
 Then:

@@ -181,7 +181,7 @@ For **CI and headless agents**, skip interaction — set an API key:
 
 ```bash
 export UNISON_TOKEN="usk_live_..."   # overrides the stored credential
-export UNISON_API_URL="https://api.unisonlabs.ai"   # optional; this is the default
+export UNISON_API_URL="https://brain.unisonlabs.ai"   # optional; this is the default
 ```
 
 `UNISON_TOKEN` always takes precedence over the stored file.
@@ -216,7 +216,7 @@ unison skill install      # writes the skill to ~/.claude/skills/unison-brain/
     "unison-brain": {
       "command": "npx",
       "args": ["-y", "@unisonlabs/mcp"],
-      "env": { "UNISON_TOKEN": "usk_live_...", "UNISON_API_URL": "https://api.unisonlabs.ai" }
+      "env": { "UNISON_TOKEN": "usk_live_...", "UNISON_API_URL": "https://brain.unisonlabs.ai" }
     }
   }
 }
@@ -234,7 +234,7 @@ unison completion fish > ~/.config/fish/completions/unison.fish
 
 ```ts
 import { BrainClient } from "@unisonlabs/sdk";
-const u = new BrainClient({ baseUrl: "https://api.unisonlabs.ai", token: process.env.UNISON_TOKEN });
+const u = new BrainClient({ baseUrl: "https://brain.unisonlabs.ai", token: process.env.UNISON_TOKEN });
 
 // Brain: search, write, and surgically edit knowledge.
 const hits = await u.search("auth decision", { limit: 5 });
@@ -252,7 +252,7 @@ const tenants = await u.tenants.list();           // [{ id, name, role, active }
 const otherKeys = await u.keys.list({ tenantId: tenants[1]?.id });
 
 // Actor delegation: service key acting on behalf of end users (requires brain:act-as scope).
-const svc = new BrainClient({ apiUrl: "https://api.unisonlabs.ai", token: serviceKey });
+const svc = new BrainClient({ apiUrl: "https://brain.unisonlabs.ai", token: serviceKey });
 const user1 = svc.withActor("user-001");
 const user2 = svc.withActor("user-002");
 await user1.write({ path: "/private/notes/x.md", bodyMd: "user 1 note" });
@@ -279,7 +279,7 @@ This is a Bun workspace monorepo: `packages/*` resolve each other by name during
 development. `bun run build` bundles the CLI and MCP server into self-contained
 `dist/index.js` files (the SDK is bundled in; only npm deps stay external).
 
-The hosted brain is live at `https://api.unisonlabs.ai` (the default). To develop
+The hosted brain is live at `https://brain.unisonlabs.ai` (the default). To develop
 against a different backend, point the client with `UNISON_API_URL` /
 `UNISON_APP_URL` or `unison auth login --api-url <url>`.
 

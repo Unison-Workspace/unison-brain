@@ -38,7 +38,7 @@ JSON envelope on stderr with a nonzero exit code (`4` auth, `3` not found,
 ## Env
 
 - `UNISON_TOKEN` — API key (`usk_...`); overrides the stored login.
-- `UNISON_API_URL` — API base (default `https://api.unisonlabs.ai`).
+- `UNISON_API_URL` — API base (default `https://brain.unisonlabs.ai`).
 - `UNISON_APP_URL` — dashboard URL for `auth login`.
 
 MIT © Unison Labs · [source + full docs](https://github.com/unison-labs-ai/unison-brain)

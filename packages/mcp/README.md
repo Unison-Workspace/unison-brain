@@ -15,7 +15,7 @@ Model Context Protocol server for the Unison brain — gives agents without a sh
       "args": ["-y", "@unisonlabs/mcp"],
       "env": {
         "UNISON_TOKEN": "usk_live_...",
-        "UNISON_API_URL": "https://api.unisonlabs.ai"
+        "UNISON_API_URL": "https://brain.unisonlabs.ai"
       }
     }
   }

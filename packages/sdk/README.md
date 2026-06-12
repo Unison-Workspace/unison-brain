@@ -15,7 +15,7 @@ npm i @unisonlabs/sdk
 import { BrainClient } from "@unisonlabs/sdk";
 
 const brain = new BrainClient({
-  apiUrl: process.env.UNISON_API_URL ?? "https://api.unisonlabs.ai",
+  apiUrl: process.env.UNISON_API_URL ?? "https://brain.unisonlabs.ai",
   token: process.env.UNISON_TOKEN, // an API key — run `unison auth login` to get one
 });
 

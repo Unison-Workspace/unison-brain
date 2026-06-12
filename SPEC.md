@@ -178,7 +178,7 @@ must be treated as secrets and rotated via `keys.revoke` + `keys.create` if comp
 
 ## 4. Conventions
 
-- **Base URL:** `https://api.unisonlabs.ai` (override with `UNISON_API_URL`; SDK constructor accepts `apiUrl` or legacy `baseUrl`).
+- **Base URL:** `https://brain.unisonlabs.ai` (override with `UNISON_API_URL`; SDK constructor accepts `apiUrl` or legacy `baseUrl`).
 - **Versioning:** all paths are prefixed `/v1`.
 - **JSON, `camelCase`.** Document paths are passed as query params (they contain slashes).
 - **Errors:** `{ "error": { "code": "snake_case", "message": "…" } }`. Codes:
@@ -404,7 +404,7 @@ plus 12 Phase G domain tools: `tasks_list`, `tasks_create`,
 
 ## 7. Availability
 
-The hosted brain is live at `https://api.unisonlabs.ai` — the default base URL for
+The hosted brain is live at `https://brain.unisonlabs.ai` — the default base URL for
 the SDK, CLI, and MCP server. To target a different backend, override with
 `UNISON_API_URL` (and `UNISON_APP_URL` for the sign-in page), or
 `unison auth login --api-url <url>`.

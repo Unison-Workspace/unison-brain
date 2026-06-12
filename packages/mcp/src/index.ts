@@ -23,7 +23,7 @@ const { version: VERSION } = JSON.parse(
   readFileSync(new URL("../package.json", import.meta.url), "utf8"),
 ) as { version: string };
 
-const apiUrl = process.env.UNISON_API_URL ?? "https://api.unisonlabs.ai";
+const apiUrl = process.env.UNISON_API_URL ?? "https://brain.unisonlabs.ai";
 const token = process.env.UNISON_TOKEN;
 
 // UNISON_ACTOR sets actor delegation for all tools in this MCP instance.

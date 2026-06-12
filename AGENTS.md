@@ -93,7 +93,7 @@ server — a curated 8-tool set kept small to stay easy on context:
     "unison-brain": {
       "command": "npx",
       "args": ["-y", "@unisonlabs/mcp"],
-      "env": { "UNISON_TOKEN": "usk_...", "UNISON_API_URL": "https://api.unisonlabs.ai" }
+      "env": { "UNISON_TOKEN": "usk_...", "UNISON_API_URL": "https://brain.unisonlabs.ai" }
     }
   }
 }

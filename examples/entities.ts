@@ -11,7 +11,7 @@ if (!token) {
 }
 
 const brain = new BrainClient({
-  baseUrl: process.env.UNISON_API_URL ?? "https://api.unisonlabs.ai",
+  baseUrl: process.env.UNISON_API_URL ?? "https://brain.unisonlabs.ai",
   token,
 });
 

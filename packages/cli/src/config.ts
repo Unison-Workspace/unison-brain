@@ -26,9 +26,8 @@ export interface ConfigFile {
   tenantKeys?: Record<string, Record<string, string>>;
 }
 
-// TODO: point at production once the brain endpoints ship. Override anytime with
-// the UNISON_API_URL / UNISON_APP_URL env vars or `unison auth login --api-url`.
-const DEFAULT_API_URL = "https://api.unisonlabs.ai";
+// Override anytime with the UNISON_API_URL / UNISON_APP_URL env vars or `unison auth login --api-url`.
+const DEFAULT_API_URL = "https://brain.unisonlabs.ai";
 // The dashboard origin the browser is sent to during login (the /cli-auth page).
 const DEFAULT_APP_URL = "https://app.unisonlabs.ai";
 

@@ -50,7 +50,7 @@ Output:
 
 Auth & env:
   UNISON_TOKEN     API key (usk_...) — overrides the stored login (use in CI/agents)
-  UNISON_API_URL   API base URL (default https://api.unisonlabs.ai)
+  UNISON_API_URL   API base URL (default https://brain.unisonlabs.ai)
   UNISON_ACTOR     Actor external id for delegation (requires brain:act-as scope on the key)
   NO_COLOR         Disable color. Color is auto-off when output is piped.
 
