@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import { BrainError } from "@unisonlabs/sdk";
 import { Command } from "commander";
 import { runAgent } from "./commands/agent";
-import { registerAuth } from "./commands/auth";
+import { registerAuth, registerInvite } from "./commands/auth";
 import { registerCalendar } from "./commands/calendar";
 import { registerChat } from "./commands/chat";
 import { registerCompletion } from "./commands/completion";
@@ -50,7 +50,6 @@ Output:
 Auth & env:
   UNISON_TOKEN     API key (usk_...) — overrides the stored login (use in CI/agents)
   UNISON_API_URL   API base URL (default https://api.unisonlabs.ai)
-  UNISON_APP_URL   Dashboard URL for 'auth login'
   NO_COLOR         Disable color. Color is auto-off when output is piped.
 
 Exit codes:
@@ -72,6 +71,7 @@ Examples:
 
 // Auth
 registerAuth(program);
+registerInvite(program);
 // Documents
 registerSearch(program);
 registerGet(program);

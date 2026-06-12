@@ -77,14 +77,12 @@ skill wraps the CLI — one API contract, four surfaces.
 ## Quickstart
 
 ```bash
-unison auth login                          # opens your browser to sign in
+npm i -g @unisonlabs/cli
+unison auth login                          # enter email → OTP → signed in
 unison status                              # confirm you're connected
 unison search "auth decision"              # search the brain
-unison get /tenant/projects/architecture.md   # read a document
-echo "We chose X because Y." | unison write /private/notes/x.md   # paths end in .md
-unison edit /private/notes/x.md --old "X" --new "Z"   # surgical in-place edit
-unison entity resolve "Daniel"             # knowledge-graph lookup
-unison fact ls --entity <id>               # facts about an entity
+unison write /private/notes/x.md          # pipe content in or pass --file
+unison context "what did we decide about auth?"   # one-call memory recall
 ```
 
 Documents: `search`, `grep`, `cat`/`get`, `ls`, `tree`, `find`, `write`, `edit`,
@@ -142,13 +140,21 @@ unison get /tenant/projects/architecture.md --json
 
 ## Authentication
 
-`unison auth login` opens your browser to our sign-in page (PKCE loopback,
-RFC 8252 + 7636) — the same one-command, no-credentials-in-the-terminal flow as
-`gh auth login` / `vercel login`. Account creation happens in the browser; the CLI
-just receives and stores the token at `~/.config/unison/config.json` (mode `0600`).
-On a headless/SSH box, use `unison auth login --device` for the code-based flow.
+`unison auth login` signs you in via email-OTP — enter your email, get a code,
+done. No browser, no OAuth dance. Account creation and key recovery both happen
+in the terminal. The key is stored at `~/.config/unison/config.json` (mode `0600`).
 
-For **CI and headless agents**, skip the browser — set an API key:
+```bash
+unison auth login                        # prompts for email; sends OTP
+unison auth verify <code>                # (optional) verify to lift usage caps
+unison auth keys                         # list your API keys
+unison auth keys create --name ci        # mint a key for CI; token shown once
+unison auth keys revoke <id>             # revoke a key
+unison invite colleague@company.com      # invite someone to your tenant
+unison invites                           # list pending invitations
+```
+
+For **CI and headless agents**, skip interaction — set an API key:
 
 ```bash
 export UNISON_TOKEN="usk_live_..."   # overrides the stored credential
@@ -161,7 +167,7 @@ export UNISON_API_URL="https://api.unisonlabs.ai"   # optional; this is the defa
 
 ```bash
 npm i -g @unisonlabs/cli      # or: pnpm add -g / bun add -g / npx @unisonlabs/cli
-unison auth login         # sign in (opens your browser)
+unison auth login             # enter your email; OTP sent; key stored
 ```
 
 Distributed via npm as three packages: **`@unisonlabs/cli`** (the `unison` binary),

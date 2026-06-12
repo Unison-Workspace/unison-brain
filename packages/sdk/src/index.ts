@@ -1,5 +1,13 @@
 export { BrainClient } from "./client";
-export type { EntitiesApi, FactsApi, JobsApi, LinksApi, ReviewApi } from "./client";
+export type {
+  EntitiesApi,
+  FactsApi,
+  InvitationsApi,
+  JobsApi,
+  KeysApi,
+  LinksApi,
+  ReviewApi,
+} from "./client";
 
 // Domain APIs + their input types.
 export type { JsonRecord } from "./domains/_request";
@@ -27,17 +35,24 @@ export type {
 // Canonical Work operation DSL types (snapshot of @unison/agent-shared).
 export type * from "./domains/work-operations";
 export {
-  buildAuthorizeUrl,
-  exchangeCode,
-  generatePkce,
-  pollDeviceToken,
+  createInvitation,
+  createKey,
+  listInvitations,
+  listKeys,
   provisionAccount,
-  randomState,
   requestKey,
-  startDeviceAuth,
+  revokeInvitation,
+  revokeKey,
   verifyEmail,
 } from "./auth";
-export type { PollResult, PollStatus, ProvisionResponse, VerifyResponse } from "./auth";
+export type {
+  ApiKeyRecord,
+  CreateInvitationResponse,
+  CreateKeyResponse,
+  InvitationRecord,
+  ProvisionResponse,
+  VerifyResponse,
+} from "./auth";
 export { AuthError, BrainError } from "./errors";
 export { BrainContractError, routeBrainWritePath, WRITABLE_BRAIN_ROOTS } from "./fs-contract";
 export { API_VERSION, parseResponse, qs, stripTrailingSlash } from "./http";

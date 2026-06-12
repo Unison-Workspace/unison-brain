@@ -2,7 +2,16 @@
 import { readFileSync } from "node:fs";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { BrainClient, provisionAccount, requestKey, verifyEmail } from "@unisonlabs/sdk";
+import {
+  BrainClient,
+  createInvitation,
+  createKey,
+  listKeys,
+  provisionAccount,
+  requestKey,
+  revokeKey,
+  verifyEmail,
+} from "@unisonlabs/sdk";
 import { z } from "zod";
 import { registerDomainTools } from "./domains";
 
@@ -21,7 +30,7 @@ const client = new BrainClient({ baseUrl: apiUrl, token });
 function ensureAuth(): void {
   if (!token) {
     throw new Error(
-      "UNISON_TOKEN is not set. Generate an API key in Unison and set UNISON_TOKEN (and optionally UNISON_API_URL).",
+      "UNISON_TOKEN is not set. Run `unison auth login` (CLI) or call the auth_provision tool to create an account and get an API key. Then set UNISON_TOKEN (and optionally UNISON_API_URL).",
     );
   }
 }
@@ -282,6 +291,64 @@ server.tool(
   "Email a recovery code for an existing verified account (lost key / new machine). Complete it with auth_verify.",
   { email: z.string().describe("The account email") },
   async ({ email }) => asText(await requestKey(apiUrl, { email })),
+);
+
+// ── Key management tools ──────────────────────────────────────────────────────
+
+server.tool(
+  "auth_keys_list",
+  "List the API keys for the authenticated account. Never returns key hashes. Requires UNISON_TOKEN.",
+  {},
+  async () => {
+    ensureAuth();
+    return asText(await listKeys(apiUrl, token ?? ""));
+  },
+);
+
+server.tool(
+  "auth_keys_create",
+  "Mint a new API key for the authenticated account. The token is returned ONCE — store it immediately. Requires UNISON_TOKEN.",
+  {
+    name: z.string().optional().describe("Key name (default: 'api key')"),
+    scopes: z
+      .array(z.string())
+      .optional()
+      .describe(
+        "Scopes (default: brain:read brain:write). Must be a subset of your current scopes.",
+      ),
+  },
+  async ({ name, scopes }) => {
+    ensureAuth();
+    return asText(await createKey(apiUrl, token ?? "", { name, scopes }));
+  },
+);
+
+server.tool(
+  "auth_keys_revoke",
+  "Revoke one of the authenticated account's API keys by id. The currently-used key can be revoked. Requires UNISON_TOKEN.",
+  { id: z.string().describe("Key id to revoke") },
+  async ({ id }) => {
+    ensureAuth();
+    return asText(await revokeKey(apiUrl, token ?? "", id));
+  },
+);
+
+// ── Invitation tool ───────────────────────────────────────────────────────────
+
+server.tool(
+  "auth_invite",
+  "Invite an email address to the authenticated account's tenant. Caller must be owner or admin. Requires UNISON_TOKEN.",
+  {
+    email: z.string().describe("Email address to invite"),
+    role: z
+      .enum(["admin", "member", "viewer"])
+      .optional()
+      .describe("Role to assign (default: member)"),
+  },
+  async ({ email, role }) => {
+    ensureAuth();
+    return asText(await createInvitation(apiUrl, token ?? "", { email, role }));
+  },
 );
 
 // Register the non-brain domain tools (work/mail/chat/calendar/people) over the

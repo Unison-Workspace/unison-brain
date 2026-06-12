@@ -1,3 +1,17 @@
+import type {
+  ApiKeyRecord,
+  CreateInvitationResponse,
+  CreateKeyResponse,
+  InvitationRecord,
+} from "./auth";
+import {
+  createInvitation,
+  createKey,
+  listInvitations,
+  listKeys,
+  revokeInvitation,
+  revokeKey,
+} from "./auth";
 import type { RequestFn } from "./domains/_request";
 import { type AgentApi, createAgentApi } from "./domains/agent";
 import { type CalendarApi, createCalendarApi } from "./domains/calendar";
@@ -48,6 +62,18 @@ import type {
   WriteInput,
 } from "./types";
 
+export interface KeysApi {
+  list(): Promise<ApiKeyRecord[]>;
+  create(params: { name?: string; scopes?: string[] }): Promise<CreateKeyResponse>;
+  revoke(id: string): Promise<{ revoked: boolean; id: string; note?: string }>;
+}
+
+export interface InvitationsApi {
+  create(params: { email: string; role?: string }): Promise<CreateInvitationResponse>;
+  list(): Promise<InvitationRecord[]>;
+  revoke(id: string): Promise<{ revoked: boolean; id: string }>;
+}
+
 export interface EntitiesApi {
   list(opts?: ListEntitiesOptions): Promise<BrainEntity[]>;
   resolve(name: string, kindHint?: EntityKind): Promise<BrainEntity | null>;
@@ -88,6 +114,11 @@ export class BrainClient {
   readonly links: LinksApi;
   readonly review: ReviewApi;
   readonly jobs: JobsApi;
+
+  /** API-key management (list, create, revoke). Scope: brain:read. */
+  readonly keys: KeysApi;
+  /** Tenant invitation management (create, list, revoke). Owner/admin only. */
+  readonly invitations: InvitationsApi;
 
   // Domain APIs over the same /v1 surface.
   readonly work: WorkApi;
@@ -186,6 +217,18 @@ export class BrainClient {
       stats: () => this.req<JobStats>("GET", "/brain/jobs/stats"),
       retry: (jobId) =>
         this.req<{ retried: boolean }>("POST", `/brain/jobs/${encodeURIComponent(jobId)}/retry`),
+    };
+
+    this.keys = {
+      list: () => listKeys(this.baseUrl, this.token ?? "", this.fetchImpl),
+      create: (params) => createKey(this.baseUrl, this.token ?? "", params, this.fetchImpl),
+      revoke: (id) => revokeKey(this.baseUrl, this.token ?? "", id, this.fetchImpl),
+    };
+
+    this.invitations = {
+      create: (params) => createInvitation(this.baseUrl, this.token ?? "", params, this.fetchImpl),
+      list: () => listInvitations(this.baseUrl, this.token ?? "", this.fetchImpl),
+      revoke: (id) => revokeInvitation(this.baseUrl, this.token ?? "", id, this.fetchImpl),
     };
 
     // Domain APIs share the same transport (prefixes /v1). work.assets.upload

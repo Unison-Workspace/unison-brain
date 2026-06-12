@@ -397,38 +397,5 @@ export interface WhoAmI {
 }
 
 // ── Auth ───────────────────────────────────────────────────────────────────
-
-export interface TokenResponse {
-  accessToken: string;
-  tokenType: string;
-  scope: string;
-}
-
-export interface PkcePair {
-  verifier: string;
-  challenge: string;
-}
-
-export interface AuthorizeUrlParams {
-  clientId?: string;
-  redirectUri: string;
-  codeChallenge: string;
-  state: string;
-  scopes?: string[];
-}
-
-export interface ExchangeCodeParams {
-  code: string;
-  verifier: string;
-  redirectUri: string;
-  clientId?: string;
-}
-
-export interface DeviceCodeResponse {
-  deviceCode: string;
-  userCode: string;
-  verificationUri: string;
-  verificationUriComplete: string;
-  interval: number;
-  expiresIn: number;
-}
+// Note: auth types (ProvisionResponse, VerifyResponse, ApiKeyRecord, etc.)
+// live in auth.ts and are re-exported from index.ts.

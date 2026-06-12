@@ -31,12 +31,15 @@ npm i -g @unisonlabs/cli      # Node ≥18 or Bun; or pnpm/bun add -g, or npx @u
 
 No shell (chat-only / IDE-embedded agent)? Skip to [MCP](#no-shell-use-the-mcp-server).
 
-### 2. Authenticate (needs the human — you can't mint this yourself)
+### 2. Authenticate
 
-- **Interactive:** ask the user to run `unison auth login` — opens their browser;
-  account creation and approval happen there, never in the terminal.
-- **Headless / CI / no browser:** ask the user for an API key, then
-  `export UNISON_TOKEN=usk_...`. It overrides any stored login.
+- **Interactive / agent with shell:** call the `auth_provision` MCP tool (or run
+  `unison auth login --email <email>`) — account created immediately, OTP sent for
+  verification. The returned `apiKey` is your `UNISON_TOKEN`.
+- **Headless / CI:** if you already have a key, `export UNISON_TOKEN=usk_...`.
+  It overrides any stored login.
+- **No shell:** use the `auth_provision` + `auth_verify` MCP tools to bootstrap
+  your own account without human intervention.
 
 ### 3. Teach yourself the brain
 
@@ -96,8 +99,14 @@ server — a curated 8-tool set kept small to stay easy on context:
 }
 ```
 
+**Bootstrap (no token yet):** call `auth_provision` with an email → get `apiKey`
+→ set it as `UNISON_TOKEN` → optionally call `auth_verify` to make the account
+durable.
+
 Tools: `brain_search`, `brain_get`, `brain_list`, `brain_write`,
-`brain_resolve_entity`, `brain_facts_about`, `brain_record_fact`, `brain_status`.
+`brain_resolve_entity`, `brain_facts_about`, `brain_record_fact`, `brain_status`,
+`auth_provision`, `auth_verify`, `auth_request_key`, `auth_keys_list`,
+`auth_keys_create`, `auth_keys_revoke`, `auth_invite`.
 
 ### If the onboarding was easy
 

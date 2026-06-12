@@ -4,9 +4,58 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres
 to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.4.0] - 2026-06-12
+
+### Changed — Breaking: auth surface replaced
+
+The PKCE loopback and device-code auth flows are **removed** from the client.
+The server no longer exposes those endpoints. The new auth surface is email-OTP
+only — simpler, no browser required, works on every machine including headless.
+
+**Migration:**
+
+| Was | Now |
+|---|---|
+| `unison auth login` (opens browser) | `unison auth login` (prompts for email) |
+| `unison auth login --device` | removed — `unison auth login` works headlessly |
+| Keys minted in the dashboard | `unison auth keys create` / `auth_keys_create` MCP tool |
+| `buildAuthorizeUrl`, `exchangeCode`, `generatePkce`, `randomState`, `startDeviceAuth`, `pollDeviceToken` (SDK) | removed |
+| `TokenResponse`, `PkcePair`, `AuthorizeUrlParams`, `ExchangeCodeParams`, `DeviceCodeResponse` (types) | removed |
 
 ### Added
+
+- **`unison auth login`** — email-OTP as the single sign-in path. Prompts for email
+  (or `--email`). New accounts: key stored immediately + inline OTP prompt.
+  Existing accounts: recovery OTP sent → collect code → new key stored.
+  `--with-token` (stdin) still works for CI pipelines.
+
+- **`unison auth verify [code]`** — stand-alone OTP verification (for non-TTY flows
+  or when verification was skipped during login).
+
+- **`unison auth keys`** (CLI subcommands):
+  - `unison auth keys ls` — table of all keys (id, name, prefix, scopes, created, status)
+  - `unison auth keys create [--name <n>] [--scopes ...]` — mint a key; token printed once
+  - `unison auth keys revoke <id>` — revoke a key by id
+
+- **`unison invite <email> [--role admin|member|viewer]`** — invite an email to your tenant.
+
+- **`unison invites`** — list pending invitations; `unison invites revoke <id>` to revoke.
+
+- **`client.keys`** (SDK): `{ list(), create({ name?, scopes? }), revoke(id) }` on `BrainClient`.
+
+- **`client.invitations`** (SDK): `{ create({ email, role? }), list(), revoke(id) }` on `BrainClient`.
+
+- Standalone SDK auth helpers: `listKeys`, `createKey`, `revokeKey`,
+  `createInvitation`, `listInvitations`, `revokeInvitation`.
+
+- New types exported from `@unisonlabs/sdk`: `ApiKeyRecord`, `CreateKeyResponse`,
+  `InvitationRecord`, `CreateInvitationResponse`, `KeysApi`, `InvitationsApi`.
+
+- **`auth_keys_list`**, **`auth_keys_create`**, **`auth_keys_revoke`**, **`auth_invite`** (MCP):
+  four new tools for key management and tenant invitations.
+
+- MCP error message for missing `UNISON_TOKEN` now points to `unison auth login`
+  and `auth_provision` instead of "the dashboard".
 
 - **`brain.context()`** (SDK): one-call recall — `GET /v1/brain/context?q&mode&k&maxEntities`.
   Returns `ContextResult` with `hits`, `entities`, and a prompt-ready `contextMd` block.
@@ -47,6 +96,13 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   `ContextMode`, `SemanticHit`, `ContextEntity`, `IngestInput`, `IngestItem`,
   `IngestConversationItem`, `IngestDocumentItem`, `IngestResult`, `IngestItemResult`,
   `ConversationTurn`, `WriteDocInput`, `WriteDocsResult`, `EditDocMetaInput`.
+
+### Removed
+
+- `buildAuthorizeUrl`, `exchangeCode`, `generatePkce`, `randomState` (PKCE helpers) from SDK
+- `startDeviceAuth`, `pollDeviceToken`, `PollStatus`, `PollResult` (device-flow helpers) from SDK
+- `TokenResponse`, `PkcePair`, `AuthorizeUrlParams`, `ExchangeCodeParams`, `DeviceCodeResponse` types from SDK
+- `open` npm dependency from `@unisonlabs/cli` (was used only for the browser loopback)
 
 ## [1.2.0]
 
@@ -158,6 +214,8 @@ Skill) for the hosted Unison brain at `https://api.unisonlabs.ai`.
 - JSON auto-compacts when piped (pretty on a TTY) to save agent tokens.
 - `--help` documents `--json`, env vars, exit codes, and usage examples.
 
-[Unreleased]: https://github.com/Unison-Workspace/unison-brain/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/Unison-Workspace/unison-brain/compare/v1.4.0...HEAD
+[1.4.0]: https://github.com/Unison-Workspace/unison-brain/compare/v1.2.0...v1.4.0
+[1.2.0]: https://github.com/Unison-Workspace/unison-brain/compare/v1.0.0...v1.2.0
 [1.0.0]: https://github.com/Unison-Workspace/unison-brain/compare/v0.1.0...v1.0.0
 [0.1.0]: https://github.com/Unison-Workspace/unison-brain/releases/tag/v0.1.0
