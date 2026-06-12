@@ -5,18 +5,21 @@
 > facts) that any agent — coding, research, ops, or personal — can read and write
 > over one HTTP API.
 
-**Agents: start with [AGENTS.md](AGENTS.md)** — it self-onboards you onto the brain
-(install → auth → skill → verify), then the search-first / write-back loop.
+**Agents: start with the skill** — install the CLI, run `unison skill install`, and
+adopt [SKILL.md](skill/SKILL.md): setup, login, recall-before-reasoning, and
+capture-as-you-work. [AGENTS.md](AGENTS.md) covers the MCP fallback and contributing.
 
 The client enforces nothing; the Unison backend is the security boundary. Auth is
-a machine API key (`usk_...`) via `UNISON_TOKEN`, or a browser PKCE login. Pass
+a machine API key (`usk_...`) via `UNISON_TOKEN`, or an email one-time-code login
+(`unison auth login --email` → `unison auth verify`). Pass
 `--json` for machine output (stdout); errors are JSON on stderr with distinct exit
 codes (4 auth, 3 not found, 5 conflict).
 
 ## Docs
 - [README](README.md): install, quickstart, filesystem + knowledge-graph usage, agent notes
 - [AGENTS.md](AGENTS.md): how an agent should work in this repo and use the CLI
-- [SKILL.md](skill/SKILL.md): the drop-in Agent Skill (when/how to use the brain)
+- [SKILL.md](skill/SKILL.md): the primary agent guide — setup, auth, recall, capture
+- [reference.md](skill/reference.md): full CLI command reference
 - [SPEC.md](SPEC.md): the backend REST API contract this client targets
 - [CHANGELOG](CHANGELOG.md): release notes
 

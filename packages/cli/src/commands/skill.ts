@@ -3,7 +3,7 @@ import { homedir } from "node:os";
 import { dirname, join } from "node:path";
 import type { Command } from "commander";
 import { info, success } from "../output";
-import { SKILL_MD } from "../skill-content";
+import { REFERENCE_MD, SKILL_MD } from "../skill-content";
 
 export function registerSkill(program: Command): void {
   const skill = program.command("skill").description("Manage the Unison brain agent skill");
@@ -16,14 +16,16 @@ export function registerSkill(program: Command): void {
       const target = join(opts.dir, "unison-brain", "SKILL.md");
       await mkdir(dirname(target), { recursive: true });
       await writeFile(target, SKILL_MD, "utf8");
-      success(`Installed skill to ${target}`);
+      await writeFile(join(dirname(target), "reference.md"), REFERENCE_MD, "utf8");
+      success(`Installed skill to ${dirname(target)} (SKILL.md + reference.md)`);
       info("Reload your agent's skills (or restart it) to pick it up.");
     });
 
   skill
     .command("print")
     .description("Print the SKILL.md to stdout")
-    .action(() => {
-      process.stdout.write(SKILL_MD);
+    .option("--reference", "Print the command reference instead")
+    .action((opts: { reference?: boolean }) => {
+      process.stdout.write(opts.reference ? REFERENCE_MD : SKILL_MD);
     });
 }

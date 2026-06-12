@@ -1,76 +1,106 @@
 ---
 name: unison-brain
-description: Use when you need to recall or store durable project knowledge — decisions, conventions, architecture, prior solutions, who's-who. Searches and writes the user's Unison cloud brain via the `unison` CLI so context persists across sessions, machines, and agents.
+description: Persistent cross-session memory via the Unison brain. Use at the start of any non-trivial task (recall decisions, conventions, prior fixes, who's-who before answering), whenever the user states a decision or hard-won insight worth keeping, when a person/project/system you lack context on is mentioned, or when the user says "remember this" / "save this" / "have we decided this before?". Also covers first-time setup of the `unison` CLI (install, login, API keys).
 ---
 
 # Unison Brain
 
-The Unison brain is the user's hosted knowledge base. It holds the durable
-context that doesn't live in the codebase: architectural decisions, conventions,
-prior solutions, people, and notes. It is reached through the `unison` CLI, which
-talks to the cloud — so the same brain is available from any machine or agent.
+The Unison brain is the user's hosted knowledge base — decisions, conventions,
+architecture, prior solutions, people, notes — reachable from any machine and any
+agent through the `unison` CLI. It is the memory that outlives your context
+window. Your job in every session: **recall before you reason, capture before you
+finish.**
 
-## When to use it
-
-- **Before answering a non-trivial question**, search the brain first — the user
-  may have already decided this, and you should not re-litigate it.
-- **When the user states a decision, convention, or hard-won insight** worth
-  keeping, write it to the brain.
-- **When a person, project, or system is mentioned** that you lack context on,
-  search the brain before asking the user to re-explain.
-
-## Commands
-
-Documents (your daily loop):
-```bash
-unison search "<question or keywords>"   # hybrid keyword + semantic search
-unison grep "<regex>"                     # exact regex scan over bodies
-unison get <path>                         # read one document (prints raw content)
-unison ls [path]                          # directory view (--docs for titles)
-unison tree [path]                        # recursive tree under a path
-unison write <path> -m "<content>"        # write/update a doc (path ends in .md)
-unison edit <path> --old "…" --new "…"    # surgical in-place edit (old must match once)
-unison neighbors <idOrPath>               # linked documents
-unison status                             # brain health + counts
-```
-
-Writable paths follow the brain FS contract: `/private/…` (your private notes,
-e.g. `/private/notes/<slug>.md`), `/tenant/…` (workspace-shared, e.g.
-`/tenant/people/<slug>.md`), and `/teams/<slug>/…` (team docs). A bare name like
-`auth.md` routes to `/private/notes/auth.md`; legacy `/wiki/…` paths are gone.
-
-Knowledge graph (when names/relationships matter):
-```bash
-unison entity resolve "<name>"            # find a person/company/project by name
-unison fact ls --entity <id>              # what the brain knows about an entity
-unison fact add <entityId> <predicate> "<text>"   # record a fact
-unison timeline <entityId>                # facts over time
-```
-
-Add `--json` to any command for machine-readable output you can pipe to `jq`.
-`search` accepts `-k <n>`, `--kind`, `--tag`, `--memory-type`, and `--as-of`
-(time-travel). `write` reads content from stdin if `-m` is omitted:
+## Setup (first run only)
 
 ```bash
-unison search "auth approach" -k 5 --json
-cat decision.md | unison write /private/notes/auth-2026-05.md
+npm i -g @unisonlabs/cli        # Node ≥18 or Bun; npx @unisonlabs/cli also works
+unison auth status              # already authenticated? then you're done
 ```
 
-**For agents:** prefer `--json` — results are JSON on **stdout**; errors are a JSON
-envelope on **stderr** with a nonzero **exit code** (4 = auth, 3 = not found,
-5 = conflict, 1 = other). Destructive commands (`rm`, `fact rm`, `review merge`,
-`review undo`) need `--yes` when running non-interactively, or they exit nonzero
-without acting.
-Run any command with `--help` to see its flags.
+Not authenticated:
 
-## Setup
+- **Interactive (user present):** `unison auth login --email <their-email>` — the
+  account is provisioned instantly and a one-time code is emailed. Ask the user
+  for the code, then `unison auth verify <code>`. The key is stored in
+  `~/.config/unison/config.json`.
+- **Headless / CI:** `export UNISON_TOKEN=usk_...` (an API key) — overrides any
+  stored login. Mint extra keys with `unison auth keys create --name <agent>`.
+- **Service key acting for many end users:** add `--actor <externalUserId>` to any
+  command (requires a key with the `brain:act-as` scope).
 
-If a command fails with **"Not authenticated"**, tell the user to run:
+Verify with `unison status` (brain health + document/entity/fact counts). If the
+user belongs to several tenants: `unison tenants` to list, `unison switch <name>`
+to change.
+
+## Recall — run BEFORE answering anything non-trivial
+
+One call gets you a prompt-ready context block (planner → hybrid search → rerank →
+entity facts, server-side):
 
 ```bash
-unison auth login
+unison context "<the actual question>" --json
 ```
 
-This opens a browser PKCE login (loopback). On SSH/headless boxes with no browser,
-use `unison auth login --device`. For CI or headless agents, set the `UNISON_TOKEN`
-environment variable to an API key instead (no login needed).
+- `--deep` — multi-hop graph expansion for relationship/why questions
+- `--path-prefix /private/notes/` — scope to a subtree
+- `--include-bodies` — inline full (clipped) doc bodies when you won't follow up with reads
+- `-k <n>` / `--max-entities <n>` — widen or narrow
+
+Use the returned `contextMd` directly in your reasoning. If the brain already
+answers the question — especially a decision — **cite it and do not re-litigate.**
+
+Precision follow-ups when you need exact content:
+
+```bash
+unison search "<keywords>" --json     # ranked hybrid hits
+unison grep "<regex>"                 # exact regex over doc bodies
+unison get <path>                     # read one document raw
+unison ls [path] / unison tree [path] # browse the filesystem
+unison entity resolve "<name>" --json # person/company/project mentioned? resolve it
+unison fact ls --entity <id>          # what the brain knows about them
+```
+
+**People rule:** when the user drops a name you have no context on, resolve it in
+the brain before asking them to re-explain.
+
+## Remember — capture as you work, not just when asked
+
+Save when **all three** hold: (1) it will matter in ≥30 days, (2) it is not
+recoverable from git/code, (3) a future agent would otherwise re-derive or re-ask
+it. Decisions-with-rationale, conventions, constraints discovered the hard way,
+fixes that took more than one attempt, who-does-what — yes. Code, git history,
+ephemeral status, secrets — never.
+
+```bash
+echo "Decision: X. Why: Y. Date: $(date +%F)" | unison write /private/notes/<topic>.md
+unison edit <path> --old "…" --new "…"            # surgical update of an existing doc
+unison fact add <entityId> <predicate> "<text>"   # entity-shaped knowledge
+```
+
+Paths: `/private/…` (personal; bare names route to `/private/notes/`),
+`/tenant/…` (shared with the workspace), `/teams/<slug>/…` (team-scoped).
+**Prefer updating an existing doc over creating a near-duplicate** — `unison
+search` for the topic first.
+
+Capture triggers — write immediately when one fires, don't batch for later:
+
+- The user states a decision, preference, or correction ("actually, always do X")
+- You discover a non-obvious constraint, gotcha, or root cause after real effort
+- A convention emerges that future sessions must follow
+- The user says "remember this", "save this", "document this"
+
+Before ending a task, sweep once: *did this session produce anything a future
+agent will need?* If your harness supports background subagents, delegate the
+write so it never blocks the main thread — the commands above are fire-and-forget
+safe.
+
+## Working agreement
+
+- Prefer `--json`: data on **stdout**, errors as a JSON envelope on **stderr** with
+  exit codes `4` auth, `3` not found, `5` conflict, `1` other.
+- Destructive commands (`rm`, `fact rm`, `review merge`, `review undo`) need
+  `--yes` non-interactively.
+- Auth failures (exit 4): re-run setup above; headless agents check `UNISON_TOKEN`.
+- Full command/flag reference: `reference.md` next to this file, or
+  `unison --help` / `unison <cmd> --help` (written to be read by agents).

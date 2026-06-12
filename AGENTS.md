@@ -31,24 +31,25 @@ npm i -g @unisonlabs/cli      # Node ≥18 or Bun; or pnpm/bun add -g, or npx @u
 
 No shell (chat-only / IDE-embedded agent)? Skip to [MCP](#no-shell-use-the-mcp-server).
 
-### 2. Authenticate
-
-- **Interactive / agent with shell:** call the `auth_provision` MCP tool (or run
-  `unison auth login --email <email>`) — account created immediately, OTP sent for
-  verification. The returned `apiKey` is your `UNISON_TOKEN`.
-- **Headless / CI:** if you already have a key, `export UNISON_TOKEN=usk_...`.
-  It overrides any stored login.
-- **No shell:** use the `auth_provision` + `auth_verify` MCP tools to bootstrap
-  your own account without human intervention.
-
-### 3. Teach yourself the brain
+### 2. Adopt the skill — the canonical guide
 
 ```bash
-unison skill install          # installs the Unison skill into ~/.claude/skills/
+unison skill install          # writes SKILL.md + reference.md to ~/.claude/skills/unison-brain/
 ```
 
-Then read [`skill/SKILL.md`](./skill/SKILL.md) and adopt it — it's the behavioral
-guide for *when* to search vs. write.
+**[`skill/SKILL.md`](./skill/SKILL.md) is the primary document for agents.** It is
+self-contained: authentication (interactive email-OTP and headless `UNISON_TOKEN`),
+the recall protocol (`unison context` before answering anything non-trivial), the
+capture protocol (what to save, where, and when — including as-you-work triggers),
+and the output contract. Read it now and follow it; everything below is just the
+fallback for agents that can't run the CLI. The full command reference lives in
+[`skill/reference.md`](./skill/reference.md).
+
+### 3. Authenticate
+
+Covered in the skill's **Setup** section. Short version: `unison auth login
+--email <email>` → `unison auth verify <code>` (interactive), or `export
+UNISON_TOKEN=usk_...` (headless). No account yet? Both paths provision one.
 
 ### 4. Verify
 
@@ -56,31 +57,9 @@ guide for *when* to search vs. write.
 unison status                 # brain health + document / entity / fact counts
 ```
 
-### The loop — run this every session
-
-- **Before answering anything non-trivial, search first.** The user may have
-  already decided it; don't re-derive or re-litigate.
-  ```bash
-  unison search "<question or keywords>" --json
-  ```
-- **When the user states a decision, convention, or who's-who, persist it** so the
-  next agent inherits it:
-  ```bash
-  echo "We chose X because Y." | unison write /private/notes/<topic>.md   # bare names route here too
-  unison fact add <entityId> <predicate> "<fact in natural language>"
-  ```
-- **When a name, project, or system you lack context on comes up, resolve it**
-  before asking the user to re-explain:
-  ```bash
-  unison entity resolve "<name>" --json
-  ```
-
-**Output contract (built for you):** result data → **stdout** (JSON with `--json`,
-auto-compacted when piped); status/errors → **stderr** as a JSON envelope with
-distinct exit codes (`4` auth, `3` not found, `5` conflict, `1` other). Destructive
-commands (`rm`, `fact rm`, `review merge`) require `--yes` non-interactively. Run
-`unison --help` and `unison <cmd> --help` — the help is written to be read by an
-agent — and see [`SPEC.md`](./SPEC.md) for the full API contract.
+Then run the skill's loop every session: **recall before you reason
+(`unison context "<question>"`), capture before you finish (`unison write`,
+`unison fact add`).**
 
 ### No shell? Use the MCP server
 

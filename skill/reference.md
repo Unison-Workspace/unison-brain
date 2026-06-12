@@ -1,0 +1,72 @@
+# Unison CLI reference
+
+Companion to `SKILL.md`. Every command accepts `--json` (machine output on stdout)
+and `--actor <externalUserId>` (act as an end user; needs the `brain:act-as`
+scope). Run `unison <cmd> --help` for the authoritative flag list.
+
+## Recall
+
+| Command | What it does |
+|---|---|
+| `unison context "<q>" [--deep] [--path-prefix <p>] [--include-bodies] [-k <n>] [--max-entities <n>]` | One-call recall: prompt-ready `contextMd` from hybrid search + rerank + entity facts. |
+| `unison search "<q>" [-k <n>] [--kind <k>...] [--tag <t>...] [--memory-type <t>] [--as-of <ts>] [--path-prefix <p>]` | Ranked hybrid (keyword + semantic) hits. `--as-of` time-travels. |
+| `unison grep "<regex>"` | Exact regex scan over document bodies. |
+| `unison get <path>` | Print one document raw. |
+| `unison ls [path] [--docs]` / `unison tree [path]` / `unison find <glob>` | Browse the brain filesystem. |
+| `unison neighbors <idOrPath>` / `unison links` / `unison link <fromId> <toId>` | Document graph. |
+
+## Write
+
+| Command | What it does |
+|---|---|
+| `unison write <path> [-m "<content>"]` | Create/replace a doc; reads stdin when `-m` omitted. Bare names route to `/private/notes/`. |
+| `unison edit <path> --old "…" --new "…"` | Surgical in-place edit; `--old` must match exactly once. |
+| `unison rm <path> --yes` | Delete a document. |
+| `unison tag <path> [--add <t>...] [--remove <t>...]` | Manage tags. |
+| `unison ingest --file <md> [--title <t>] [--doc-path <p>] [--source-ref <ref>] [--visibility tenant\|private]` | Ingest a document through the extraction pipeline (entities + facts get built). |
+
+Writable path roots: `/private/…` (personal; free-form subtrees allowed except
+`/private/sources/*`), `/tenant/…` (workspace-shared), `/teams/<slug>/…`.
+Paths are lowercase kebab-case ending in `.md`.
+
+## Knowledge graph
+
+| Command | What it does |
+|---|---|
+| `unison entity resolve "<name>"` | Find a person/company/project by name. |
+| `unison entity ls` / `unison entity get <id>` / `unison entity set <kind> <name>` / `unison people [query]` | List / inspect / upsert entities; quick person lookup. |
+| `unison fact ls --entity <id>` | Facts the brain holds about an entity. |
+| `unison fact add <entityId> <predicate> "<text>"` | Record a fact. |
+| `unison fact correct <factId>` | Supersede a fact with a corrected one. |
+| `unison fact rm <factId> --yes` | Retract a fact. |
+| `unison fact timeline <entityId>` | Facts over time (bitemporal). |
+| `unison review ls\|merge\|distinct\|merges\|undo` | Entity-dedup review queue (admin; `merge`/`undo` need `--yes`). |
+
+## Auth, tenants, account
+
+| Command | What it does |
+|---|---|
+| `unison auth login --email <email>` | Provision/login; emails a one-time code. |
+| `unison auth verify <code>` | Complete login; stores the API key locally. |
+| `unison auth status` / `unison auth logout` | Inspect / clear stored credentials. |
+| `unison auth keys [ls]` / `unison auth keys create --name <n> [--scopes <s>...]` / `unison auth keys revoke <id>` | Manage API keys (`usk_…`). Default scopes: `brain:read brain:write`. |
+| `unison auth invite <email> [--role admin\|member\|viewer]` | Invite someone to the tenant. |
+| `unison invites [ls]` / `unison invites revoke <id>` | List / revoke pending invitations. |
+| `unison tenants` / `unison switch <tenantIdOrName>` | List memberships / switch active tenant. |
+| `unison status` | Brain health + document/entity/fact counts. |
+| `unison jobs ls\|stats\|retry <id>` | Background pipeline queue (admin). |
+| `unison skill install [--dir <path>]` / `unison skill print` | (Re)install or print this skill. |
+
+## Environment
+
+| Variable | Effect |
+|---|---|
+| `UNISON_TOKEN` | API key; overrides the stored login. The headless/CI path. |
+| `UNISON_API_URL` | Override the API base URL (default `https://brain.unisonlabs.ai`). Leave unset in normal use. |
+
+## Output contract
+
+Result data → **stdout** (JSON with `--json`, auto-compacted when piped).
+Status and errors → **stderr** as a JSON envelope. Exit codes: `0` ok, `4` auth,
+`3` not found, `5` conflict, `1` other. Destructive commands require `--yes`
+when non-interactive.

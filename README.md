@@ -21,9 +21,10 @@ all share.
 
 ---
 
-> **🤖 Reading this as an AI agent?** Go straight to [`AGENTS.md`](./AGENTS.md) — it
-> self-onboards you onto the brain in four steps (install → auth → skill → verify),
-> then teaches the search-first / write-back loop.
+> **🤖 Reading this as an AI agent?** Install the CLI, then run `unison skill install`
+> and adopt [`skill/SKILL.md`](./skill/SKILL.md) — the canonical agent guide: setup,
+> login, the recall-before-reasoning loop, and when/how to save what you learn.
+> [`AGENTS.md`](./AGENTS.md) has the MCP fallback and repo-contributor guide.
 
 Every agent starts each session blank — the context window resets the moment you
 close the terminal. The usual patches only half-fix it: a `CLAUDE.md` here, Cursor's
@@ -59,7 +60,7 @@ is the contract this client speaks).
 | [`@unisonlabs/cli`](./packages/cli) | `unison` | The CLI: `search`, `get`, `write`, `list`, `status`, `auth`. |
 | [`@unisonlabs/sdk`](./packages/sdk) | `@unisonlabs/sdk` | Typed HTTP client the CLI and MCP server are built on. |
 | [`@unisonlabs/mcp`](./packages/mcp) | `unison-brain-mcp` | A Model Context Protocol server for agents without shell access. |
-| [`skill/SKILL.md`](./skill/SKILL.md) | — | Drop-in [Agent Skill](https://www.anthropic.com/engineering/equipping-agents-for-the-real-world-with-agent-skills) that teaches an agent to use the CLI. |
+| [`skill/SKILL.md`](./skill/SKILL.md) | — | The primary agent entry: a drop-in [Agent Skill](https://www.anthropic.com/engineering/equipping-agents-for-the-real-world-with-agent-skills) covering setup, auth, recall, and capture (+ [`reference.md`](./skill/reference.md)). |
 
 The SDK is the core; the CLI and MCP server are thin wrappers over it, and the
 skill wraps the CLI — one API contract, four surfaces.

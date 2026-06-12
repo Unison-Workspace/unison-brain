@@ -54,6 +54,13 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 - **`ACTOR_ID_RE`** (SDK): exported regex constant for the actor id format validation.
 
+## [1.4.2] - 2026-06-12
+
+### Changed
+- Rewrote the agent skill (`skill/SKILL.md`) as the primary entry point for agents: self-contained setup (install, email-OTP login, headless `UNISON_TOKEN`, multi-tenant, `--actor`), a `unison context`-first recall protocol, a capture-as-you-work memory protocol with explicit save triggers, and the output contract. `unison skill install` now also ships `reference.md`, a full command/flag reference; `unison skill print --reference` prints it.
+- `unison search` gained `--path-prefix` (SDK already supported it).
+- README, AGENTS.md, and llms.txt now funnel agents to the skill first; stale browser-PKCE login references replaced with the email-OTP flow.
+
 ## [1.4.1] - 2026-06-12
 
 ### Added
@@ -270,7 +277,8 @@ Skill) for the hosted Unison brain at `https://brain.unisonlabs.ai`.
 - JSON auto-compacts when piped (pretty on a TTY) to save agent tokens.
 - `--help` documents `--json`, env vars, exit codes, and usage examples.
 
-[Unreleased]: https://github.com/unison-labs-ai/unison-brain/compare/v1.4.1...HEAD
+[Unreleased]: https://github.com/unison-labs-ai/unison-brain/compare/v1.4.2...HEAD
+[1.4.2]: https://github.com/unison-labs-ai/unison-brain/compare/v1.4.1...v1.4.2
 [1.4.1]: https://github.com/unison-labs-ai/unison-brain/compare/v1.4.0...v1.4.1
 [1.4.0]: https://github.com/unison-labs-ai/unison-brain/compare/v1.2.0...v1.4.0
 [1.2.0]: https://github.com/unison-labs-ai/unison-brain/compare/v1.0.0...v1.2.0

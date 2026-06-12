@@ -13,6 +13,7 @@ export function registerSearch(program: Command): void {
     .option("--tag <tag...>", "Filter by tag (repeatable)")
     .option("--memory-type <type>", "episodic | semantic | procedural | auto")
     .option("--as-of <datetime>", "Time-travel: what the brain knew as of then")
+    .option("--path-prefix <prefix>", "Restrict results to documents under this path prefix")
     .option("--actor <id>", "Act as an external user id (requires brain:act-as scope)")
     .option("--json", "Output JSON")
     .action(
@@ -24,6 +25,7 @@ export function registerSearch(program: Command): void {
           tag?: string[];
           memoryType?: MemoryType;
           asOf?: string;
+          pathPrefix?: string;
           actor?: string;
           json?: boolean;
         },
@@ -35,6 +37,7 @@ export function registerSearch(program: Command): void {
           tags: opts.tag,
           memoryType: opts.memoryType,
           asOf: opts.asOf,
+          pathPrefix: opts.pathPrefix,
         });
 
         if (opts.json) {
