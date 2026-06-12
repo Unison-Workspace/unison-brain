@@ -3,7 +3,12 @@
 Runnable examples for `@unisonlabs/sdk`. Set a token first:
 
 ```bash
-export UNISON_TOKEN="usk_live_..."          # from the dashboard → Settings → API keys
+# Get a key via the CLI (email-OTP, no browser):
+unison auth login              # prompts for email; stores key at ~/.config/unison/config.json
+# — or mint one for CI/scripts:
+unison auth keys create --name examples
+# Then:
+export UNISON_TOKEN="usk_live_..."
 export UNISON_API_URL="https://api.unisonlabs.ai"   # optional; this is the default
 ```
 

@@ -6,7 +6,7 @@ import { BrainClient } from "@unisonlabs/sdk";
 
 const token = process.env.UNISON_TOKEN;
 if (!token) {
-  console.error("Set UNISON_TOKEN (Settings → API keys in the dashboard).");
+  console.error("Set UNISON_TOKEN — run `unison auth login` to get one.");
   process.exit(1);
 }
 

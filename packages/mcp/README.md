@@ -22,7 +22,7 @@ Model Context Protocol server for the Unison brain — gives agents without a sh
 }
 ```
 
-Mint the `UNISON_TOKEN` API key in the dashboard (Settings → API keys).
+Get a `UNISON_TOKEN` key via `unison auth login` (CLI) or the MCP's own `auth_provision` tool.
 
 ## Tools
 

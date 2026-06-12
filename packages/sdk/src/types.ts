@@ -1,6 +1,12 @@
 export interface BrainClientOptions {
-  /** Base URL of the Unison API, e.g. https://api.unisonlabs.ai */
-  baseUrl: string;
+  /**
+   * Base URL of the Unison API, e.g. https://api.unisonlabs.ai
+   * Accepts `apiUrl` as an alias (preferred) or `baseUrl` (legacy). Provide one
+   * — if both are set they must be identical, otherwise the constructor throws.
+   */
+  apiUrl?: string;
+  /** @deprecated Use `apiUrl` instead. */
+  baseUrl?: string;
   /** Bearer token: an API key (`usk_...`) or a browser-login access token. */
   token?: string;
   /** Override the fetch implementation (used in tests). */
@@ -397,38 +403,5 @@ export interface WhoAmI {
 }
 
 // ── Auth ───────────────────────────────────────────────────────────────────
-
-export interface TokenResponse {
-  accessToken: string;
-  tokenType: string;
-  scope: string;
-}
-
-export interface PkcePair {
-  verifier: string;
-  challenge: string;
-}
-
-export interface AuthorizeUrlParams {
-  clientId?: string;
-  redirectUri: string;
-  codeChallenge: string;
-  state: string;
-  scopes?: string[];
-}
-
-export interface ExchangeCodeParams {
-  code: string;
-  verifier: string;
-  redirectUri: string;
-  clientId?: string;
-}
-
-export interface DeviceCodeResponse {
-  deviceCode: string;
-  userCode: string;
-  verificationUri: string;
-  verificationUriComplete: string;
-  interval: number;
-  expiresIn: number;
-}
+// Note: auth types (ProvisionResponse, VerifyResponse, ApiKeyRecord, etc.)
+// live in auth.ts and are re-exported from index.ts.

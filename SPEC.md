@@ -4,8 +4,8 @@ The HTTP contract the **Unison backend** implements and this open-source client
 (SDK / CLI / MCP) speaks. It lives in the public client repo so integrators can
 build against it directly.
 
-Every operation here is something you can already do with the brain from the
-Unison dashboard — the API is dashboard parity, headless.
+Every operation here is something you can do with the brain — the API is the
+product's primary surface; the dashboard and CLI are clients of it.
 
 > **🤖 AI agent?** This spec is the full API contract. To *start using* the brain,
 > see [`AGENTS.md`](./AGENTS.md) — the four-step path to a working setup.
@@ -60,38 +60,31 @@ surface map in §6.
 
 ## 3. Authentication
 
-`Authorization: Bearer <token>` on every request except the login endpoints. The
-token is an API key (`usk_...`) or an access token minted by a browser login.
+`Authorization: Bearer <token>` on every request except the unauthenticated
+provisioning endpoints. The token is an API key (`usk_...`).
 
 ### How `unison auth login` works
 
-Account creation always happens **in the browser, never in the CLI** — no signup,
-password, SSO, or billing in a terminal. A brand-new user runs `unison auth login`,
-signs up in the tab that opens, approves, and is logged in — no separate dashboard
-visit required.
+Everything happens in the terminal — no browser required.
 
-**Primary — browser loopback (PKCE, RFC 8252 + RFC 7636).** One command:
+**Email-OTP (primary).** One command:
 
 ```
 $ unison auth login
-→ CLI starts a throwaway listener on 127.0.0.1:<random>
-→ opens the browser to  https://app.unisonlabs.ai/cli-auth?…&redirect_uri=http://127.0.0.1:<port>/callback
-→ user logs in / signs up / approves
-→ the site redirects to the loopback with ?code=…&state=…
-→ CLI exchanges code + verifier for a token, stores it, shuts the listener down
+→ enter your email
+→ if new: account + key created immediately; OTP sent for verification
+→ if existing: recovery OTP sent; enter code → new key issued and stored
 ```
 
-`state` + the PKCE `code_verifier` prevent CSRF and code interception.
+The account is usable immediately (unverified, with usage caps). Verifying the
+emailed code lifts the caps and makes the account durable.
 
-**Fallback — device flow (RFC 8628)** for SSH / headless / no-browser boxes:
-`unison auth login --device` prints a short code the user enters on another device.
-
-**CI / automation — API key.** `export UNISON_TOKEN=usk_...`; no browser. Keys are
-minted in the dashboard.
+**CI / automation — API key.** `export UNISON_TOKEN=usk_...`; no interaction.
+Keys are minted via `unison auth keys create` or the `auth_keys_create` MCP tool.
 
 ### Scopes
 
-- `brain:read` — all GETs
+- `brain:read` — all GETs, key management, invitations
 - `brain:write` — document write/delete/tag/share, entity upsert, fact record/correct/invalidate, link
 - `brain:admin` — dedup review (merge/unmerge), job retry
 
@@ -108,22 +101,32 @@ and lets the server reject — it never hides or blocks paths itself.
 
 ### Auth endpoints
 
-**Browser loopback (primary):**
-- `GET https://app.unisonlabs.ai/cli-auth` — dashboard sign-in page (not under `/v1`). Params: `response_type=code`, `client_id=unison-cli`, `redirect_uri` (must match `http://127.0.0.1:*/callback` — the server allowlists loopback only), `code_challenge`, `code_challenge_method=S256`, `state`, `scope`. Redirects to `redirect_uri?code=…&state=…`.
-- `POST /v1/auth/token` — body `{ grantType: "authorization_code", code, codeVerifier, redirectUri, clientId }` → `200 { accessToken, tokenType, scope }`. Verifies PKCE; single-use code; short TTL.
+**Email-OTP (unauthenticated — no token required):**
+- `POST /v1/auth/provision` — body `{ email }` → `{ apiKey, tenantId, status, emailSent, joinedExistingTenant? }`. Creates account + mints `usk_` key immediately (unverified). `409 email_registered` if the email already has an account — use `/request-key` instead. Joins an inviting tenant if a pending invitation exists.
+- `POST /v1/auth/verify` — body `{ email, code }` → `{ verified, apiKey?, tenantId }`. First-time: flips tenant durable; repeat (recovery): mints a new `usk_` key.
+- `POST /v1/auth/request-key` — body `{ email }` → `{ status: "verification_sent" }`. Sends a recovery OTP to a verified account. Responds uniformly (does not leak whether the email is registered).
 
-**Device flow (fallback):**
-- `POST /v1/auth/device/code` — body `{ clientId: "unison-cli" }` → `{ deviceCode, userCode, verificationUri, verificationUriComplete, interval, expiresIn }`.
-- `POST /v1/auth/device/token` — body `{ deviceCode }`. Pending → `400 { error: "authorization_pending" }` (also `slow_down`, `access_denied`, `expired_token`). Approved → `200 { accessToken, tokenType, scope }`.
+**Identity:**
+- `GET /v1/auth/whoami` → `{ user: { id, email }, tenant: { id, name, verified }, scopes[] }`.
 
-**Both:**
-- `GET /v1/auth/whoami` → `{ user: { id, email }, tenant: { id, name }, scopes[] }`.
+**Key management (scope: `brain:read`):**
+- `GET /v1/auth/keys` → `{ keys: ApiKeyRecord[] }`. Never returns key hashes.
+- `POST /v1/auth/keys` — body `{ name?, scopes? }` → `{ id, token, scopes, name }` `201`. Token returned once — store it. Requested scopes must be a subset of caller's scopes.
+- `DELETE /v1/auth/keys/:id` → `{ revoked: true, id, note? }`.
+
+**Invitations (scope: `brain:read`; owner/admin only for write):**
+- `POST /v1/auth/invitations` — body `{ email, role? }` → `{ invitation: InvitationRecord, emailSent }` `201`. Roles: `admin|member|viewer` (default: `member`).
+- `GET /v1/auth/invitations` → `{ invitations: InvitationRecord[] }`. Lists pending invitations for the caller's tenant.
+- `DELETE /v1/auth/invitations/:id` → `{ revoked: true, id }`.
+
+`ApiKeyRecord`: `{ id, name, keyPrefix, scopes[], createdAt, expiresAt|null, revokedAt|null }`.
+`InvitationRecord`: `{ id, email, role, status, expiresAt, createdAt }`.
 
 ---
 
 ## 4. Conventions
 
-- **Base URL:** `https://api.unisonlabs.ai` (override with `UNISON_API_URL`).
+- **Base URL:** `https://api.unisonlabs.ai` (override with `UNISON_API_URL`; SDK constructor accepts `apiUrl` or legacy `baseUrl`).
 - **Versioning:** all paths are prefixed `/v1`.
 - **JSON, `camelCase`.** Document paths are passed as query params (they contain slashes).
 - **Errors:** `{ "error": { "code": "snake_case", "message": "…" } }`. Codes:

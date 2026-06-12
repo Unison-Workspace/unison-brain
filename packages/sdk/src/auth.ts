@@ -1,141 +1,19 @@
 import { BrainError } from "./errors";
 import { API_VERSION, parseResponse, stripTrailingSlash } from "./http";
-import type {
-  AuthorizeUrlParams,
-  DeviceCodeResponse,
-  ExchangeCodeParams,
-  PkcePair,
-  TokenResponse,
-} from "./types";
 
-const CLIENT_ID = "unison-cli";
-
-// ── Browser loopback (PKCE, RFC 7636 + RFC 8252) — primary login ────────────
-
-function base64Url(bytes: Uint8Array): string {
-  return Buffer.from(bytes)
-    .toString("base64")
-    .replace(/\+/g, "-")
-    .replace(/\//g, "_")
-    .replace(/=+$/, "");
-}
-
-/** Generate a PKCE verifier + S256 challenge. */
-export async function generatePkce(): Promise<PkcePair> {
-  const verifierBytes = crypto.getRandomValues(new Uint8Array(32));
-  const verifier = base64Url(verifierBytes);
-  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(verifier));
-  return { verifier, challenge: base64Url(new Uint8Array(digest)) };
-}
-
-/** Random URL-safe token for the CSRF `state` parameter. */
-export function randomState(): string {
-  return base64Url(crypto.getRandomValues(new Uint8Array(16)));
-}
-
-/** Build the browser URL the user is sent to (the dashboard's /cli-auth page). */
-export function buildAuthorizeUrl(appUrl: string, params: AuthorizeUrlParams): string {
-  const query = new URLSearchParams({
-    response_type: "code",
-    client_id: params.clientId ?? CLIENT_ID,
-    redirect_uri: params.redirectUri,
-    code_challenge: params.codeChallenge,
-    code_challenge_method: "S256",
-    state: params.state,
-  });
-  if (params.scopes?.length) query.set("scope", params.scopes.join(" "));
-  return `${stripTrailingSlash(appUrl)}/cli-auth?${query.toString()}`;
-}
-
-/** Exchange the authorization code (+ verifier) for an access token. */
-export async function exchangeCode(
-  baseUrl: string,
-  params: ExchangeCodeParams,
-  fetchImpl: typeof fetch = fetch,
-): Promise<TokenResponse> {
-  const res = await fetchImpl(`${stripTrailingSlash(baseUrl)}/${API_VERSION}/auth/token`, {
-    method: "POST",
-    headers: { "content-type": "application/json", accept: "application/json" },
-    body: JSON.stringify({
-      grantType: "authorization_code",
-      code: params.code,
-      codeVerifier: params.verifier,
-      redirectUri: params.redirectUri,
-      clientId: params.clientId ?? CLIENT_ID,
-    }),
-  });
-  return parseResponse<TokenResponse>(res);
-}
-
-// ── Device flow (RFC 8628) — headless fallback ──────────────────────────────
-
-export async function startDeviceAuth(
-  baseUrl: string,
-  opts: { scopes?: string[] } = {},
-  fetchImpl: typeof fetch = fetch,
-): Promise<DeviceCodeResponse> {
-  const res = await fetchImpl(`${stripTrailingSlash(baseUrl)}/${API_VERSION}/auth/device/code`, {
-    method: "POST",
-    headers: { "content-type": "application/json", accept: "application/json" },
-    // Request the same scopes as the loopback flow; the server clamps the grant
-    // to what the approving user's role allows, so over-requesting is safe. Omit
-    // when none are named to keep the server's historical brain-only default.
-    body: JSON.stringify({
-      clientId: CLIENT_ID,
-      ...(opts.scopes?.length ? { scope: opts.scopes.join(" ") } : {}),
-    }),
-  });
-  return parseResponse<DeviceCodeResponse>(res);
-}
-
-export type PollStatus = "pending" | "slow_down" | "complete" | "denied" | "expired";
-
-export interface PollResult {
-  status: PollStatus;
-  token?: TokenResponse;
-}
-
-export async function pollDeviceToken(
-  baseUrl: string,
-  deviceCode: string,
-  fetchImpl: typeof fetch = fetch,
-): Promise<PollResult> {
-  const res = await fetchImpl(`${stripTrailingSlash(baseUrl)}/${API_VERSION}/auth/device/token`, {
-    method: "POST",
-    headers: { "content-type": "application/json", accept: "application/json" },
-    body: JSON.stringify({ deviceCode }),
-  });
-
-  if (res.ok) {
-    return { status: "complete", token: (await res.json()) as TokenResponse };
-  }
-
-  const body = (await res.json().catch(() => ({}))) as { error?: string | { code?: string } };
-  const code = typeof body.error === "string" ? body.error : body.error?.code;
-
-  switch (code) {
-    case "authorization_pending":
-      return { status: "pending" };
-    case "slow_down":
-      return { status: "slow_down" };
-    case "access_denied":
-      return { status: "denied" };
-    case "expired_token":
-      return { status: "expired" };
-    default:
-      throw new BrainError(code ?? "auth_error", "Device authorization failed", res.status);
-  }
-}
-
-// ── Machine-auth: headless account provisioning ─────────────────────────────
-// Lets a coding agent create + verify its own account with no browser. The agent
-// supplies an email, gets a working key immediately (unverified, capped), then
-// verifies a code emailed to it to make the account durable.
+// ── Email-OTP machine auth ────────────────────────────────────────────────────
+//
+// Three-step flow:
+//   1. POST /provision  {email}           → {apiKey, tenantId, status, emailSent, …}
+//   2. POST /verify     {email, code}     → durable (first time) or key recovery
+//   3. (recovery only) POST /request-key {email} → sends recovery OTP
 
 export interface ProvisionResponse {
   apiKey: string;
   tenantId: string;
   status: string;
+  emailSent: boolean;
+  joinedExistingTenant?: boolean;
   message?: string;
 }
 
@@ -145,7 +23,9 @@ export interface VerifyResponse {
   tenantId?: string;
 }
 
-/** Create a new account for `email` and return a working (unverified) key. */
+/** Create a new account for `email` and return a working (unverified) key.
+ * If the email already belongs to an account, throws a BrainError with code
+ * `email_registered` — caller should redirect to `requestKey` instead. */
 export async function provisionAccount(
   baseUrl: string,
   params: { email: string },
@@ -154,12 +34,13 @@ export async function provisionAccount(
   const res = await fetchImpl(`${stripTrailingSlash(baseUrl)}/${API_VERSION}/auth/provision`, {
     method: "POST",
     headers: { "content-type": "application/json", accept: "application/json" },
-    body: JSON.stringify({ email: params.email, clientId: CLIENT_ID }),
+    body: JSON.stringify({ email: params.email }),
   });
   return parseResponse<ProvisionResponse>(res);
 }
 
-/** Verify an emailed code. Recovery codes also return a fresh key. */
+/** Verify an emailed code. First-time → makes the account durable, returns verified+tenantId.
+ * Recovery (already-verified account) → returns a fresh apiKey. */
 export async function verifyEmail(
   baseUrl: string,
   params: { email: string; code: string },
@@ -173,7 +54,8 @@ export async function verifyEmail(
   return parseResponse<VerifyResponse>(res);
 }
 
-/** Request a recovery code for an existing verified account (lost key). */
+/** Request a recovery OTP for an existing verified account (lost key / new machine).
+ * Responds uniformly — does not reveal whether the email is registered. */
 export async function requestKey(
   baseUrl: string,
   params: { email: string },
@@ -186,3 +68,139 @@ export async function requestKey(
   });
   return parseResponse<{ status: string }>(res);
 }
+
+// ── API-key management (authenticated) ───────────────────────────────────────
+
+export interface ApiKeyRecord {
+  id: string;
+  name: string;
+  keyPrefix: string;
+  scopes: string[];
+  createdAt: string;
+  expiresAt: string | null;
+  revokedAt: string | null;
+}
+
+export interface CreateKeyResponse {
+  id: string;
+  token: string;
+  scopes: string[];
+  name: string;
+}
+
+/** List the caller's API keys. Never returns key hashes. Scope: brain:read. */
+export async function listKeys(
+  baseUrl: string,
+  token: string,
+  fetchImpl: typeof fetch = fetch,
+): Promise<ApiKeyRecord[]> {
+  const res = await fetchImpl(`${stripTrailingSlash(baseUrl)}/${API_VERSION}/auth/keys`, {
+    headers: { authorization: `Bearer ${token}`, accept: "application/json" },
+  });
+  const data = await parseResponse<{ keys: ApiKeyRecord[] }>(res);
+  return data.keys;
+}
+
+/** Mint an additional key. Scope: brain:read. The token is returned ONCE — store it. */
+export async function createKey(
+  baseUrl: string,
+  token: string,
+  params: { name?: string; scopes?: string[] },
+  fetchImpl: typeof fetch = fetch,
+): Promise<CreateKeyResponse> {
+  const res = await fetchImpl(`${stripTrailingSlash(baseUrl)}/${API_VERSION}/auth/keys`, {
+    method: "POST",
+    headers: {
+      authorization: `Bearer ${token}`,
+      "content-type": "application/json",
+      accept: "application/json",
+    },
+    body: JSON.stringify(params),
+  });
+  return parseResponse<CreateKeyResponse>(res);
+}
+
+/** Revoke one of the caller's keys by id. Scope: brain:read. */
+export async function revokeKey(
+  baseUrl: string,
+  token: string,
+  keyId: string,
+  fetchImpl: typeof fetch = fetch,
+): Promise<{ revoked: boolean; id: string; note?: string }> {
+  const res = await fetchImpl(
+    `${stripTrailingSlash(baseUrl)}/${API_VERSION}/auth/keys/${encodeURIComponent(keyId)}`,
+    {
+      method: "DELETE",
+      headers: { authorization: `Bearer ${token}`, accept: "application/json" },
+    },
+  );
+  return parseResponse<{ revoked: boolean; id: string; note?: string }>(res);
+}
+
+// ── Invitations (authenticated) ───────────────────────────────────────────────
+
+export interface InvitationRecord {
+  id: string;
+  email: string;
+  role: string;
+  status: string;
+  expiresAt: string;
+  createdAt: string;
+}
+
+export interface CreateInvitationResponse {
+  invitation: InvitationRecord;
+  emailSent: boolean;
+}
+
+/** Invite an email to the caller's tenant. Caller must be owner or admin. Scope: brain:read. */
+export async function createInvitation(
+  baseUrl: string,
+  token: string,
+  params: { email: string; role?: string },
+  fetchImpl: typeof fetch = fetch,
+): Promise<CreateInvitationResponse> {
+  const res = await fetchImpl(`${stripTrailingSlash(baseUrl)}/${API_VERSION}/auth/invitations`, {
+    method: "POST",
+    headers: {
+      authorization: `Bearer ${token}`,
+      "content-type": "application/json",
+      accept: "application/json",
+    },
+    body: JSON.stringify(params),
+  });
+  return parseResponse<CreateInvitationResponse>(res);
+}
+
+/** List pending invitations for the caller's tenant. Owner/admin only. Scope: brain:read. */
+export async function listInvitations(
+  baseUrl: string,
+  token: string,
+  fetchImpl: typeof fetch = fetch,
+): Promise<InvitationRecord[]> {
+  const res = await fetchImpl(`${stripTrailingSlash(baseUrl)}/${API_VERSION}/auth/invitations`, {
+    headers: { authorization: `Bearer ${token}`, accept: "application/json" },
+  });
+  const data = await parseResponse<{ invitations: InvitationRecord[] }>(res);
+  return data.invitations;
+}
+
+/** Revoke a pending invitation by id. Owner/admin only. Scope: brain:read. */
+export async function revokeInvitation(
+  baseUrl: string,
+  token: string,
+  inviteId: string,
+  fetchImpl: typeof fetch = fetch,
+): Promise<{ revoked: boolean; id: string }> {
+  const res = await fetchImpl(
+    `${stripTrailingSlash(baseUrl)}/${API_VERSION}/auth/invitations/${encodeURIComponent(inviteId)}`,
+    {
+      method: "DELETE",
+      headers: { authorization: `Bearer ${token}`, accept: "application/json" },
+    },
+  );
+  return parseResponse<{ revoked: boolean; id: string }>(res);
+}
+
+// Keep BrainError re-exported for callers who catch auth errors.
+export { BrainError };

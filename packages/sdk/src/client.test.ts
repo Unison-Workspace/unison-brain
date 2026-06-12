@@ -384,3 +384,71 @@ describe("BrainClient search pathPrefix", () => {
     expect(url).toContain("pathPrefix=%2Fprivate%2Fnotes");
   });
 });
+
+describe("BrainClient constructor apiUrl alias", () => {
+  test("apiUrl is accepted as the primary option", async () => {
+    let url = "";
+    const client = new BrainClient({
+      apiUrl: "https://api.alias-test",
+      token: "tok",
+      fetch: stubFetch((u) => {
+        url = u;
+        return json({ results: [] });
+      }),
+    });
+
+    await client.search("hello");
+    expect(url).toContain("https://api.alias-test/");
+  });
+
+  test("baseUrl still works as legacy alias", async () => {
+    let url = "";
+    const client = new BrainClient({
+      baseUrl: "https://api.legacy-test",
+      token: "tok",
+      fetch: stubFetch((u) => {
+        url = u;
+        return json({ results: [] });
+      }),
+    });
+
+    await client.search("hello");
+    expect(url).toContain("https://api.legacy-test/");
+  });
+
+  test("throws when apiUrl and baseUrl are both set and differ", () => {
+    expect(
+      () =>
+        new BrainClient({
+          apiUrl: "https://api.one",
+          baseUrl: "https://api.two",
+          token: "tok",
+        }),
+    ).toThrow(/differ/);
+  });
+
+  test("accepts apiUrl and baseUrl when they are identical", async () => {
+    let url = "";
+    const client = new BrainClient({
+      apiUrl: "https://api.same",
+      baseUrl: "https://api.same",
+      token: "tok",
+      fetch: stubFetch((u) => {
+        url = u;
+        return json({ results: [] });
+      }),
+    });
+
+    await client.search("hello");
+    expect(url).toContain("https://api.same/");
+  });
+
+  test("throws when neither apiUrl nor baseUrl is provided", () => {
+    expect(
+      () =>
+        new BrainClient({
+          token: "tok",
+        } as Parameters<typeof BrainClient>[0]),
+    ).toThrow(/apiUrl/);
+  });
+});
