@@ -12,6 +12,7 @@
 
 import { execSync } from "node:child_process";
 import { readFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 const root = new URL("..", import.meta.url).pathname;
@@ -23,9 +24,16 @@ function readPkg(dir: string): { name: string; version: string } {
   };
 }
 
+// `bun run release` injects npm_config_* env vars that make npm inside the
+// workspace error with "Cannot use --no-workspaces and --workspace at the
+// same time" — strip them so npm sees a clean environment.
+const cleanEnv = Object.fromEntries(
+  Object.entries(process.env).filter(([k]) => !k.toLowerCase().startsWith("npm_config_")),
+) as NodeJS.ProcessEnv;
+
 function run(cmd: string, cwd: string): void {
   console.log(`\n$ ${cmd}  (${cwd})`);
-  execSync(cmd, { cwd, stdio: "inherit" });
+  execSync(cmd, { cwd, stdio: "inherit", env: cleanEnv });
 }
 
 function npmVersionExists(name: string, version: string): boolean {
@@ -66,7 +74,11 @@ for (const pkg of toPublish) {
     console.log(`\nSkipping ${pkg.name}@${pkg.version} — already on npm.`);
     continue;
   }
-  run("npm publish --access public", join(root, pkg.dir));
+  // Publish with the PACKAGE DIR as an argument from a neutral cwd: running
+  // npm inside the workspace tree trips the user-level `workspaces=false`
+  // npmrc against npm's auto-workspace detection ("Cannot use --no-workspaces
+  // and --workspace at the same time").
+  run(`npm publish ${JSON.stringify(join(root, pkg.dir))} --access public`, tmpdir());
   anyPublished = true;
 }
 
