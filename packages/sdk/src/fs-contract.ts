@@ -12,7 +12,7 @@ import { BrainError } from "./errors";
 
 /** Top-level namespaces the agent may write to. `/system/*` and `/AGENTS.md`
  * are read-only; `/private/sources/*` is rejected server-side. */
-export const WRITABLE_BRAIN_ROOTS = ["private", "teams", "tenant"] as const;
+export const WRITABLE_BRAIN_ROOTS = ["private", "teams", "workspace"] as const;
 
 /** Thrown when a write targets a path no longer in the FS contract. */
 export class BrainContractError extends BrainError {
@@ -40,7 +40,7 @@ function defaultPrivateNotePath(rawPath: string): string {
  * Route a brain write path through the FS contract, mirroring the in-app
  * `defaultPrivateScope` behavior:
  *
- * - A path under a writable root (`/private`, `/teams/<slug>`, `/tenant`) passes
+ * - A path under a writable root (`/private`, `/teams/<slug>`, `/workspace`) passes
  *   through unchanged — the server validates the rest of the path.
  * - A bare-root (`/foo.md`) or unqualified (`foo.md`, `notes/foo.md`) write is
  *   rewritten to `/private/notes/<slug>.md`.
@@ -73,6 +73,6 @@ export function routeBrainWritePath(path: string): string {
   }
 
   throw new BrainContractError(
-    `Path "${trimmed}" is not in the brain FS contract. Writable roots are /private/… (e.g. /private/notes/<slug>.md), /tenant/… (e.g. /tenant/people/<slug>.md), and /teams/<slug>/… (e.g. /teams/<slug>/docs/<id>.md). Bare names route to /private/notes/.`,
+    `Path "${trimmed}" is not in the brain FS contract. Writable roots are /private/… (e.g. /private/notes/<slug>.md), /workspace/… (e.g. /workspace/people/<slug>.md), and /teams/<slug>/… (e.g. /teams/<slug>/docs/<id>.md). Bare names route to /private/notes/.`,
   );
 }

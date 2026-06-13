@@ -4,23 +4,23 @@ import { API_VERSION, parseResponse, stripTrailingSlash } from "./http";
 // ── Email-OTP machine auth ────────────────────────────────────────────────────
 //
 // Three-step flow:
-//   1. POST /provision  {email}           → {apiKey, tenantId, status, emailSent, …}
+//   1. POST /provision  {email}           → {apiKey, workspaceId, status, emailSent, …}
 //   2. POST /verify     {email, code}     → durable (first time) or key recovery
 //   3. (recovery only) POST /request-key {email} → sends recovery OTP
 
 export interface ProvisionResponse {
   apiKey: string;
-  tenantId: string;
+  workspaceId: string;
   status: string;
   emailSent: boolean;
-  joinedExistingTenant?: boolean;
+  joinedExistingWorkspace?: boolean;
   message?: string;
 }
 
 export interface VerifyResponse {
   verified: boolean;
   apiKey?: string;
-  tenantId?: string;
+  workspaceId?: string;
 }
 
 /** Create a new account for `email` and return a working (unverified) key.
@@ -39,7 +39,7 @@ export async function provisionAccount(
   return parseResponse<ProvisionResponse>(res);
 }
 
-/** Verify an emailed code. First-time → makes the account durable, returns verified+tenantId.
+/** Verify an emailed code. First-time → makes the account durable, returns verified+workspaceId.
  * Recovery (already-verified account) → returns a fresh apiKey. */
 export async function verifyEmail(
   baseUrl: string,
@@ -89,14 +89,14 @@ export interface CreateKeyResponse {
 }
 
 /** List the caller's API keys. Never returns key hashes. Scope: brain:read.
- * Pass `tenantId` to list keys minted for a specific member tenant. */
+ * Pass `workspaceId` to list keys minted for a specific member workspace. */
 export async function listKeys(
   baseUrl: string,
   token: string,
-  opts: { tenantId?: string } = {},
+  opts: { workspaceId?: string } = {},
   fetchImpl: typeof fetch = fetch,
 ): Promise<ApiKeyRecord[]> {
-  const qs = opts.tenantId ? `?tenantId=${encodeURIComponent(opts.tenantId)}` : "";
+  const qs = opts.workspaceId ? `?workspaceId=${encodeURIComponent(opts.workspaceId)}` : "";
   const res = await fetchImpl(`${stripTrailingSlash(baseUrl)}/${API_VERSION}/auth/keys${qs}`, {
     headers: { authorization: `Bearer ${token}`, accept: "application/json" },
   });
@@ -105,11 +105,11 @@ export async function listKeys(
 }
 
 /** Mint an additional key. Scope: brain:read. The token is returned ONCE — store it.
- * Pass `tenantId` to mint the key into a different tenant the caller is a member of. */
+ * Pass `workspaceId` to mint the key into a different workspace the caller is a member of. */
 export async function createKey(
   baseUrl: string,
   token: string,
-  params: { name?: string; scopes?: string[]; tenantId?: string },
+  params: { name?: string; scopes?: string[]; workspaceId?: string },
   fetchImpl: typeof fetch = fetch,
 ): Promise<CreateKeyResponse> {
   const res = await fetchImpl(`${stripTrailingSlash(baseUrl)}/${API_VERSION}/auth/keys`, {
@@ -124,26 +124,26 @@ export async function createKey(
   return parseResponse<CreateKeyResponse>(res);
 }
 
-// ── Tenant membership ─────────────────────────────────────────────────────────
+// ── Workspace membership ──────────────────────────────────────────────────────
 
-export interface TenantMembershipRecord {
+export interface WorkspaceMembershipRecord {
   id: string;
   name: string | null;
   role: string;
   active: boolean;
 }
 
-/** List all tenants the caller is a member of. Scope: brain:read. */
-export async function listTenants(
+/** List all workspaces the caller is a member of. Scope: brain:read. */
+export async function listWorkspaces(
   baseUrl: string,
   token: string,
   fetchImpl: typeof fetch = fetch,
-): Promise<TenantMembershipRecord[]> {
-  const res = await fetchImpl(`${stripTrailingSlash(baseUrl)}/${API_VERSION}/auth/tenants`, {
+): Promise<WorkspaceMembershipRecord[]> {
+  const res = await fetchImpl(`${stripTrailingSlash(baseUrl)}/${API_VERSION}/auth/workspaces`, {
     headers: { authorization: `Bearer ${token}`, accept: "application/json" },
   });
-  const data = await parseResponse<{ tenants: TenantMembershipRecord[] }>(res);
-  return data.tenants;
+  const data = await parseResponse<{ workspaces: WorkspaceMembershipRecord[] }>(res);
+  return data.workspaces;
 }
 
 /** Revoke one of the caller's keys by id. Scope: brain:read. */
@@ -179,7 +179,7 @@ export interface CreateInvitationResponse {
   emailSent: boolean;
 }
 
-/** Invite an email to the caller's tenant. Caller must be owner or admin. Scope: brain:read. */
+/** Invite an email to the caller's workspace. Caller must be owner or admin. Scope: brain:read. */
 export async function createInvitation(
   baseUrl: string,
   token: string,
@@ -198,7 +198,7 @@ export async function createInvitation(
   return parseResponse<CreateInvitationResponse>(res);
 }
 
-/** List pending invitations for the caller's tenant. Owner/admin only. Scope: brain:read. */
+/** List pending invitations for the caller's workspace. Owner/admin only. Scope: brain:read. */
 export async function listInvitations(
   baseUrl: string,
   token: string,

@@ -34,7 +34,7 @@ export function registerMigrate(program: Command): void {
       "Import a directory of markdown files (knowledge base, Obsidian vault, any tool's markdown export)",
     )
     .option("--prefix <path>", "Brain path the tree is mounted under", "/private/kb")
-    .option("--visibility <v>", "tenant | private", "private")
+    .option("--visibility <v>", "workspace | private", "private")
     .option("--tag <tag...>", "Extra tag(s) applied to every imported doc")
     .option("--exclude <path...>", "Relative path prefix(es) to skip, e.g. --exclude raw archive")
     .option("--dry-run", "Plan only — print what would change, write nothing")
@@ -51,7 +51,7 @@ export function registerMigrate(program: Command): void {
       "Import a JSON export from any memory system — an array of objects with id/title/content/tags fields (common field aliases auto-detected)",
     )
     .option("--prefix <path>", "Brain path the memories are mounted under", "/private/imported")
-    .option("--visibility <v>", "tenant | private", "private")
+    .option("--visibility <v>", "workspace | private", "private")
     .option("--tag <tag...>", "Extra tag(s) applied to every imported doc")
     .option("--dry-run", "Plan only — print what would change, write nothing")
     .option("--actor <id>", "Act as an external user id (requires brain:act-as scope)")

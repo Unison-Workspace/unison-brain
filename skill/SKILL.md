@@ -30,7 +30,7 @@ Not authenticated:
   command (requires a key with the `brain:act-as` scope).
 
 Verify with `unison status` (brain health + document/entity/fact counts). If the
-user belongs to several tenants: `unison tenants` to list, `unison switch <name>`
+user belongs to several workspaces: `unison workspaces` to list, `unison switch <name>`
 to change.
 
 ## Recall — run BEFORE answering anything non-trivial
@@ -78,8 +78,8 @@ unison edit <path> --old "…" --new "…"            # surgical update of an ex
 unison fact add <entityId> <predicate> "<text>"   # entity-shaped knowledge
 ```
 
-Paths: `/private/…` (personal), `/tenant/…` (shared with the workspace),
-`/teams/<slug>/…` (team-scoped). `write` accepts a bare name and routes it to
+Paths: `/private/…` (personal), `/workspace/…` (shared with the workspace),
+`/workspace/teams/<slug>/…` (team folder). `write` accepts a bare name and routes it to
 `/private/notes/` — but read it back with the **full path** it prints
 (`get`/`edit`/`rm` don't take bare names).
 **Prefer updating an existing doc over creating a near-duplicate** — `unison

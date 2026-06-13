@@ -94,7 +94,7 @@ async function emailOtpLogin(apiUrl: string, email: string): Promise<void> {
   // Fresh account: key is ready immediately.
   await saveCredentials({ apiUrl, token: result.apiKey });
   success("Account created and signed in.");
-  info(`  tenant: ${result.tenantId}`);
+  info(`  workspace: ${result.workspaceId}`);
   info(`  status: ${result.status}`);
 
   if (isTty()) {
@@ -252,8 +252,8 @@ export function registerAuth(program: Command): void {
       }
       success(`Authenticated to ${creds.apiUrl}`);
       info(`  user:     ${me.user.email ?? me.user.id}`);
-      info(`  tenant:   ${me.tenant.name ?? me.tenant.id}`);
-      info(`  verified: ${(me.tenant as { verified?: boolean }).verified ?? true}`);
+      info(`  workspace: ${me.workspace.name ?? me.workspace.id}`);
+      info(`  verified: ${(me.workspace as { verified?: boolean }).verified ?? true}`);
       info(`  scopes:   ${me.scopes.join(", ")}`);
     });
 
@@ -358,7 +358,7 @@ export function registerInvite(program: Command): void {
   // unison invite <email>
   program
     .command("invite <email>")
-    .description("Invite an email to your tenant")
+    .description("Invite an email to your workspace")
     .option("--role <role>", "Role: admin|member|viewer (default: member)")
     .option("--api-url <url>", "API base URL", defaultApiUrl())
     .option("--json", "Output JSON")
@@ -384,7 +384,7 @@ export function registerInvite(program: Command): void {
     });
 
   // unison invites
-  const invites = program.command("invites").description("Manage pending tenant invitations");
+  const invites = program.command("invites").description("Manage pending workspace invitations");
 
   invites
     .command("ls", { isDefault: true })

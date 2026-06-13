@@ -7,7 +7,7 @@ import {
   createInvitation,
   createKey,
   listKeys,
-  listTenants,
+  listWorkspaces,
   provisionAccount,
   requestKey,
   revokeKey,
@@ -110,7 +110,7 @@ server.tool(
             sourceRef: z
               .string()
               .describe("Stable caller-side identifier for this conversation (session/thread id)"),
-            visibility: z.enum(["tenant", "private"]).optional(),
+            visibility: z.enum(["workspace", "private"]).optional(),
             idempotencyKey: z.string().optional(),
           }),
           z.object({
@@ -122,7 +122,7 @@ server.tool(
               .optional()
               .describe("Brain path to write the document to (e.g. /private/notes/foo.md)"),
             tags: z.array(z.string()).optional(),
-            visibility: z.enum(["tenant", "private"]).optional(),
+            visibility: z.enum(["workspace", "private"]).optional(),
             sourceRef: z.string().optional(),
           }),
         ]),
@@ -161,7 +161,7 @@ server.tool(
 server.tool(
   "brain_get",
   "Read a single document from the Unison brain by its path.",
-  { path: z.string().describe("Document path, e.g. /tenant/projects/architecture.md") },
+  { path: z.string().describe("Document path, e.g. /workspace/projects/architecture.md") },
   async ({ path }) => {
     ensureAuth();
     return asText(await client.get(path));
@@ -172,7 +172,7 @@ server.tool(
   "brain_list",
   "List documents in the Unison brain under a path prefix.",
   {
-    prefix: z.string().optional().describe("Path prefix, e.g. /private or /tenant/people"),
+    prefix: z.string().optional().describe("Path prefix, e.g. /private or /workspace/people"),
     limit: z.number().int().positive().optional().describe("Max items (default 100)"),
   },
   async ({ prefix, limit }) => {
@@ -183,7 +183,7 @@ server.tool(
 
 server.tool(
   "brain_write",
-  "Write or update a document in the Unison brain so the knowledge persists across sessions and machines. Writable roots: /private/… (e.g. /private/notes/<slug>.md), /tenant/… (e.g. /tenant/people/<slug>.md), and /teams/<slug>/… . A bare name routes to /private/notes/; legacy /wiki, /actions, /skills roots are gone.",
+  "Write or update a document in the Unison brain so the knowledge persists across sessions and machines. Writable roots: /private/… (e.g. /private/notes/<slug>.md), /workspace/… (e.g. /workspace/people/<slug>.md), and /teams/<slug>/… . A bare name routes to /private/notes/; legacy /wiki, /actions, /skills roots are gone.",
   {
     path: z.string().describe("Document path, e.g. /private/notes/auth-decision.md"),
     bodyMd: z.string().describe("Markdown content"),
@@ -365,7 +365,7 @@ server.tool(
 
 server.tool(
   "auth_invite",
-  "Invite an email address to the authenticated account's tenant. Caller must be owner or admin. Requires UNISON_TOKEN.",
+  "Invite an email address to the authenticated account's workspace. Caller must be owner or admin. Requires UNISON_TOKEN.",
   {
     email: z.string().describe("Email address to invite"),
     role: z
@@ -379,15 +379,15 @@ server.tool(
   },
 );
 
-// ── Tenant membership ─────────────────────────────────────────────────────────
+// ── Workspace membership ──────────────────────────────────────────────────────
 
 server.tool(
-  "auth_tenants_list",
-  "List all tenants the authenticated account is a member of. Returns id, name, role, and whether each is the currently-active tenant. Requires UNISON_TOKEN.",
+  "auth_workspaces_list",
+  "List all workspaces the authenticated account is a member of. Returns id, name, role, and whether each is the currently-active workspace. Requires UNISON_TOKEN.",
   {},
   async () => {
     ensureAuth();
-    return asText(await listTenants(apiUrl, token ?? ""));
+    return asText(await listWorkspaces(apiUrl, token ?? ""));
   },
 );
 

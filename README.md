@@ -94,18 +94,18 @@ command. Full surface and the backend contract are in [`SPEC.md`](./SPEC.md).
 
 ## Browse the brain like a filesystem
 
-The brain is path-addressable (`/private/`, `/tenant/`, `/teams/<slug>/`,
-`/system/`), so it navigates with the commands you already know:
+The brain is path-addressable (`/private/`, `/workspace/`, `/system/`), so it
+navigates with the commands you already know:
 
 ```bash
-unison ls                          # entries at the root (dirs + files)
-unison ls /private                 # entries under /private
-unison ls /tenant/people --docs    # documents with titles instead of the dir view
-unison tree /private               # recursive tree under /private
-unison find '/private/**auth*'     # paths matching a glob
-unison cat /tenant/projects/architecture.md  # read a document (alias of `get`)
-unison cat --raw '/system/...'     # read any tier, including synthetic ones
-unison grep "TODO" --json          # regex scan over document bodies
+unison ls                            # entries at the root (dirs + files)
+unison ls /private                   # entries under /private
+unison ls /workspace/people --docs   # documents with titles instead of the dir view
+unison tree /private                 # recursive tree under /private
+unison find '/private/**auth*'       # paths matching a glob
+unison cat /workspace/projects/architecture.md  # read a document (alias of `get`)
+unison cat --raw '/system/...'       # read any tier, including synthetic ones
+unison grep "TODO" --json            # regex scan over document bodies
 ```
 
 ## Query the knowledge graph
@@ -118,7 +118,7 @@ id=$(unison entity resolve "Daniel" --json | jq -r .entity.id)
 unison fact ls --entity "$id"          # what the brain knows about Daniel
 unison timeline "$id"                   # facts over time
 unison fact add "$id" works_at "Joined Unison in 2026" --confidence 0.9
-unison neighbors /tenant/projects/architecture.md  # linked documents
+unison neighbors /workspace/projects/architecture.md  # linked documents
 ```
 
 ## For agents
@@ -136,7 +136,7 @@ skill in with `unison skill install`, or run `unison --help` / `unison <cmd>
 
 ```bash
 unison search "rate limiting" -k 5 --json | jq '.[].doc.path'
-unison get /tenant/projects/architecture.md --json
+unison get /workspace/projects/architecture.md --json
 ```
 
 ## Authentication
@@ -151,15 +151,15 @@ unison auth verify <code>                # (optional) verify to lift usage caps
 unison auth keys                         # list your API keys
 unison auth keys create --name ci        # mint a key for CI; token shown once
 unison auth keys revoke <id>             # revoke a key
-unison invite colleague@company.com      # invite someone to your tenant
+unison invite colleague@company.com      # invite someone to your workspace
 unison invites                           # list pending invitations
 ```
 
-**Multi-tenant** — if you belong to more than one tenant:
+**Multi-workspace** — if you belong to more than one workspace:
 
 ```bash
-unison tenants ls                        # list all tenant memberships
-unison switch <tenantId>                 # switch active tenant (mints or recalls key)
+unison workspaces ls                     # list all workspace memberships
+unison switch <workspaceId>              # switch active workspace (mints or recalls key)
 unison switch "Team Brain"               # also accepts a unique name
 ```
 
@@ -248,9 +248,9 @@ await u.work.apply({
 });
 const tasks = await u.work.search({ query: "ship", limit: 5 });
 
-// Multi-tenant: list memberships and list keys for another tenant.
-const tenants = await u.tenants.list();           // [{ id, name, role, active }]
-const otherKeys = await u.keys.list({ tenantId: tenants[1]?.id });
+// Multi-workspace: list memberships and list keys for another workspace.
+const workspaces = await u.workspaces.list();           // [{ id, name, role, active }]
+const otherKeys = await u.keys.list({ workspaceId: workspaces[1]?.id });
 
 // Actor delegation: service key acting on behalf of end users (requires brain:act-as scope).
 const svc = new BrainClient({ apiUrl: "https://brain.unisonlabs.ai", token: serviceKey });

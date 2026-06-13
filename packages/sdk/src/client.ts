@@ -3,14 +3,14 @@ import type {
   CreateInvitationResponse,
   CreateKeyResponse,
   InvitationRecord,
-  TenantMembershipRecord,
+  WorkspaceMembershipRecord,
 } from "./auth";
 import {
   createInvitation,
   createKey,
   listInvitations,
   listKeys,
-  listTenants,
+  listWorkspaces,
   revokeInvitation,
   revokeKey,
 } from "./auth";
@@ -71,17 +71,17 @@ export const DEFAULT_API_URL = "https://brain.unisonlabs.ai";
 export const ACTOR_ID_RE = /^[A-Za-z0-9._:@-]{1,200}$/;
 
 export interface KeysApi {
-  list(opts?: { tenantId?: string }): Promise<ApiKeyRecord[]>;
+  list(opts?: { workspaceId?: string }): Promise<ApiKeyRecord[]>;
   create(params: {
     name?: string;
     scopes?: string[];
-    tenantId?: string;
+    workspaceId?: string;
   }): Promise<CreateKeyResponse>;
   revoke(id: string): Promise<{ revoked: boolean; id: string; note?: string }>;
 }
 
-export interface TenantsApi {
-  list(): Promise<TenantMembershipRecord[]>;
+export interface WorkspacesApi {
+  list(): Promise<WorkspaceMembershipRecord[]>;
 }
 
 export interface InvitationsApi {
@@ -133,9 +133,9 @@ export class BrainClient {
 
   /** API-key management (list, create, revoke). Scope: brain:read. */
   readonly keys: KeysApi;
-  /** Tenant membership listing. Scope: brain:read. */
-  readonly tenants: TenantsApi;
-  /** Tenant invitation management (create, list, revoke). Owner/admin only. */
+  /** Workspace membership listing. Scope: brain:read. */
+  readonly workspaces: WorkspacesApi;
+  /** Workspace invitation management (create, list, revoke). Owner/admin only. */
   readonly invitations: InvitationsApi;
 
   // Domain APIs over the same /v1 surface.
@@ -258,8 +258,8 @@ export class BrainClient {
       revoke: (id) => revokeKey(this.baseUrl, this.token ?? "", id, this.fetchImpl),
     };
 
-    this.tenants = {
-      list: () => listTenants(this.baseUrl, this.token ?? "", this.fetchImpl),
+    this.workspaces = {
+      list: () => listWorkspaces(this.baseUrl, this.token ?? "", this.fetchImpl),
     };
 
     this.invitations = {

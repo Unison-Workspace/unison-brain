@@ -23,25 +23,25 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   Validate the id format (`/^[A-Za-z0-9._:@-]{1,200}$/`) client-side before the request.
   `withActor(null)` returns a derived client with the header cleared.
 
-- **`client.tenants`** (SDK): `{ list() }` — `GET /v1/auth/tenants` → list of all tenant
+- **`client.workspaces`** (SDK): `{ list() }` — `GET /v1/auth/workspaces` → list of all workspace
   memberships with `{ id, name, role, active }`.
 
-- **`client.keys.list({ tenantId? })`** (SDK): optional `tenantId` scopes the listing to
-  keys minted for a specific member tenant.
+- **`client.keys.list({ workspaceId? })`** (SDK): optional `workspaceId` scopes the listing to
+  keys minted for a specific member workspace.
 
-- **`client.keys.create({ ..., tenantId? })`** (SDK): optional `tenantId` mints the key
-  into a different tenant the caller is a member of (must be owner/admin to add `brain:act-as`).
+- **`client.keys.create({ ..., workspaceId? })`** (SDK): optional `workspaceId` mints the key
+  into a different workspace the caller is a member of (must be owner/admin to add `brain:act-as`).
 
 - **`WhoAmI.actedAs`** (SDK type): `{ externalId, userId }` — present when actor delegation
   is active on the request.
 
-- **`TenantMembershipRecord`** (SDK type): exported from `@unisonlabs/sdk`.
+- **`WorkspaceMembershipRecord`** (SDK type): exported from `@unisonlabs/sdk`.
 
-- **`unison tenants ls [--json]`** (CLI): table of all tenant memberships, marks active.
+- **`unison workspaces ls [--json]`** (CLI): table of all workspace memberships, marks active.
 
-- **`unison switch <tenantIdOrName>`** (CLI): resolves tenant by id prefix or unique name match,
-  mints (or recalls from cache) a key for that tenant, stores it as the new active credential.
-  Keeps a per-apiUrl/per-tenantId key cache in `~/.config/unison/config.json` so switching back
+- **`unison switch <workspaceIdOrName>`** (CLI): resolves workspace by id prefix or unique name match,
+  mints (or recalls from cache) a key for that workspace, stores it as the new active credential.
+  Keeps a per-apiUrl/per-workspaceId key cache in `~/.config/unison/config.json` so switching back
   is instant without re-minting.
 
 - **`--actor <id>`** on brain commands (write, search, context, ingest, get, ls) (CLI):
@@ -50,9 +50,9 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - **`UNISON_ACTOR`** env var (CLI + MCP): service-key users set this once to act as all
   requests under a fixed end-user id. MCP: applies to all tools in the server instance.
 
-- **`auth_tenants_list`** (MCP): new tool — lists tenant memberships. Requires `UNISON_TOKEN`.
+- **`auth_workspaces_list`** (MCP): new tool — lists workspace memberships. Requires `UNISON_TOKEN`.
 
-- **`listTenants(baseUrl, token, fetchImpl?)`** (SDK standalone helper): exported from
+- **`listWorkspaces(baseUrl, token, fetchImpl?)`** (SDK standalone helper): exported from
   `@unisonlabs/sdk`.
 
 - **`ACTOR_ID_RE`** (SDK): exported regex constant for the actor id format validation.
@@ -75,7 +75,7 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Skill: new **Precedence** section — when multiple memory systems exist, the brain is canonical; recall from it first, capture to it by default.
 
 ### Changed
-- Rewrote the agent skill (`skill/SKILL.md`) as the primary entry point for agents: self-contained setup (install, email-OTP login, headless `UNISON_TOKEN`, multi-tenant, `--actor`), a `unison context`-first recall protocol, a capture-as-you-work memory protocol with explicit save triggers, and the output contract. `unison skill install` now also ships `reference.md`, a full command/flag reference; `unison skill print --reference` prints it.
+- Rewrote the agent skill (`skill/SKILL.md`) as the primary entry point for agents: self-contained setup (install, email-OTP login, headless `UNISON_TOKEN`, multi-workspace, `--actor`), a `unison context`-first recall protocol, a capture-as-you-work memory protocol with explicit save triggers, and the output contract. `unison skill install` now also ships `reference.md`, a full command/flag reference; `unison skill print --reference` prints it.
 - `unison search` gained `--path-prefix` (SDK already supported it).
 - README, AGENTS.md, and llms.txt now funnel agents to the skill first; stale browser-PKCE login references replaced with the email-OTP flow.
 
@@ -118,7 +118,7 @@ only — simpler, no browser required, works on every machine including headless
   - `unison auth keys create [--name <n>] [--scopes ...]` — mint a key; token printed once
   - `unison auth keys revoke <id>` — revoke a key by id
 
-- **`unison invite <email> [--role admin|member|viewer]`** — invite an email to your tenant.
+- **`unison invite <email> [--role admin|member|viewer]`** — invite an email to your workspace.
 
 - **`unison invites`** — list pending invitations; `unison invites revoke <id>` to revoke.
 
@@ -133,7 +133,7 @@ only — simpler, no browser required, works on every machine including headless
   `InvitationRecord`, `CreateInvitationResponse`, `KeysApi`, `InvitationsApi`.
 
 - **`auth_keys_list`**, **`auth_keys_create`**, **`auth_keys_revoke`**, **`auth_invite`** (MCP):
-  four new tools for key management and tenant invitations.
+  four new tools for key management and workspace invitations.
 
 - MCP error message for missing `UNISON_TOKEN` now points to `unison auth login`
   and `auth_provision` instead of "the dashboard".
@@ -159,7 +159,7 @@ only — simpler, no browser required, works on every machine including headless
   prints `contextMd` by default; `--json` for the full structured response; `--deep`
   activates multi-hop graph expansion.
 
-- **`unison ingest [--file <path>] [--conversation <json>] [--source-ref <ref>] [--visibility tenant|private]`**
+- **`unison ingest [--file <path>] [--conversation <json>] [--source-ref <ref>] [--visibility workspace|private]`**
   (CLI): ingest a markdown file as a document (`--file`) or a conversation JSON array of
   `{role,content}` turns (`--conversation` or stdin). Scope: `brain:write`.
 
@@ -246,7 +246,7 @@ pre-`/v1/work` server.
 |---|---|
 | `u.tasks.list(...)` / `u.tasks.create(...)` | `u.work.query({ viewId })` / `u.work.apply({ operations: [{ op: "record.upsert", tableId, values }] })` |
 | `u.crm.searchRecords(...)` / `u.crm.createNote(...)` | `u.work.search({ query })` / `u.work.apply({ operations: [...] })` |
-| `u.workspace.tree(id)` / `u.workspace.createArtifact(...)` | `u.work.tree({ teamSpaceId })` / `u.work.apply({ operations: [{ op: "artifact.mount", ... }] })` |
+| `u.workspace.tree(id)` / `u.workspace.createArtifact(...)` | `u.work.tree({ folderId })` / `u.work.apply({ operations: [{ op: "artifact.mount", ... }] })` |
 | `unison tasks list` / `unison crm …` / `unison workspace …` | `unison work query …` / `unison work search …` / `unison work apply` |
 | `write /wiki/x.md` | `write /private/notes/x.md` (bare names auto-route) |
 

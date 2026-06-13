@@ -23,10 +23,10 @@ scope). Run `unison <cmd> --help` for the authoritative flag list.
 | `unison edit <path> --old "…" --new "…"` | Surgical in-place edit; `--old` must match exactly once. |
 | `unison rm <path> --yes` | Delete a document. |
 | `unison tag <path> [--add <t>...] [--remove <t>...]` | Manage tags. |
-| `unison ingest --file <md> [--title <t>] [--doc-path <p>] [--source-ref <ref>] [--visibility tenant\|private]` | Ingest a document through the extraction pipeline (entities + facts get built). |
+| `unison ingest --file <md> [--title <t>] [--doc-path <p>] [--source-ref <ref>] [--visibility workspace\|private]` | Ingest a document through the extraction pipeline (entities + facts get built). |
 
 Writable path roots: `/private/…` (personal; free-form subtrees allowed except
-`/private/sources/*`), `/tenant/…` (workspace-shared), `/teams/<slug>/…`.
+`/private/sources/*`), `/workspace/…` (workspace-shared), `/workspace/teams/<slug>/…` (team folder).
 Paths are lowercase kebab-case ending in `.md`. **Bare names are accepted by
 `write` only** (the server routes them to `/private/notes/` and the command
 prints the resolved path); `get`, `edit`, `rm`, and `tag` need the full path.
@@ -36,7 +36,7 @@ prints the resolved path); `get`, `edit`, `rm`, and `tag` need the full path.
 | Command | What it does |
 |---|---|
 | `unison migrate` | Guided wizard: detects memory systems on the machine (coding-agent memory dirs, Obsidian vaults, custom paths), imports what you pick, prints the cutover checklist. |
-| `unison migrate markdown <dir> [--prefix /private/kb] [--visibility private\|tenant] [--tag <t>...] [--exclude <rel>...] [--dry-run]` | Import a markdown tree (knowledge base, Obsidian vault, any tool's markdown export). Idempotent: diffs against the brain and writes only new/changed docs — re-run any time to sync. |
+| `unison migrate markdown <dir> [--prefix /private/kb] [--visibility private\|workspace] [--tag <t>...] [--exclude <rel>...] [--dry-run]` | Import a markdown tree (knowledge base, Obsidian vault, any tool's markdown export). Idempotent: diffs against the brain and writes only new/changed docs — re-run any time to sync. |
 | `unison migrate json <file> [--prefix /private/imported] [--dry-run]` | Import any memory system's JSON export — array of objects; id/title/content/tags field aliases auto-detected. |
 | `unison export <dir> [--path-prefix </...>]` | Export brain docs to a markdown directory with frontmatter (incl. `unison-path`) — the lossless backward path. |
 
@@ -54,7 +54,7 @@ prints the resolved path); `get`, `edit`, `rm`, and `tag` need the full path.
 | `unison timeline <entityId> [--from <ts>] [--to <ts>]` | Chronological facts for an entity (bitemporal). |
 | `unison review ls\|merge\|distinct\|merges\|undo` | Entity-dedup review queue (admin; `merge`/`undo` need `--yes`). |
 
-## Auth, tenants, account
+## Auth, workspaces, account
 
 | Command | What it does |
 |---|---|
@@ -62,9 +62,9 @@ prints the resolved path); `get`, `edit`, `rm`, and `tag` need the full path.
 | `unison auth verify <code>` | Complete login; stores the API key locally. |
 | `unison auth status` / `unison auth logout` | Inspect / clear stored credentials. |
 | `unison auth keys [ls]` / `unison auth keys create --name <n> [--scopes <s>...]` / `unison auth keys revoke <id>` | Manage API keys (`usk_…`). Default scopes: `brain:read brain:write`. |
-| `unison invite <email> [--role admin\|member\|viewer]` | Invite someone to the tenant (top-level, not under `auth`). |
+| `unison invite <email> [--role admin\|member\|viewer]` | Invite someone to the workspace (top-level, not under `auth`). |
 | `unison invites [ls]` / `unison invites revoke <id>` | List / revoke pending invitations. |
-| `unison tenants` / `unison switch <tenantIdOrName>` | List memberships / switch active tenant. |
+| `unison workspaces` / `unison switch <workspaceIdOrName>` | List memberships / switch active workspace. |
 | `unison status` | Brain health + document/entity/fact counts. |
 | `unison jobs ls\|stats\|retry <id>` | Background pipeline queue (admin). |
 | `unison skill install [--dir <path>]` / `unison skill print` | (Re)install or print this skill. |

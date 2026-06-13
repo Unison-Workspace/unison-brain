@@ -25,8 +25,8 @@ import { registerReview } from "./commands/review";
 import { registerSearch } from "./commands/search";
 import { registerSkill } from "./commands/skill";
 import { registerStatus } from "./commands/status";
-import { registerSwitch, registerTenants } from "./commands/tenants";
 import { registerWork } from "./commands/work";
+import { registerSwitch, registerWorkspaces } from "./commands/workspaces";
 import { registerWrite } from "./commands/write";
 import { fail, info } from "./output";
 
@@ -62,7 +62,7 @@ Exit codes:
 Examples:
   unison auth login
   unison search "auth decision" -k 5 --json
-  unison get /tenant/projects/architecture.md
+  unison get /workspace/projects/architecture.md
   echo "We chose X because Y." | unison write /private/notes/x.md
   unison edit /private/notes/x.md --old "We chose X" --new "We chose Z"
   unison context "what did we decide about auth?" --deep
@@ -70,8 +70,8 @@ Examples:
   unison work search "vendors" --json
   unison entity resolve "Daniel" --json
   unison rm /private/notes/old.md --yes   # destructive cmds need --yes when non-interactive
-  unison tenants ls --json
-  unison switch <tenantId>
+  unison workspaces ls --json
+  unison switch <workspaceId>
   unison search "query" --actor user-123   # delegate to actor (service-key users)
 `,
   );
@@ -79,8 +79,8 @@ Examples:
 // Auth
 registerAuth(program);
 registerInvite(program);
-// Multi-tenant
-registerTenants(program);
+// Multi-workspace
+registerWorkspaces(program);
 registerSwitch(program);
 // Documents
 registerSearch(program);

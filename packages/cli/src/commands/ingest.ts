@@ -17,7 +17,7 @@ export function registerIngest(program: Command): void {
       "Conversation JSON: [{role,content},...] or a full ingest item",
     )
     .option("--source-ref <ref>", "Stable source reference / idempotency identifier")
-    .option("--visibility <v>", "tenant | private (default private)", "private")
+    .option("--visibility <v>", "workspace | private (default private)", "private")
     .option("--actor <id>", "Act as an external user id (requires brain:act-as scope)")
     .option("--json", "Output JSON")
     .action(
