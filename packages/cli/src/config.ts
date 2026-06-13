@@ -10,20 +10,20 @@ export interface StoredCredentials {
 /**
  * The on-disk config shape. Versioned to allow future migrations.
  *
- * `tenantKeys` holds previously-used keys per (apiUrl, tenantId) pair so
- * `unison switch` can swap back to a tenant without re-minting a key:
+ * `workspaceKeys` holds previously-used keys per (apiUrl, workspaceId) pair so
+ * `unison switch` can swap back to a workspace without re-minting a key:
  *
- *   tenantKeys: {
+ *   workspaceKeys: {
  *     "<apiUrl>": {
- *       "<tenantId>": "<usk_...>"
+ *       "<workspaceId>": "<usk_...>"
  *     }
  *   }
  */
 export interface ConfigFile {
   apiUrl?: string;
   token?: string;
-  /** Per-apiUrl → per-tenantId key cache. Used by `unison switch` for instant re-switch. */
-  tenantKeys?: Record<string, Record<string, string>>;
+  /** Per-apiUrl → per-workspaceId key cache. Used by `unison switch` for instant re-switch. */
+  workspaceKeys?: Record<string, Record<string, string>>;
 }
 
 // Override anytime with the UNISON_API_URL / UNISON_APP_URL env vars or `unison auth login --api-url`.
@@ -86,20 +86,23 @@ export async function clearCredentials(): Promise<void> {
   await rm(configPath(), { force: true });
 }
 
-/** Cache a key for a specific (apiUrl, tenantId) pair so `switch` is instant later. */
-export async function saveTenantKey(
+/** Cache a key for a specific (apiUrl, workspaceId) pair so `switch` is instant later. */
+export async function saveWorkspaceKey(
   apiUrl: string,
-  tenantId: string,
+  workspaceId: string,
   token: string,
 ): Promise<void> {
   const cfg = await readConfigFile();
-  const tenantKeys = cfg.tenantKeys ?? {};
-  tenantKeys[apiUrl] = { ...(tenantKeys[apiUrl] ?? {}), [tenantId]: token };
-  await writeConfigFile({ ...cfg, tenantKeys });
+  const workspaceKeys = cfg.workspaceKeys ?? {};
+  workspaceKeys[apiUrl] = { ...(workspaceKeys[apiUrl] ?? {}), [workspaceId]: token };
+  await writeConfigFile({ ...cfg, workspaceKeys });
 }
 
-/** Retrieve a cached key for a (apiUrl, tenantId) pair, or null if not cached. */
-export async function loadTenantKey(apiUrl: string, tenantId: string): Promise<string | null> {
+/** Retrieve a cached key for a (apiUrl, workspaceId) pair, or null if not cached. */
+export async function loadWorkspaceKey(
+  apiUrl: string,
+  workspaceId: string,
+): Promise<string | null> {
   const cfg = await readConfigFile();
-  return cfg.tenantKeys?.[apiUrl]?.[tenantId] ?? null;
+  return cfg.workspaceKeys?.[apiUrl]?.[workspaceId] ?? null;
 }

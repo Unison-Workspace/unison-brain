@@ -7,7 +7,7 @@ export type {
   KeysApi,
   LinksApi,
   ReviewApi,
-  TenantsApi,
+  WorkspacesApi,
 } from "./client";
 
 // Domain APIs + their input types.
@@ -40,7 +40,7 @@ export {
   createKey,
   listInvitations,
   listKeys,
-  listTenants,
+  listWorkspaces,
   provisionAccount,
   requestKey,
   revokeInvitation,
@@ -53,7 +53,7 @@ export type {
   CreateKeyResponse,
   InvitationRecord,
   ProvisionResponse,
-  TenantMembershipRecord,
+  WorkspaceMembershipRecord,
   VerifyResponse,
 } from "./auth";
 export { AuthError, BrainError } from "./errors";

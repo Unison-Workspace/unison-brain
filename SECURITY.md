@@ -17,7 +17,7 @@ investigate. We'll credit reporters who want it once a fix ships.
 
 This repository is the **open-source client** (CLI / SDK / MCP / skill). It holds
 no secrets and is not a security boundary — all authentication, authorization,
-tenant isolation, and rate limiting are enforced **server-side** by the Unison
+workspace isolation, and rate limiting are enforced **server-side** by the Unison
 brain API. Reports about the client are most useful when they concern:
 
 - credential handling on disk (`~/.config/unison/config.json`),

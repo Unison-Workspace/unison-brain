@@ -76,11 +76,11 @@ export function registerDomainTools({ server, client, ensureAuth, asText }: Deps
   );
   server.tool(
     "work_tree",
-    "Read the Work folder + artifact tree (optionally scoped to a team space).",
-    { teamSpaceId: z.string().optional() },
-    async ({ teamSpaceId }) => {
+    "Read the Work folder + artifact tree (optionally scoped to a workspace folder).",
+    { folderId: z.string().optional() },
+    async ({ folderId }) => {
       ensureAuth();
-      return asText(await client.work.tree({ teamSpaceId }));
+      return asText(await client.work.tree({ folderId }));
     },
   );
   server.tool("work_folder", "Get a Work folder by id.", { id: z.string() }, async ({ id }) => {

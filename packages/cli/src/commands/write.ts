@@ -13,7 +13,7 @@ export function registerWrite(program: Command): void {
     .option("--title <title>", "Title")
     .option("--tldr <tldr>", "One-line summary")
     .option("--tag <tag...>", "Tags (repeatable)")
-    .option("--visibility <v>", "tenant | private", "tenant")
+    .option("--visibility <v>", "workspace | private", "workspace")
     .option("--if-match <hash>", "Optimistic concurrency: expected content hash")
     .option("--actor <id>", "Act as an external user id (requires brain:act-as scope)")
     .option("--json", "Output JSON")

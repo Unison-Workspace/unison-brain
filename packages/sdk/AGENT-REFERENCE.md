@@ -470,7 +470,7 @@ records(input: WorkRecordsInput): Promise<JsonRecord>
 List the records of a table directly — no view needed. Pass `tableId` for any
 table, or `semanticKind` (company/person/deal/task) to read the canonical
 CRM/Tasks table without first discovering its id. Use this to list/count/
-summarize the CRM (it is tenant-scoped and never appears in `tree()`).
+summarize the CRM (it is workspace-scoped and never appears in `tree()`).
 
 `input` (`WorkRecordsInput`):
 - `tableId?: string` — Read this exact table's records.
@@ -507,10 +507,10 @@ Inspect a single primitive by kind + id.
 tree(input?: WorkTreeInput): Promise<JsonRecord>
 ```
 
-Read the folder + artifact tree (optionally scoped to a team space).
+Read the folder + artifact tree (optionally scoped to a folder).
 
 `input?` (`WorkTreeInput`):
-- `teamSpaceId?: string`
+- `folderId?: string`
 
 ### `u.work.folder`
 

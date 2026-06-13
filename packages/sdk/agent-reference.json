@@ -1090,7 +1090,7 @@
         {
           "name": "records",
           "signature": "records(input: WorkRecordsInput): Promise<JsonRecord>",
-          "doc": "List the records of a table directly — no view needed. Pass `tableId` for any\ntable, or `semanticKind` (company/person/deal/task) to read the canonical\nCRM/Tasks table without first discovering its id. Use this to list/count/\nsummarize the CRM (it is tenant-scoped and never appears in `tree()`).",
+          "doc": "List the records of a table directly — no view needed. Pass `tableId` for any\ntable, or `semanticKind` (company/person/deal/task) to read the canonical\nCRM/Tasks table without first discovering its id. Use this to list/count/\nsummarize the CRM (it is workspace-scoped and never appears in `tree()`).",
           "sdkCall": "u.work.records",
           "params": [
             {
@@ -1174,7 +1174,7 @@
         {
           "name": "tree",
           "signature": "tree(input?: WorkTreeInput): Promise<JsonRecord>",
-          "doc": "Read the folder + artifact tree (optionally scoped to a team space).",
+          "doc": "Read the folder + artifact tree (optionally scoped to a folder).",
           "sdkCall": "u.work.tree",
           "params": [
             {
@@ -1182,7 +1182,7 @@
               "type": "WorkTreeInput",
               "fields": [
                 {
-                  "name": "teamSpaceId",
+                  "name": "folderId",
                   "type": "string",
                   "optional": true,
                   "doc": ""

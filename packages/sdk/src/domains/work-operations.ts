@@ -94,7 +94,7 @@ export interface FolderCreateOperation extends BaseOperation {
   op: "folder.create";
   folderId?: string;
   name: string;
-  teamSpaceId?: string;
+  workspaceFolderId?: string;
   parentFolderId?: WorkIdOrRef | null;
   slug?: string;
   position?: number;
@@ -125,7 +125,7 @@ export interface DocumentCreateOperation extends BaseOperation {
   op: "document.create";
   documentId?: string;
   title?: string;
-  teamSpaceId?: string;
+  workspaceFolderId?: string;
   folderId?: WorkIdOrRef;
   bodyMd?: string;
   bodyJson?: unknown;
@@ -427,7 +427,7 @@ export interface ArtifactMountOperation extends BaseOperation {
   op: "artifact.mount";
   artifactId?: string;
   folderId?: WorkIdOrRef | null;
-  teamSpaceId?: string;
+  workspaceFolderId?: string;
   title: string;
   artifactKind: WorkArtifactKind;
   targetKind: WorkArtifactTargetKind;

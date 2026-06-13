@@ -21,7 +21,7 @@ const brain = new BrainClient({
 
 // Documents — paths follow the FS contract; bare names route to /private/notes/.
 const hits = await brain.search("auth decision", { limit: 5 });
-const doc = await brain.get("/tenant/projects/architecture.md");
+const doc = await brain.get("/workspace/projects/architecture.md");
 await brain.write({ path: "/private/notes/x.md", bodyMd: "We chose X because Y." });
 await brain.editDoc({ path: "/private/notes/x.md", oldStr: "X", newStr: "Z" }); // surgical edit
 

@@ -42,7 +42,7 @@ export interface WorkInspectInput {
 }
 
 export interface WorkTreeInput {
-  teamSpaceId?: string;
+  folderId?: string;
 }
 
 /** A view query config (filters / sorts / limit). Validated server-side; passed
@@ -93,14 +93,14 @@ export interface WorkApi {
    * List the records of a table directly — no view needed. Pass `tableId` for any
    * table, or `semanticKind` (company/person/deal/task) to read the canonical
    * CRM/Tasks table without first discovering its id. Use this to list/count/
-   * summarize the CRM (it is tenant-scoped and never appears in `tree()`).
+   * summarize the CRM (it is workspace-scoped and never appears in `tree()`).
    */
   records(input: WorkRecordsInput): Promise<JsonRecord>;
   /** Search folders, artifacts, documents, tables, records, and assets. */
   search(input: WorkSearchInput): Promise<JsonRecord>;
   /** Inspect a single primitive by kind + id. */
   inspect(input: WorkInspectInput): Promise<JsonRecord>;
-  /** Read the folder + artifact tree (optionally scoped to a team space). */
+  /** Read the folder + artifact tree (optionally scoped to a folder). */
   tree(input?: WorkTreeInput): Promise<JsonRecord>;
   folder(id: string): Promise<JsonRecord>;
   artifact(id: string): Promise<JsonRecord>;
@@ -194,7 +194,7 @@ export function createWorkApi(req: RequestFn, rawFetch: typeof fetch): WorkApi {
       ),
     search: (input) => req("POST", "/work/search", input),
     inspect: (input) => req("POST", "/work/inspect", input),
-    tree: (o = {}) => req("GET", `/work/tree?${qs({ teamSpaceId: o.teamSpaceId })}`),
+    tree: (o = {}) => req("GET", `/work/tree?${qs({ folderId: o.folderId })}`),
     folder: (id) => req("GET", `/work/folders/${encodeURIComponent(id)}`),
     artifact: (id) => req("GET", `/work/artifacts/${encodeURIComponent(id)}`),
     tableSchema: (id) => req("GET", `/work/tables/${encodeURIComponent(id)}/schema`),

@@ -58,7 +58,7 @@ describe("BrainClient documents", () => {
                 title: "Auth decision",
                 tldr: "We chose device-flow.",
                 tags: ["auth"],
-                visibility: "tenant",
+                visibility: "workspace",
                 updatedAt: "2026-05-31T00:00:00Z",
                 contentHash: "abc",
               },
@@ -548,10 +548,10 @@ describe("BrainClient actor delegation", () => {
   });
 });
 
-// ── Multi-tenant ──────────────────────────────────────────────────────────────
+// ── Multi-workspace ───────────────────────────────────────────────────────────
 
-describe("BrainClient tenants", () => {
-  test("tenants.list() GETs /v1/auth/tenants and returns the array", async () => {
+describe("BrainClient workspaces", () => {
+  test("workspaces.list() GETs /v1/auth/workspaces and returns the array", async () => {
     let url = "";
     const client = new BrainClient({
       apiUrl: "https://api.test",
@@ -559,7 +559,7 @@ describe("BrainClient tenants", () => {
       fetch: stubFetch((u) => {
         url = u;
         return json({
-          tenants: [
+          workspaces: [
             { id: "t1", name: "Main", role: "owner", active: true },
             { id: "t2", name: "Shared", role: "member", active: false },
           ],
@@ -567,17 +567,17 @@ describe("BrainClient tenants", () => {
       }),
     });
 
-    const tenants = await client.tenants.list();
-    expect(url).toContain("/v1/auth/tenants");
-    expect(tenants).toHaveLength(2);
-    expect(tenants[0]?.id).toBe("t1");
-    expect(tenants[0]?.active).toBe(true);
-    expect(tenants[1]?.role).toBe("member");
+    const workspaces = await client.workspaces.list();
+    expect(url).toContain("/v1/auth/workspaces");
+    expect(workspaces).toHaveLength(2);
+    expect(workspaces[0]?.id).toBe("t1");
+    expect(workspaces[0]?.active).toBe(true);
+    expect(workspaces[1]?.role).toBe("member");
   });
 });
 
-describe("BrainClient keys multi-tenant", () => {
-  test("keys.list passes tenantId as query param", async () => {
+describe("BrainClient keys multi-workspace", () => {
+  test("keys.list passes workspaceId as query param", async () => {
     let url = "";
     const client = new BrainClient({
       apiUrl: "https://api.test",
@@ -588,11 +588,11 @@ describe("BrainClient keys multi-tenant", () => {
       }),
     });
 
-    await client.keys.list({ tenantId: "t2" });
-    expect(url).toContain("tenantId=t2");
+    await client.keys.list({ workspaceId: "t2" });
+    expect(url).toContain("workspaceId=t2");
   });
 
-  test("keys.create passes tenantId in body", async () => {
+  test("keys.create passes workspaceId in body", async () => {
     let body = "";
     const client = new BrainClient({
       apiUrl: "https://api.test",
@@ -604,13 +604,13 @@ describe("BrainClient keys multi-tenant", () => {
           token: "usk_x",
           scopes: ["brain:read"],
           name: "cli",
-          tenantId: "t2",
+          workspaceId: "t2",
         });
       }),
     });
 
-    await client.keys.create({ name: "cli", tenantId: "t2" });
-    expect(JSON.parse(body).tenantId).toBe("t2");
+    await client.keys.create({ name: "cli", workspaceId: "t2" });
+    expect(JSON.parse(body).workspaceId).toBe("t2");
   });
 });
 

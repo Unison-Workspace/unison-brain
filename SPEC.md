@@ -15,15 +15,15 @@ product's primary surface; the dashboard and CLI are clients of it.
 ## 1. Design principles
 
 - **Two abstractions, one brain.** The cortex is a **scope-only filesystem** —
-  the writable roots are `/private/` (the default — only the caller sees it),
-  `/teams/<slug>/` (visible to that team-space), and `/tenant/` (visible to the
-  whole company); `/system/` (synthesized views) and `/sources/` (connector
-  ingest, under `/private/sources/`) are **read-only**. *Where the agent writes is
-  who sees it* — sharing is an explicit upgrade by qualifying the path. (The
-  legacy roots `/wiki/` and `/skills/` are still accepted as a compatibility
-  shim; `/actions/` and `/raw/` no longer exist — act via the SDK domain methods,
-  not by writing files.) The cortex is also a **knowledge graph** (entities →
-  bitemporal facts → links). The API exposes both.
+  the writable roots are `/private/` (the default — only the caller sees it)
+  and `/workspace/` (visible to the whole workspace); teams are a folder
+  convention inside `/workspace/teams/<slug>/`. `/system/` (synthesized views)
+  and `/sources/` (connector ingest, under `/private/sources/`) are **read-only**.
+  *Where the agent writes is who sees it* — sharing is an explicit upgrade by
+  qualifying the path. (The legacy roots `/wiki/` and `/skills/` are still
+  accepted as a compatibility shim; `/actions/` and `/raw/` no longer exist —
+  act via the SDK domain methods, not by writing files.) The cortex is also a
+  **knowledge graph** (entities → bitemporal facts → links). The API exposes both.
 - **Three surfaces, deliberately different breadth:**
   - **SDK** — *complete*. Every operation, typed. The reference surface.
   - **CLI** — *complete, ergonomic*. Grouped commands, for humans and shell agents.
@@ -34,7 +34,7 @@ product's primary surface; the dashboard and CLI are clients of it.
   server returns. They never check scopes, validate paths, hide operations, or
   pre-authorize — an open-source client cannot be a security boundary, so it isn't
   one. Authentication, scope and permission enforcement, read-only-tier
-  enforcement, tenant isolation, rate limiting, and content safety are all enforced
+  enforcement, workspace isolation, rate limiting, and content safety are all enforced
   **server-side** and are out of scope for this client contract.
 
 ## 2. Scope
@@ -43,7 +43,7 @@ product's primary surface; the dashboard and CLI are clients of it.
 job visibility, health.
 
 **Also in scope (Phase G — preview):** the rest of the `/v1` workspace surface —
-`tasks`, `workspace` (team spaces / nodes / artifacts), `mail`, `chat` (channels /
+`tasks`, `workspace` (folders / nodes / artifacts), `mail`, `chat` (channels /
 messages), `crm`, `calendar`, and `people`. The SDK/CLI/MCP clients ship ahead of
 the server endpoints (Unison monorepo PR #378); inputs are typed, outputs are
 passed through loosely until each domain's contract is pinned down. See the
@@ -94,43 +94,44 @@ pre-checks scopes — it sends the call and surfaces the result.
 ### Write constraints
 
 Document paths must end in `.md`, and writes/deletes to the read-only tiers
-`/system/` and `/sources/` return `403`; the writable scopes are `/private/`,
-`/teams/<slug>/`, and `/tenant/` (the legacy roots `/wiki/` and `/skills/` are
-also accepted for compatibility). The client offers write/delete/tag for any path
-and lets the server reject — it never hides or blocks paths itself.
+`/system/` and `/sources/` return `403`; the writable scopes are `/private/`
+and `/workspace/` (teams as `/workspace/teams/<slug>/`; legacy roots `/wiki/`
+and `/skills/` are also accepted for compatibility). The client offers
+write/delete/tag for any path and lets the server reject — it never hides or
+blocks paths itself.
 
 ### Auth endpoints
 
 **Email-OTP (unauthenticated — no token required):**
-- `POST /v1/auth/provision` — body `{ email }` → `{ apiKey, tenantId, status, emailSent, joinedExistingTenant? }`. Creates account + mints `usk_` key immediately (unverified). `409 email_registered` if the email already has an account — use `/request-key` instead. Joins an inviting tenant if a pending invitation exists.
-- `POST /v1/auth/verify` — body `{ email, code }` → `{ verified, apiKey?, tenantId }`. First-time: flips tenant durable; repeat (recovery): mints a new `usk_` key.
+- `POST /v1/auth/provision` — body `{ email }` → `{ apiKey, workspaceId, status, emailSent, joinedExistingWorkspace? }`. Creates account + mints `usk_` key immediately (unverified). `409 email_registered` if the email already has an account — use `/request-key` instead. Joins an inviting workspace if a pending invitation exists.
+- `POST /v1/auth/verify` — body `{ email, code }` → `{ verified, apiKey?, workspaceId }`. First-time: flips workspace durable; repeat (recovery): mints a new `usk_` key.
 - `POST /v1/auth/request-key` — body `{ email }` → `{ status: "verification_sent" }`. Sends a recovery OTP to a verified account. Responds uniformly (does not leak whether the email is registered).
 
 **Identity:**
-- `GET /v1/auth/whoami` → `{ user: { id, email }, tenant: { id, name, verified }, scopes[], actedAs?: { externalId, userId } }`. `actedAs` is present when actor delegation is active.
+- `GET /v1/auth/whoami` → `{ user: { id, email }, workspace: { id, name, verified }, scopes[], actedAs?: { externalId, userId } }`. `actedAs` is present when actor delegation is active.
 
 **Key management (scope: `brain:read`):**
-- `GET /v1/auth/keys` → `{ keys: ApiKeyRecord[] }`. Pass `?tenantId=` to scope to a member tenant. Never returns key hashes.
-- `POST /v1/auth/keys` — body `{ name?, scopes?, tenantId? }` → `{ id, token, scopes, name, tenantId }` `201`. Token returned once — store it. Requested scopes must be a subset of caller's scopes. `tenantId` mints into a different member tenant.
+- `GET /v1/auth/keys` → `{ keys: ApiKeyRecord[] }`. Pass `?workspaceId=` to scope to a member workspace. Never returns key hashes.
+- `POST /v1/auth/keys` — body `{ name?, scopes?, workspaceId? }` → `{ id, token, scopes, name, workspaceId }` `201`. Token returned once — store it. Requested scopes must be a subset of caller's scopes. `workspaceId` mints into a different member workspace.
 - `DELETE /v1/auth/keys/:id` → `{ revoked: true, id, note? }`.
 
-**Multi-tenant membership (scope: `brain:read`):**
-- `GET /v1/auth/tenants` → `{ tenants: [{ id, name, role, active }] }`. Lists all tenants the caller is a member of; `active` marks the tenant the current key belongs to.
+**Workspace membership (scope: `brain:read`):**
+- `GET /v1/auth/workspaces` → `{ workspaces: [{ id, name, role, active }] }`. Lists all workspaces the caller is a member of; `active` marks the workspace the current key belongs to.
 
 **Invitations (scope: `brain:read`; owner/admin only for write):**
 - `POST /v1/auth/invitations` — body `{ email, role? }` → `{ invitation: InvitationRecord, emailSent }` `201`. Roles: `admin|member|viewer` (default: `member`).
-- `GET /v1/auth/invitations` → `{ invitations: InvitationRecord[] }`. Lists pending invitations for the caller's tenant.
+- `GET /v1/auth/invitations` → `{ invitations: InvitationRecord[] }`. Lists pending invitations for the caller's workspace.
 - `DELETE /v1/auth/invitations/:id` → `{ revoked: true, id }`.
 
 **Actor delegation (scope: `brain:act-as`):**
 - Add `X-Unison-Actor: <externalId>` header to any `/v1` request. The id must match `/^[A-Za-z0-9._:@-]{1,200}$/`.
-- Requires the key to carry the `brain:act-as` scope (only grantable by tenant owner/admin via `POST /v1/auth/keys`).
+- Requires the key to carry the `brain:act-as` scope (only grantable by workspace owner/admin via `POST /v1/auth/keys`).
 - Shadow users are auto-created server-side on first use; `/private` scoping isolates each actor automatically.
 - `GET /v1/auth/whoami` returns `actedAs: { externalId, userId }` when this header is present.
 
 `ApiKeyRecord`: `{ id, name, keyPrefix, scopes[], createdAt, expiresAt|null, revokedAt|null }`.
 `InvitationRecord`: `{ id, email, role, status, expiresAt, createdAt }`.
-`TenantMembershipRecord`: `{ id, name|null, role, active }`.
+`WorkspaceMembershipRecord`: `{ id, name|null, role, active }`.
 
 ---
 
@@ -141,7 +142,7 @@ manages memory for many end users without each needing their own Unison account.
 
 **Setup:**
 
-1. Tenant owner/admin mints a service key with `brain:act-as` scope:
+1. Workspace owner/admin mints a service key with `brain:act-as` scope:
 
 ```ts
 const { token } = await client.keys.create({
@@ -203,12 +204,12 @@ must be treated as secrets and rotated via `keys.revoke` + `keys.create` if comp
 | `GET /v1/brain/list?prefix&kind*&tag*&limit` | enumerate by prefix / kind / tag |
 | `GET /v1/brain/fs?path` | directory listing (dir / file / mtime) |
 | `GET /v1/brain/fs/read?path` | raw content of any tier, including read-only ones |
-| `PUT /v1/brain/doc` | body: `path` (under a writable scope — `/private/` `/teams/<slug>/` `/tenant/`, or legacy `/wiki/` `/skills/`; ends in `.md`), `kind` (def note), `title?`, `tldr?`, `bodyMd` (≤200k), `tags[]`, `visibility` tenant\|private, `expectedContentHash?`, `source?{kind,ref}` |
+| `PUT /v1/brain/doc` | body: `path` (under a writable scope — `/private/` `/workspace/`, or legacy `/wiki/` `/skills/`; ends in `.md`), `kind` (def note), `title?`, `tldr?`, `bodyMd` (≤200k), `tags[]`, `visibility` workspace\|private, `expectedContentHash?`, `source?{kind,ref}` |
 | `PUT /v1/brain/docs` | batch write: body `{ docs: WriteDocInput[] }` → `{ documents: BrainDocument[] }`. Each item has the same fields as `PUT /v1/brain/doc`. |
 | `PATCH /v1/brain/doc` | body `{ path, oldStr, newStr, expectedContentHash? }` for a body edit (server-side str_replace, atomic + uniqueness-checked). Also accepts a metadata-only variant `{ path, title?, tldr?, tags? }` to rename/re-summarize/re-tag without touching the body. |
 | `DELETE /v1/brain/doc?path` | delete a document |
 | `POST /v1/brain/doc/tag` | body `{ path, add[], remove[] }` |
-| `POST /v1/brain/share` | body `{ kind: doc\|fact\|entity, id }` → promote private → tenant |
+| `POST /v1/brain/share` | body `{ kind: doc\|fact\|entity, id }` → promote private → workspace |
 | `GET /v1/brain/neighbors?idOrPath&kind*&limit` | `kind` ∈ mentions\|derived_from\|supersedes\|see_also; `limit` 1–100 (def 20) |
 
 ### 5.8 Context recall (`brain:read`)
@@ -259,7 +260,7 @@ resolution + fact extraction). Documents are written as extractable notes.
   type: "conversation";
   turns: { role: "user" | "assistant" | "system"; content: string; name?: string; }[];
   sourceRef: string;          // stable caller-side id (session / thread id)
-  visibility?: "tenant" | "private";  // default "private"
+  visibility?: "workspace" | "private";  // default "private"
   idempotencyKey?: string;
 }
 
@@ -270,7 +271,7 @@ resolution + fact extraction). Documents are written as extractable notes.
   title?: string;
   path?: string;              // brain path; auto-routed if omitted
   tags?: string[];
-  visibility?: "tenant" | "private";
+  visibility?: "workspace" | "private";
   sourceRef?: string;
 }
 ```
@@ -386,18 +387,18 @@ domain's contract — this maps the CLI → SDK → MCP shape, not the full endp
 | Domain | CLI group | SDK namespace | MCP |
 |---|---|---|---|
 | tasks | `unison tasks <list\|search\|get\|create\|update\|rm\|projects>` | `client.tasks.*` | ✓ `tasks_list`, `tasks_create` |
-| workspace | `unison work <team-spaces\|team-space\|create-team-space\|tree\|node\|artifact\|create-artifact\|artifact-versions>` | `client.workspace.*` | ✓ `workspace_team_spaces`, `workspace_tree` |
+| workspace | `unison work <tree\|node\|artifact\|create-artifact\|artifact-versions>` | `client.workspace.*` | ✓ `workspace_tree` |
 | mail | `unison mail <connection\|folders\|threads\|thread\|send\|draft>` | `client.mail.*` | ✓ `mail_threads`, `mail_send` |
 | chat | `unison chat <channels\|channel\|messages\|send\|search>` | `client.chat.*` | ✓ `chat_channels`, `chat_send` |
 | crm | `unison crm <objects\|search\|record\|create-record\|lists\|notes\|create-note>` | `client.crm.*` | ✓ `crm_search_records`, `crm_create_note` |
 | calendar | `unison cal <connection\|calendars\|events\|event\|create-event>` | `client.calendar.*` | ✓ `calendar_events` |
 | people | `unison people <query>` | `client.people.search()` | ✓ `people_search` |
 
-MCP tool set (22): the 10 brain tools — `brain_context`, `brain_ingest`,
+MCP tool set (21): the 10 brain tools — `brain_context`, `brain_ingest`,
 `brain_search`, `brain_get`, `brain_list`, `brain_write`, `brain_edit`,
 `brain_resolve_entity`, `brain_facts_about`, `brain_record_fact`, `brain_status` —
-plus 12 Phase G domain tools: `tasks_list`, `tasks_create`,
-`workspace_team_spaces`, `workspace_tree`, `mail_threads`, `mail_send`,
+plus 11 Phase G domain tools: `tasks_list`, `tasks_create`,
+`workspace_tree`, `mail_threads`, `mail_send`,
 `chat_channels`, `chat_send`, `crm_search_records`, `crm_create_note`,
 `calendar_events`, `people_search`.
 

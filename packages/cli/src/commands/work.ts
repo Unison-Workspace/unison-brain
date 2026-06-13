@@ -122,10 +122,10 @@ export function registerWork(program: Command): void {
   work
     .command("tree")
     .description("Read the Work folder + artifact tree")
-    .option("--team-space <id>")
-    .action(async (o: { teamSpace?: string }) => {
+    .option("--folder <id>")
+    .action(async (o: { folder?: string }) => {
       const c = await requireClient();
-      printJson(await c.work.tree({ teamSpaceId: o.teamSpace }));
+      printJson(await c.work.tree({ folderId: o.folder }));
     });
 
   work

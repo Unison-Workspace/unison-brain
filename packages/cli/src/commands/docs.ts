@@ -55,7 +55,7 @@ export function registerDocs(program: Command): void {
 
   program
     .command("share <kind> <id>")
-    .description("Promote a private doc/fact/entity to tenant scope")
+    .description("Promote a private doc/fact/entity to workspace scope")
     .option("--json", "Output JSON")
     .action(async (kind: string, id: string, opts: { json?: boolean }) => {
       const client = await requireClient();

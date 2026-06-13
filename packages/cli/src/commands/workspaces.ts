@@ -1,17 +1,17 @@
 import { hostname } from "node:os";
-import { BrainClient, createKey, listTenants } from "@unisonlabs/sdk";
+import { BrainClient, createKey, listWorkspaces } from "@unisonlabs/sdk";
 import type { Command } from "commander";
-import { loadCredentials, loadTenantKey, saveCredentials, saveTenantKey } from "../config";
+import { loadCredentials, loadWorkspaceKey, saveCredentials, saveWorkspaceKey } from "../config";
 import { fail, info, printJson, success } from "../output";
 
-export function registerTenants(program: Command): void {
-  // ── unison tenants ls ────────────────────────────────────────────────────
+export function registerWorkspaces(program: Command): void {
+  // ── unison workspaces ls ─────────────────────────────────────────────────────
 
-  const tenants = program.command("tenants").description("Manage tenant memberships");
+  const workspaces = program.command("workspaces").description("Manage workspace memberships");
 
-  tenants
+  workspaces
     .command("ls", { isDefault: true })
-    .description("List tenants you are a member of")
+    .description("List workspaces you are a member of")
     .option("--json", "Output JSON")
     .action(async (opts: { json?: boolean }) => {
       const creds = await loadCredentials();
@@ -19,13 +19,13 @@ export function registerTenants(program: Command): void {
         fail("Not authenticated. Run `unison auth login`.");
         process.exit(1);
       }
-      const rows = await listTenants(creds.apiUrl, creds.token);
+      const rows = await listWorkspaces(creds.apiUrl, creds.token);
       if (opts.json) {
         printJson(rows);
         return;
       }
       if (rows.length === 0) {
-        info("No tenant memberships found.");
+        info("No workspace memberships found.");
         return;
       }
       const pad = (s: string, n: number) => s.slice(0, n).padEnd(n);
@@ -48,74 +48,74 @@ export function registerTenants(program: Command): void {
 
 export function registerSwitch(program: Command): void {
   program
-    .command("switch <tenantIdOrName>")
+    .command("switch <workspaceIdOrName>")
     .description(
-      "Switch the active tenant. Resolves by id prefix or unique name match, mints (or recalls) a key for that tenant, and stores it as the new default credential.",
+      "Switch the active workspace. Resolves by id prefix or unique name match, mints (or recalls) a key for that workspace, and stores it as the new default credential.",
     )
     .option("--json", "Output JSON")
-    .action(async (tenantIdOrName: string, opts: { json?: boolean }) => {
+    .action(async (workspaceIdOrName: string, opts: { json?: boolean }) => {
       const creds = await loadCredentials();
       if (!creds) {
         fail("Not authenticated. Run `unison auth login`.");
         process.exit(1);
       }
 
-      // 1. Resolve the tenant from the membership list.
-      const rows = await listTenants(creds.apiUrl, creds.token);
+      // 1. Resolve the workspace from the membership list.
+      const rows = await listWorkspaces(creds.apiUrl, creds.token);
       if (rows.length === 0) {
-        fail("No tenant memberships found.");
+        fail("No workspace memberships found.");
         process.exit(1);
       }
 
       // Try id prefix first, then exact/unique name match.
-      let match = rows.find((t) => t.id === tenantIdOrName);
-      if (!match) match = rows.find((t) => t.id.startsWith(tenantIdOrName));
+      let match = rows.find((t) => t.id === workspaceIdOrName);
+      if (!match) match = rows.find((t) => t.id.startsWith(workspaceIdOrName));
       if (!match) {
         const byName = rows.filter(
-          (t) => (t.name ?? "").toLowerCase() === tenantIdOrName.toLowerCase(),
+          (t) => (t.name ?? "").toLowerCase() === workspaceIdOrName.toLowerCase(),
         );
         if (byName.length === 1) {
           match = byName[0];
         } else if (byName.length > 1) {
           fail(
-            `Ambiguous name "${tenantIdOrName}" matches multiple tenants: ${byName.map((t) => t.id).join(", ")}. Use the tenant id instead.`,
+            `Ambiguous name "${workspaceIdOrName}" matches multiple workspaces: ${byName.map((t) => t.id).join(", ")}. Use the workspace id instead.`,
           );
           process.exit(1);
         }
       }
       if (!match) {
         fail(
-          `Tenant "${tenantIdOrName}" not found. Run \`unison tenants ls\` to see your memberships.`,
+          `Workspace "${workspaceIdOrName}" not found. Run \`unison workspaces ls\` to see your memberships.`,
         );
         process.exit(1);
       }
 
-      const targetTenant = match;
+      const targetWorkspace = match;
 
       // 2. Check cache — re-use a previously-minted key if available.
-      const cached = await loadTenantKey(creds.apiUrl, targetTenant.id);
+      const cached = await loadWorkspaceKey(creds.apiUrl, targetWorkspace.id);
       let newToken: string;
 
       if (cached) {
         newToken = cached;
       } else {
-        // 3. Mint a new key scoped to the target tenant.
+        // 3. Mint a new key scoped to the target workspace.
         const keyRes = await createKey(creds.apiUrl, creds.token, {
           name: `cli ${hostname()}`,
-          tenantId: targetTenant.id,
+          workspaceId: targetWorkspace.id,
         });
         newToken = keyRes.token;
         // Cache it for future switches.
-        await saveTenantKey(creds.apiUrl, targetTenant.id, newToken);
+        await saveWorkspaceKey(creds.apiUrl, targetWorkspace.id, newToken);
       }
 
       // 4. Store the new key as the active credential, also cache the old one.
-      // Verify the old token belongs to a tenant we can recover.
+      // Verify the old token belongs to a workspace we can recover.
       const me = await new BrainClient({
         apiUrl: creds.apiUrl,
         token: creds.token,
       }).whoami();
-      await saveTenantKey(creds.apiUrl, me.tenant.id, creds.token);
+      await saveWorkspaceKey(creds.apiUrl, me.workspace.id, creds.token);
 
       await saveCredentials({ apiUrl: creds.apiUrl, token: newToken });
 
@@ -126,12 +126,12 @@ export function registerSwitch(program: Command): void {
       }).whoami();
 
       if (opts.json) {
-        printJson({ switched: true, tenant: after.tenant, role: targetTenant.role });
+        printJson({ switched: true, workspace: after.workspace, role: targetWorkspace.role });
         return;
       }
       success(
-        `Switched to tenant ${after.tenant.name ?? after.tenant.id} (${targetTenant.role})${cached ? " — recalled from cache" : " — minted new key"}.`,
+        `Switched to workspace ${after.workspace.name ?? after.workspace.id} (${targetWorkspace.role})${cached ? " — recalled from cache" : " — minted new key"}.`,
       );
-      info(`  tenant id: ${after.tenant.id}`);
+      info(`  workspace id: ${after.workspace.id}`);
     });
 }

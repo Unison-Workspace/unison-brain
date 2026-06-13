@@ -14,7 +14,7 @@ unison auth login             # browser sign-in (or UNISON_TOKEN=usk_... for CI)
 
 ```bash
 unison search "auth decision" -k 5      # hybrid keyword + semantic search
-unison cat /tenant/projects/architecture.md   # read a document (alias of get)
+unison cat /workspace/projects/architecture.md   # read a document (alias of get)
 unison ls /private                       # directory view; also: tree, find
 echo "We chose X because Y." | unison write /private/notes/x.md   # paths end in .md
 unison edit /private/notes/x.md --old "X" --new "Z"   # surgical in-place edit

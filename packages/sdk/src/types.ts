@@ -22,7 +22,7 @@ export interface BrainClientOptions {
 // ── Documents (filesystem tier) ────────────────────────────────────────────
 
 export type DocKind = "wiki_page" | "raw" | "note" | "log" | "index" | "skill" | "skill_proposed";
-export type Visibility = "tenant" | "private";
+export type Visibility = "workspace" | "private";
 export type MemoryType = "episodic" | "semantic" | "procedural" | "auto";
 
 export interface BrainDocument {
@@ -137,7 +137,7 @@ export interface IngestConversationItem {
    * thread id). Used for idempotency and dedup.
    */
   sourceRef: string;
-  /** Default "private". Pass "tenant" to make signals visible workspace-wide. */
+  /** Default "private". Pass "workspace" to make signals visible workspace-wide. */
   visibility?: Visibility;
   /** Client-side idempotency key — re-submitting the same key is a no-op. */
   idempotencyKey?: string;
@@ -408,19 +408,19 @@ export interface BrainStatus {
 
 export interface WhoAmI {
   user: { id: string; email: string | null };
-  tenant: { id: string; name: string | null };
+  workspace: { id: string; name: string | null };
   scopes: string[];
   /** Present when actor delegation is active (`X-Unison-Actor` + `brain:act-as` scope). */
   actedAs?: { externalId: string; userId: string };
 }
 
-// ── Multi-tenant ───────────────────────────────────────────────────────────
+// ── Multi-workspace ────────────────────────────────────────────────────────
 
-export interface TenantMembership {
+export interface WorkspaceMembership {
   id: string;
   name: string | null;
   role: string;
-  /** Whether this is the tenant currently associated with the bearer key. */
+  /** Whether this is the workspace currently associated with the bearer key. */
   active: boolean;
 }
 

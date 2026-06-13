@@ -4,7 +4,7 @@ import {
   createKey,
   listInvitations,
   listKeys,
-  listTenants,
+  listWorkspaces,
   provisionAccount,
   requestKey,
   revokeInvitation,
@@ -55,10 +55,10 @@ describe("provisionAccount", () => {
   test("POSTs email to /v1/auth/provision and returns the key", async () => {
     const fetchImpl = stub(200, {
       apiKey: "usk_abc",
-      tenantId: "t1",
+      workspaceId: "t1",
       status: "unverified",
       emailSent: true,
-      joinedExistingTenant: false,
+      joinedExistingWorkspace: false,
     });
     const res = await provisionAccount(
       "https://api.test",
@@ -66,7 +66,7 @@ describe("provisionAccount", () => {
       fetchImpl,
     );
     expect(res.apiKey).toBe("usk_abc");
-    expect(res.tenantId).toBe("t1");
+    expect(res.workspaceId).toBe("t1");
     expect(res.status).toBe("unverified");
   });
 
@@ -96,7 +96,7 @@ describe("provisionAccount", () => {
         new Response(
           JSON.stringify({
             apiKey: "usk_x",
-            tenantId: "t1",
+            workspaceId: "t1",
             status: "unverified",
             emailSent: true,
           }),
@@ -114,7 +114,7 @@ describe("provisionAccount", () => {
 
 describe("verifyEmail", () => {
   test("posts email + code and returns verified + optional key", async () => {
-    const fetchImpl = stub(200, { verified: true, apiKey: "usk_new", tenantId: "t1" });
+    const fetchImpl = stub(200, { verified: true, apiKey: "usk_new", workspaceId: "t1" });
     const res = await verifyEmail(
       "https://api.test",
       { email: "a@b.co", code: "123456" },
@@ -240,10 +240,10 @@ describe("revokeInvitation", () => {
   });
 });
 
-// ── listTenants ───────────────────────────────────────────────────────────────
+// ── listWorkspaces ────────────────────────────────────────────────────────────
 
-describe("listTenants", () => {
-  test("GETs /v1/auth/tenants and returns the tenant array", async () => {
+describe("listWorkspaces", () => {
+  test("GETs /v1/auth/workspaces and returns the workspace array", async () => {
     const cap = captureRequest();
     const capFetch = ((url: string, init?: RequestInit) => {
       const headers: Record<string, string> = {};
@@ -260,7 +260,7 @@ describe("listTenants", () => {
       return Promise.resolve(
         new Response(
           JSON.stringify({
-            tenants: [
+            workspaces: [
               { id: "t1", name: "Main", role: "owner", active: true },
               { id: "t2", name: "Shared", role: "member", active: false },
             ],
@@ -270,9 +270,9 @@ describe("listTenants", () => {
       );
     }) as unknown as typeof fetch;
 
-    const res = await listTenants("https://api.test", "usk_tok", capFetch);
+    const res = await listWorkspaces("https://api.test", "usk_tok", capFetch);
     expect(cap.calls).toHaveLength(1);
-    expect(cap.calls[0]?.url).toContain("/v1/auth/tenants");
+    expect(cap.calls[0]?.url).toContain("/v1/auth/workspaces");
     expect(cap.calls[0]?.method).toBe("GET");
     expect(cap.calls[0]?.headers.authorization).toBe("Bearer usk_tok");
     expect(res).toHaveLength(2);
@@ -282,10 +282,10 @@ describe("listTenants", () => {
   });
 });
 
-// ── listKeys tenantId ─────────────────────────────────────────────────────────
+// ── listKeys workspaceId ──────────────────────────────────────────────────────
 
-describe("listKeys with tenantId", () => {
-  test("appends ?tenantId= query param when provided", async () => {
+describe("listKeys with workspaceId", () => {
+  test("appends ?workspaceId= query param when provided", async () => {
     const cap = captureRequest();
     const capFetch = ((url: string, init?: RequestInit) => {
       const headers: Record<string, string> = {};
@@ -302,11 +302,11 @@ describe("listKeys with tenantId", () => {
       return Promise.resolve(new Response(JSON.stringify({ keys: [] }), { status: 200 }));
     }) as unknown as typeof fetch;
 
-    await listKeys("https://api.test", "usk_tok", { tenantId: "t2" }, capFetch);
-    expect(cap.calls[0]?.url).toContain("tenantId=t2");
+    await listKeys("https://api.test", "usk_tok", { workspaceId: "t2" }, capFetch);
+    expect(cap.calls[0]?.url).toContain("workspaceId=t2");
   });
 
-  test("omits tenantId param when not provided", async () => {
+  test("omits workspaceId param when not provided", async () => {
     const cap = captureRequest();
     const capFetch = ((url: string, init?: RequestInit) => {
       const headers: Record<string, string> = {};
@@ -324,14 +324,14 @@ describe("listKeys with tenantId", () => {
     }) as unknown as typeof fetch;
 
     await listKeys("https://api.test", "usk_tok", {}, capFetch);
-    expect(cap.calls[0]?.url).not.toContain("tenantId");
+    expect(cap.calls[0]?.url).not.toContain("workspaceId");
   });
 });
 
-// ── createKey tenantId ────────────────────────────────────────────────────────
+// ── createKey workspaceId ─────────────────────────────────────────────────────
 
-describe("createKey with tenantId", () => {
-  test("sends tenantId in body when provided", async () => {
+describe("createKey with workspaceId", () => {
+  test("sends workspaceId in body when provided", async () => {
     const cap = captureRequest();
     const capFetch = ((url: string, init?: RequestInit) => {
       const headers: Record<string, string> = {};
@@ -352,7 +352,7 @@ describe("createKey with tenantId", () => {
             token: "usk_new",
             scopes: ["brain:read"],
             name: "service key",
-            tenantId: "t2",
+            workspaceId: "t2",
           }),
           { status: 201 },
         ),
@@ -362,10 +362,10 @@ describe("createKey with tenantId", () => {
     const res = await createKey(
       "https://api.test",
       "usk_tok",
-      { name: "service key", tenantId: "t2", scopes: ["brain:read", "brain:act-as"] },
+      { name: "service key", workspaceId: "t2", scopes: ["brain:read", "brain:act-as"] },
       capFetch,
     );
-    expect(cap.calls[0]?.body.tenantId).toBe("t2");
+    expect(cap.calls[0]?.body.workspaceId).toBe("t2");
     expect(cap.calls[0]?.body.scopes).toContain("brain:act-as");
     expect(res.token).toBe("usk_new");
   });

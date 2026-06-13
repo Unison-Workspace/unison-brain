@@ -72,14 +72,14 @@ describe("domain clients build correct /v1 requests", () => {
     expect(JSON.parse(body)).toEqual({ query: "vendors", limit: 5 });
   });
 
-  test("work.tree GETs /v1/work/tree with teamSpaceId", async () => {
+  test("work.tree GETs /v1/work/tree with folderId", async () => {
     let url = "";
     const c = client((u) => {
       url = u;
       return json({ folders: [], artifacts: [] });
     });
-    await c.work.tree({ teamSpaceId: "ts1" });
-    expect(url).toContain("/v1/work/tree?teamSpaceId=ts1");
+    await c.work.tree({ folderId: "ts1" });
+    expect(url).toContain("/v1/work/tree?folderId=ts1");
   });
 
   test("work.viewQuery POSTs to /v1/work/views/:id/query", async () => {
