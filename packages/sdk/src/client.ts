@@ -14,14 +14,6 @@ import {
   revokeInvitation,
   revokeKey,
 } from "./auth";
-import type { RequestFn } from "./domains/_request";
-import { type AgentApi, createAgentApi } from "./domains/agent";
-import { type CalendarApi, createCalendarApi } from "./domains/calendar";
-import { type ChatApi, createChatApi } from "./domains/chat";
-import { type MailApi, createMailApi } from "./domains/mail";
-import { type PeopleApi, createPeopleApi } from "./domains/people";
-import { type ResearchApi, createResearchApi } from "./domains/research";
-import { type WorkApi, createWorkApi } from "./domains/work";
 import { BrainError } from "./errors";
 import { routeBrainWritePath } from "./fs-contract";
 import { API_VERSION, parseResponse, qs, stripTrailingSlash } from "./http";
@@ -137,16 +129,6 @@ export class BrainClient {
   readonly workspaces: WorkspacesApi;
   /** Workspace invitation management (create, list, revoke). Owner/admin only. */
   readonly invitations: InvitationsApi;
-
-  // Domain APIs over the same /v1 surface.
-  readonly work: WorkApi;
-  readonly mail: MailApi;
-  readonly chat: ChatApi;
-  readonly calendar: CalendarApi;
-  readonly people: PeopleApi;
-  readonly research: ResearchApi;
-  /** Streaming server-side agent (POST /v1/agent). The "robot" is on the backend. */
-  readonly agent: AgentApi;
 
   private readonly baseUrl: string;
   private readonly token?: string;
@@ -267,21 +249,6 @@ export class BrainClient {
       list: () => listInvitations(this.baseUrl, this.token ?? "", this.fetchImpl),
       revoke: (id) => revokeInvitation(this.baseUrl, this.token ?? "", id, this.fetchImpl),
     };
-
-    // Domain APIs share the same transport (prefixes /v1). work.assets.upload
-    // also PUTs to absolute signed URLs, so it gets the raw fetch impl.
-    const request: RequestFn = (method, path, body) => this.req(method, path, body);
-    this.work = createWorkApi(request, this.fetchImpl);
-    this.mail = createMailApi(request);
-    this.chat = createChatApi(request);
-    this.calendar = createCalendarApi(request);
-    this.people = createPeopleApi(request);
-    this.research = createResearchApi(request);
-    this.agent = createAgentApi({
-      baseUrl: this.baseUrl,
-      token: this.token,
-      fetchImpl: this.fetchImpl,
-    });
   }
 
   // ── Documents ──────────────────────────────────────────────────────────
