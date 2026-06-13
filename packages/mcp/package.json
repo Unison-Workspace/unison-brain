@@ -1,6 +1,6 @@
 {
   "name": "@unisonlabs/mcp",
-  "version": "1.6.0",
+  "version": "1.6.1",
   "description": "Model Context Protocol server for the Unison brain.",
   "keywords": ["unison", "brain", "knowledge-base", "mcp", "model-context-protocol", "ai", "agent"],
   "homepage": "https://github.com/Unison-Workspace/unison-brain#readme",
@@ -25,7 +25,7 @@
   },
   "scripts": {
     "dev": "bun run src/index.ts",
-    "build": "bun build src/index.ts --target node --outfile dist/index.js --external @modelcontextprotocol/sdk --external zod",
+    "build": "rm -rf dist && bun build src/index.ts --target node --outfile dist/index.js --external @modelcontextprotocol/sdk --external zod",
     "prepublishOnly": "bun run build"
   },
   "dependencies": {
