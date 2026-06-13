@@ -14,7 +14,6 @@ import {
   verifyEmail,
 } from "@unisonlabs/sdk";
 import { z } from "zod";
-import { registerDomainTools } from "./domains";
 
 // Read from package.json at runtime so the server reports the real published
 // version (npm includes package.json next to dist/ in the tarball). Resolved
@@ -285,16 +284,6 @@ server.tool(
   },
 );
 
-server.tool(
-  "web_search",
-  "Search the open web (server-side web-search proxy). The only route to the open web — use it to verify a claim or gather external facts the brain doesn't already have.",
-  { query: z.string().describe("Search query") },
-  async ({ query }) => {
-    ensureAuth();
-    return asText(await client.research.search(query));
-  },
-);
-
 // Bootstrap auth tools — these do NOT require UNISON_TOKEN; they let an agent
 // create + verify its own account headlessly, then use the returned key.
 server.tool(
@@ -390,9 +379,5 @@ server.tool(
     return asText(await listWorkspaces(apiUrl, token ?? ""));
   },
 );
-
-// Register the non-brain domain tools (work/mail/chat/calendar/people) over the
-// same /v1 client.
-registerDomainTools({ server, client, ensureAuth, asText });
 
 await server.connect(new StdioServerTransport());

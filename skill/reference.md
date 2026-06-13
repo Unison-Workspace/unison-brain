@@ -45,7 +45,7 @@ prints the resolved path); `get`, `edit`, `rm`, and `tag` need the full path.
 | Command | What it does |
 |---|---|
 | `unison entity resolve "<name>"` | Find a person/company/project by name. |
-| `unison entity ls` / `unison entity get <id>` / `unison entity set <kind> <name>` / `unison people [query]` | List / inspect / upsert entities; quick person lookup. |
+| `unison entity ls` / `unison entity get <id>` / `unison entity set <kind> <name>` | List / inspect / upsert entities. |
 | `unison fact ls --entity <id>` | Facts the brain holds about an entity. |
 | `unison fact add <entityId> <predicate> "<text>"` | Record a fact. |
 | `unison fact correct <factId>` | Supersede a fact with a corrected one. |

@@ -89,8 +89,7 @@ unison context "what did we decide about auth?"   # one-call memory recall
 
 Documents: `search`, `grep`, `cat`/`get`, `ls`, `tree`, `find`, `write`, `edit`,
 `rm`, `tag`, `share`, `neighbors`, `links`, `link`. Graph: `entity …`, `fact …`,
-`timeline`. Work (tasks/docs/tables/records/views): `work apply`, `work query`,
-`work search`, `work tree`, … Admin: `review …`, `jobs …`. Add `--json` to any
+`timeline`. Admin: `review …`, `jobs …`. Add `--json` to any
 command. Full surface and the backend contract are in [`SPEC.md`](./SPEC.md).
 
 ## Browse the brain like a filesystem
@@ -243,11 +242,9 @@ const hits = await u.search("auth decision", { limit: 5 });
 await u.write({ path: "/private/notes/auth.md", bodyMd: "We chose device-flow because …" });
 await u.editDoc({ path: "/private/notes/auth.md", oldStr: "device-flow", newStr: "PKCE device-flow" });
 
-// Work: one apply endpoint takes the operation DSL (tasks/docs/tables/records/views).
-await u.work.apply({
-  operations: [{ op: "record.upsert", tableId: { ref: "tasks" }, primaryText: "Ship SDK v1" }],
-});
-const tasks = await u.work.search({ query: "ship", limit: 5 });
+// Graph: resolve an entity and read the facts the brain holds about it.
+const daniel = await u.entities.resolve("Daniel");
+const facts = daniel ? await u.facts.about(daniel.id) : [];
 
 // Multi-workspace: list memberships and list keys for another workspace.
 const workspaces = await u.workspaces.list();           // [{ id, name, role, active }]

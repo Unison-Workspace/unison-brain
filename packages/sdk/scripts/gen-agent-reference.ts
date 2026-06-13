@@ -44,28 +44,6 @@ const DOMAINS: { key: string; prop: string | null; api: string | null; intro: st
     intro: "Entity-resolution conflicts + merge review.",
   },
   { key: "jobs", prop: "jobs", api: "JobsApi", intro: "Background brain maintenance jobs." },
-  {
-    key: "work",
-    prop: "work",
-    api: "WorkApi",
-    intro:
-      "Work primitives — folders, documents, tables, records, views, assets, and the CRM/Tasks tables.",
-  },
-  { key: "mail", prop: "mail", api: "MailApi", intro: "Gmail — threads, drafts, send." },
-  {
-    key: "chat",
-    prop: "chat",
-    api: "ChatApi",
-    intro: "Workspace chat — channels, messages, DMs, members.",
-  },
-  { key: "calendar", prop: "calendar", api: "CalendarApi", intro: "Calendar — events." },
-  { key: "people", prop: "people", api: "PeopleApi", intro: "CRM people search." },
-  {
-    key: "research",
-    prop: "research",
-    api: "ResearchApi",
-    intro: "Open-web search (server-side proxy).",
-  },
 ];
 
 interface Field {

@@ -2,10 +2,7 @@
 import { readFileSync } from "node:fs";
 import { BrainError } from "@unisonlabs/sdk";
 import { Command } from "commander";
-import { runAgent } from "./commands/agent";
 import { registerAuth, registerInvite } from "./commands/auth";
-import { registerCalendar } from "./commands/calendar";
-import { registerChat } from "./commands/chat";
 import { registerCompletion } from "./commands/completion";
 import { registerContext } from "./commands/context";
 import { registerDocs } from "./commands/docs";
@@ -17,15 +14,11 @@ import { registerGet } from "./commands/get";
 import { registerIngest } from "./commands/ingest";
 import { registerJobs } from "./commands/jobs";
 import { registerList } from "./commands/list";
-import { registerMail } from "./commands/mail";
 import { registerMigrate } from "./commands/migrate";
-import { registerPeople } from "./commands/people";
-import { registerResearch } from "./commands/research";
 import { registerReview } from "./commands/review";
 import { registerSearch } from "./commands/search";
 import { registerSkill } from "./commands/skill";
 import { registerStatus } from "./commands/status";
-import { registerWork } from "./commands/work";
 import { registerSwitch, registerWorkspaces } from "./commands/workspaces";
 import { registerWrite } from "./commands/write";
 import { fail, info } from "./output";
@@ -67,7 +60,6 @@ Examples:
   unison edit /private/notes/x.md --old "We chose X" --new "We chose Z"
   unison context "what did we decide about auth?" --deep
   unison ingest --file notes.md --title "Auth decision"
-  unison work search "vendors" --json
   unison entity resolve "Daniel" --json
   unison rm /private/notes/old.md --yes   # destructive cmds need --yes when non-interactive
   unison workspaces ls --json
@@ -97,13 +89,6 @@ registerIngest(program);
 // Graph
 registerEntity(program);
 registerFact(program);
-// Domains — the full /v1 surface
-registerWork(program);
-registerMail(program);
-registerChat(program);
-registerCalendar(program);
-registerPeople(program);
-registerResearch(program);
 // Admin
 registerReview(program);
 registerJobs(program);
@@ -170,35 +155,6 @@ function reportError(err: unknown): number {
   return 1;
 }
 
-// `unison "<natural language>"` — one-shot server-side agent. The CLI is a thin
-// transport: it POSTs the prompt to the backend's /v1/agent streaming endpoint
-// and renders the SSE event stream. Scope is enforced server-side by the
-// `usk_` key — there is no client-side write gate. The agent runs on the
-// backend; nothing local. Detected before Commander parses so the bare prompt
-// form isn't mistaken for an unknown subcommand; a leading token that matches
-// a registered command, or -h/-V, always routes to Commander.
-const knownCommands = new Set<string>();
-for (const cmd of program.commands) {
-  knownCommands.add(cmd.name());
-  for (const alias of cmd.aliases()) knownCommands.add(alias);
-}
-const argv = process.argv.slice(2);
-const firstPositional = argv.find((a) => !a.startsWith("-"));
-const isAgentPrompt =
-  firstPositional !== undefined &&
-  !knownCommands.has(firstPositional) &&
-  !argv.includes("-h") &&
-  !argv.includes("--help") &&
-  !argv.includes("-V") &&
-  !argv.includes("--version");
-
-if (isAgentPrompt) {
-  const prompt = argv.filter((a) => !a.startsWith("-")).join(" ");
-  runAgent(prompt)
-    .then((code) => process.exit(code))
-    .catch((err: unknown) => process.exit(reportError(err)));
-} else {
-  program.parseAsync(process.argv).catch((err: unknown) => {
-    process.exit(reportError(err));
-  });
-}
+program.parseAsync(process.argv).catch((err: unknown) => {
+  process.exit(reportError(err));
+});
