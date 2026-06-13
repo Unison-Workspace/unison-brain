@@ -6,6 +6,9 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Fixed
+- CLI: `migrate markdown`/`json` now exit `6` (not `1`) when every write in the batch is blocked by the free-tier quota, so callers can distinguish the cap from other failures (found by the 1.5.1 QA fleet).
+
 ### Changed
 
 - **Default API URL** updated from `https://api.unisonlabs.ai` to `https://brain.unisonlabs.ai`

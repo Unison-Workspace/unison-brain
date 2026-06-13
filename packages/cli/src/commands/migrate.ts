@@ -349,7 +349,7 @@ async function runImport(docs: WriteDocInput[], opts: MigrateOpts): Promise<void
     return;
   }
 
-  const failures: { path: string; error: string }[] = [];
+  const failures: { path: string; error: string; code?: string }[] = [];
   let written = 0;
   for (let i = 0; i < toWrite.length; i += BATCH) {
     const batch = toWrite.slice(i, i + BATCH);
@@ -367,6 +367,10 @@ async function runImport(docs: WriteDocInput[], opts: MigrateOpts): Promise<void
           failures.push({
             path: doc.path,
             error: err instanceof Error ? err.message : String(err),
+            code:
+              typeof (err as { code?: unknown })?.code === "string"
+                ? (err as { code: string }).code
+                : undefined,
           });
         }
       }
@@ -382,5 +386,10 @@ async function runImport(docs: WriteDocInput[], opts: MigrateOpts): Promise<void
     );
     for (const f of failures) fail(`  ${f.path}: ${f.error}`);
   }
-  if (failures.length > 0) process.exit(1);
+  if (failures.length > 0) {
+    // Surface the free-tier cap distinctly (exit 6) when it's the sole blocker,
+    // matching the single-write exit code; mixed/other failures stay exit 1.
+    const allQuota = failures.every((f) => f.code === "quota_exceeded");
+    process.exit(allQuota ? 6 : 1);
+  }
 }
