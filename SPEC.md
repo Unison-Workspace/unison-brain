@@ -42,16 +42,9 @@ product's primary surface; the dashboard and CLI are clients of it.
 **In scope:** the full brain — documents, entities, facts, links, dedup review,
 job visibility, health.
 
-**Also in scope (Phase G — preview):** the rest of the `/v1` workspace surface —
-`tasks`, `workspace` (folders / nodes / artifacts), `mail`, `chat` (channels /
-messages), `crm`, `calendar`, and `people`. The SDK/CLI/MCP clients ship ahead of
-the server endpoints (Unison monorepo PR #378); inputs are typed, outputs are
-passed through loosely until each domain's contract is pinned down. See the
-surface map in §6.
-
 **Out of scope (deliberately):**
-- **Agent chat / sessions / streaming** — the AI-agent chat product (distinct from the workspace `chat` channels above) is a separate, larger surface, not the brain.
-- **Connector setup / ingest** (Gmail / Drive / Notion / Slack OAuth + ingest pipelines) — browser OAuth + workspace config; not CLI-shaped. The connected `mail` / `calendar` data is read/written through the Phase G clients; wiring up the connection is not.
+- **Agent chat / sessions / streaming** — the AI-agent chat product is a separate, larger surface, not the brain.
+- **Connector setup / ingest** (Gmail / Drive / Notion / Slack OAuth + ingest pipelines) — browser OAuth + workspace config; not CLI-shaped. Wiring up connections lives in client backends, not this repo.
 - **Internal worker machinery** — embedding, signal promotion, reconcile/merge pipelines, compaction, ingest jobs. Encapsulated behind the job queue; they auto-run.
 - **Visualization** — the 3D graph and inline-diff editor. The *data* behind them (`links`, `neighbors`, `entities`) is exposed; the canvas is not.
 - **Local FS mirror** — the CLI verbs plus server-side search already give the filesystem feel with no daemon, staleness, or local copy.
@@ -379,28 +372,9 @@ MCP column: ✓ = exposed as an agent tool; — = SDK/CLI only.
 | status | `unison status` | `brain.status()` | ✓ `brain_status` |
 | auth | `unison auth login\|logout\|status` | `startDeviceAuth()` / `pollDeviceToken()` | — |
 
-### 6.1 Phase G domains (preview)
-
-Mirrors the brain client over the rest of `/v1`. Outputs are loose pending each
-domain's contract — this maps the CLI → SDK → MCP shape, not the full endpoint spec.
-
-| Domain | CLI group | SDK namespace | MCP |
-|---|---|---|---|
-| tasks | `unison tasks <list\|search\|get\|create\|update\|rm\|projects>` | `client.tasks.*` | ✓ `tasks_list`, `tasks_create` |
-| workspace | `unison work <tree\|node\|artifact\|create-artifact\|artifact-versions>` | `client.workspace.*` | ✓ `workspace_tree` |
-| mail | `unison mail <connection\|folders\|threads\|thread\|send\|draft>` | `client.mail.*` | ✓ `mail_threads`, `mail_send` |
-| chat | `unison chat <channels\|channel\|messages\|send\|search>` | `client.chat.*` | ✓ `chat_channels`, `chat_send` |
-| crm | `unison crm <objects\|search\|record\|create-record\|lists\|notes\|create-note>` | `client.crm.*` | ✓ `crm_search_records`, `crm_create_note` |
-| calendar | `unison cal <connection\|calendars\|events\|event\|create-event>` | `client.calendar.*` | ✓ `calendar_events` |
-| people | `unison people <query>` | `client.people.search()` | ✓ `people_search` |
-
-MCP tool set (21): the 10 brain tools — `brain_context`, `brain_ingest`,
+MCP tool set: the brain tools — `brain_context`, `brain_ingest`,
 `brain_search`, `brain_get`, `brain_list`, `brain_write`, `brain_edit`,
-`brain_resolve_entity`, `brain_facts_about`, `brain_record_fact`, `brain_status` —
-plus 11 Phase G domain tools: `tasks_list`, `tasks_create`,
-`workspace_tree`, `mail_threads`, `mail_send`,
-`chat_channels`, `chat_send`, `crm_search_records`, `crm_create_note`,
-`calendar_events`, `people_search`.
+`brain_resolve_entity`, `brain_facts_about`, `brain_record_fact`, `brain_status`.
 
 ---
 
