@@ -5,7 +5,7 @@ The HTTP contract the **Unison backend** implements and this open-source client
 build against it directly.
 
 Every operation here is something you can do with the brain — the API is the
-product's primary surface; the dashboard and CLI are clients of it.
+product's primary surface; the CLI and SDK are clients of it.
 
 > **🤖 AI agent?** This spec is the full API contract. To *start using* the brain,
 > see [`AGENTS.md`](./AGENTS.md) — the four-step path to a working setup.
@@ -370,7 +370,7 @@ MCP column: ✓ = exposed as an agent tool; — = SDK/CLI only.
 | unmerge | `unison review undo <mergeId>` | `brain.review.undo()` | — |
 | jobs | `unison jobs ls [--status] \| jobs stats \| jobs retry <id>` | `brain.jobs.*()` | — |
 | status | `unison status` | `brain.status()` | ✓ `brain_status` |
-| auth | `unison auth login\|logout\|status` | `startDeviceAuth()` / `pollDeviceToken()` | — |
+| auth | `unison auth login\|logout\|status` | `createKey()` / `listKeys()` / `revokeKey()` | — |
 
 MCP tool set: the brain tools — `brain_context`, `brain_ingest`,
 `brain_search`, `brain_get`, `brain_list`, `brain_write`, `brain_edit`,
@@ -382,5 +382,5 @@ MCP tool set: the brain tools — `brain_context`, `brain_ingest`,
 
 The hosted brain is live at `https://brain.unisonlabs.ai` — the default base URL for
 the SDK, CLI, and MCP server. To target a different backend, override with
-`UNISON_API_URL` (and `UNISON_APP_URL` for the sign-in page), or
+`UNISON_API_URL`, or
 `unison auth login --api-url <url>`.

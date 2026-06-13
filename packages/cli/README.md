@@ -7,7 +7,7 @@ terminal and in any agent.
 
 ```bash
 npm i -g @unisonlabs/cli      # or: pnpm add -g / bun add -g / npx @unisonlabs/cli
-unison auth login             # browser sign-in (or UNISON_TOKEN=usk_... for CI)
+unison auth login             # email OTP sign-in (or UNISON_TOKEN=usk_... for CI)
 ```
 
 ## Use it
@@ -36,6 +36,5 @@ JSON envelope on stderr with a nonzero exit code (`4` auth, `3` not found,
 
 - `UNISON_TOKEN` — API key (`usk_...`); overrides the stored login.
 - `UNISON_API_URL` — API base (default `https://brain.unisonlabs.ai`).
-- `UNISON_APP_URL` — dashboard URL for `auth login`.
 
 MIT © Unison Labs · [source + full docs](https://github.com/unison-labs-ai/unison-brain)
