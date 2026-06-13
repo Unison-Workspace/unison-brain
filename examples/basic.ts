@@ -42,9 +42,5 @@ console.log(`\nWrote ${note.path}`);
 // 4. Surgical in-place edit — replace an exact string without rewriting the doc.
 await client.editDoc({ path: note.path, oldStr: "Written by", newStr: "Updated by" });
 
-// 5. Search the Work surface (tasks/docs/tables/records) — needs a work:read key.
-const work = await client.work.search({ query, limit: 5 });
-console.log("\nWork search:", JSON.stringify(work).slice(0, 300));
-
-// 6. Brain health.
+// 5. Brain health.
 console.log("\nStatus:", await client.status());

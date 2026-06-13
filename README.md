@@ -39,7 +39,7 @@ architecture, prior fixes, people — that any agent *reads from and writes back
 from any machine, with one command:
 
 ```bash
-unison search "why did we pick device-flow auth"
+unison search "why did we pick email-otp auth"
 ```
 
 It's not only for coding agents: the same brain backs your research, ops, and personal
@@ -70,7 +70,7 @@ skill wraps the CLI — one API contract, four surfaces.
 
 | 🐟 Without a brain | 🧠 With Unison |
 | --- | --- |
-| _"Why did we switch to device-flow auth?"_ → the agent greps, guesses, or asks you for the third time | `unison search "why device-flow auth"` → the actual decision **and its reasoning**, in one second |
+| _"Why did we switch to email-OTP auth?"_ → the agent greps, guesses, or asks you for the third time | `unison search "why email-otp auth"` → the actual decision **and its reasoning**, in one second |
 | New laptop, new repo, new teammate → re-explain the whole architecture from scratch | One brain. Every agent, every machine, every teammate reads the **same source of truth** |
 | `CLAUDE.md` / `.cursorrules` go stale the day after you write them | Agents **write back** what they learn, so the brain stays current on its own |
 | mem0 / Letta / Zep are frameworks you _build an agent with_ | Plugs into the agents you **already use** — nothing to host, no migration |
@@ -239,8 +239,8 @@ const u = new BrainClient({ baseUrl: "https://brain.unisonlabs.ai", token: proce
 
 // Brain: search, write, and surgically edit knowledge.
 const hits = await u.search("auth decision", { limit: 5 });
-await u.write({ path: "/private/notes/auth.md", bodyMd: "We chose device-flow because …" });
-await u.editDoc({ path: "/private/notes/auth.md", oldStr: "device-flow", newStr: "PKCE device-flow" });
+await u.write({ path: "/private/notes/auth.md", bodyMd: "We chose email-OTP because …" });
+await u.editDoc({ path: "/private/notes/auth.md", oldStr: "email-OTP", newStr: "email-OTP (verified)" });
 
 // Graph: resolve an entity and read the facts the brain holds about it.
 const daniel = await u.entities.resolve("Daniel");
@@ -279,8 +279,8 @@ development. `bun run build` bundles the CLI and MCP server into self-contained
 `dist/index.js` files (the SDK is bundled in; only npm deps stay external).
 
 The hosted brain is live at `https://brain.unisonlabs.ai` (the default). To develop
-against a different backend, point the client with `UNISON_API_URL` /
-`UNISON_APP_URL` or `unison auth login --api-url <url>`.
+against a different backend, point the client with `UNISON_API_URL`
+or `unison auth login --api-url <url>`.
 
 ## Star history
 

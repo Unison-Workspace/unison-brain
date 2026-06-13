@@ -38,7 +38,4 @@ Namespaces: top-level document methods (`search`, `grep`, `get`, `list`, `listFs
 `brain.links.*`, `brain.review.*`, `brain.jobs.*`. Failed calls throw
 `BrainError` (with `.status` and `.code`).
 
-Auth helpers for building your own login flow are also exported (`generatePkce`,
-`buildAuthorizeUrl`, `exchangeCode`, `startDeviceAuth`, `pollDeviceToken`).
-
 MIT © Unison Labs · [source + full docs](https://github.com/unison-labs-ai/unison-brain)
