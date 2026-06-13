@@ -14,6 +14,7 @@ all share.
 [![CI](https://github.com/unison-labs-ai/unison-brain/actions/workflows/ci.yml/badge.svg)](https://github.com/unison-labs-ai/unison-brain/actions/workflows/ci.yml)
 [![npm](https://img.shields.io/npm/v/@unisonlabs/cli?logo=npm&color=cb3837&label=cli)](https://www.npmjs.com/package/@unisonlabs/cli)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
+[![Stars](https://img.shields.io/github/stars/unison-labs-ai/unison-brain?style=social)](https://github.com/unison-labs-ai/unison-brain)
 
 [**Why**](#with-the-brain-vs-without) • [**Quickstart**](#quickstart) • [**Install**](#install) • [**For agents**](#for-agents) • [**SPEC**](./SPEC.md)
 
@@ -284,15 +285,37 @@ The hosted brain is live at `https://brain.unisonlabs.ai` (the default). To deve
 against a different backend, point the client with `UNISON_API_URL` /
 `UNISON_APP_URL` or `unison auth login --api-url <url>`.
 
-## Star it
+## Star history
 
-If the brain saves your agent one "wait, why did we do it this way?" — star it. ⭐
+[![Star History Chart](https://api.star-history.com/svg?repos=unison-labs-ai/unison-brain&type=Date)](https://star-history.com/#unison-labs-ai/unison-brain&Date)
+
+If the brain saves your agent one "wait, why did we do it this way?" — drop a ⭐ to help others find it.
 
 ## Contributing & security
 
 Contributions welcome — see [`CONTRIBUTING.md`](./CONTRIBUTING.md) and the
 [`CHANGELOG.md`](./CHANGELOG.md). Found a vulnerability? See
 [`SECURITY.md`](./SECURITY.md) — please report privately, not via a public issue.
+
+## Part of the Unison Labs constellation
+
+**One brain, every agent.** Every repo below reads from _and writes to_ the same [Unison brain](https://unisonlabs.ai) — no per-tool memory silos.
+
+| Repo | What it does |
+|---|---|
+| **[unison-brain](https://github.com/unison-labs-ai/unison-brain)** | **CLI · SDK · MCP server — the core ← you are here** |
+| [claude-unison](https://github.com/unison-labs-ai/claude-unison) | Memory for Claude Code |
+| [cursor-unison](https://github.com/unison-labs-ai/cursor-unison) | Memory for Cursor |
+| [codex-unison](https://github.com/unison-labs-ai/codex-unison) | Memory for OpenAI Codex CLI |
+| [opencode-unison](https://github.com/unison-labs-ai/opencode-unison) | Memory for OpenCode |
+| [openclaw-unison](https://github.com/unison-labs-ai/openclaw-unison) | Memory for OpenClaw |
+| [pipecat-unison](https://github.com/unison-labs-ai/pipecat-unison) | Memory for Pipecat voice agents |
+| [python-sdk](https://github.com/unison-labs-ai/python-sdk) | Python SDK for the brain |
+| [install-mcp](https://github.com/unison-labs-ai/install-mcp) | One-command MCP installer |
+| [code-chunk](https://github.com/unison-labs-ai/code-chunk) | AST-aware code chunking |
+| [unison-fs](https://github.com/unison-labs-ai/unison-fs) | Mount the brain as a filesystem |
+| [backchannel](https://github.com/unison-labs-ai/backchannel) | Async messaging between agents |
+| [Unison-evals](https://github.com/unison-labs-ai/Unison-evals) | Open memory benchmark suite |
 
 ## License
 
