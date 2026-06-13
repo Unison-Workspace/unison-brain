@@ -1,6 +1,6 @@
 {
   "name": "@unisonlabs/cli",
-  "version": "1.6.0",
+  "version": "1.6.1",
   "description": "The `unison` CLI — search and write your Unison brain from the terminal or any agent.",
   "keywords": ["unison", "brain", "knowledge-base", "cli", "ai", "agent", "memory"],
   "homepage": "https://github.com/Unison-Workspace/unison-brain#readme",
@@ -25,7 +25,7 @@
   },
   "scripts": {
     "dev": "bun run src/index.ts",
-    "build": "bun ../../scripts/gen-skill.ts && bun build src/index.ts --target node --outfile dist/index.js --external commander --external picocolors",
+    "build": "rm -rf dist && bun ../../scripts/gen-skill.ts && bun build src/index.ts --target node --outfile dist/index.js --external commander --external picocolors",
     "prepublishOnly": "bun run build"
   },
   "dependencies": {
